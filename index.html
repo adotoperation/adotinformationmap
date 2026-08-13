@@ -25,12 +25,15 @@
             <input type="text" id="branch-search" placeholder="학교명, 지번주소 또는 에이닷지점 검색 (예: 경기고, 대치동, 강동)" autocomplete="off">
             <div id="search-results"></div>
 
-            <!-- 🔘 필터 체크박스 -->
+            <!-- 🔘 필터 체크박스 (기본: 에이닷지점만 체크) -->
             <div id="filter-container">
-                <label class="filter-item"><input type="checkbox" id="chk-high" checked> 🏫 고등학교</label>
-                <label class="filter-item"><input type="checkbox" id="chk-middle" checked> 🏫 중학교</label>
-                <label class="filter-item"><input type="checkbox" id="chk-branch" checked> 🎓 에이닷지점</label>
-                <label class="filter-item"><input type="checkbox" id="chk-academy" checked> 📚 학원가</label>
+                <div class="filter-guide-text">💡 지도에 표시할 정보를 선택하세요. (체크 시 마커 표시)</div>
+                <div class="filter-grid">
+                    <label class="filter-item"><input type="checkbox" id="chk-branch" checked> 🎓 에이닷지점</label>
+                    <label class="filter-item"><input type="checkbox" id="chk-high"> 🏫 고등학교</label>
+                    <label class="filter-item"><input type="checkbox" id="chk-middle"> 🏫 중학교</label>
+                    <label class="filter-item"><input type="checkbox" id="chk-academy"> 📚 학원가</label>
+                </div>
             </div>
         </div>
     </div>
@@ -52,7 +55,7 @@
         <div class="legend-item"><span class="circle lvl-blue"></span> 학원 40개 미만 (파랑)</div>
 
         <div class="legend-item" style="margin-top:8px;"><span class="branch-legend-icon">🎓</span> 에이닷지점</div>
-        <div class="legend-note">* 지도 빈 공간 클릭 시 반경 3km 통합 집계가 표시됩니다.</div>
+        <div class="legend-note">* 에이닷지점 클릭 시 반경 3km 내 학생수/학원수/학교수가 표출됩니다.</div>
         <div class="legend-note">* 클릭 시 두 점 간 직선 거리(km) 계산 (우클릭 시 지우기)</div>
     </div>
 
