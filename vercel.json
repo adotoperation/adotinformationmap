@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/api/data", "dest": "/api/data.js" },
+    { "src": "/api/academy_data", "dest": "/api/academy_data.js" },
+    { "src": "/api/branch_data", "dest": "/api/branch_data.js" }
+  ]
+}
