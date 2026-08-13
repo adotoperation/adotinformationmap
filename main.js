@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 및 학교 보라색 계열 5단계 & 학원가 원형 5단계 스케일 + 줌인/줌아웃 클러스터링 지도 가동
+// 카카오 맵 SDK 로드 - B열 학교코드(Code) 기준 동명 학교 누락 없이 100% 완전 수집 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -22,7 +22,7 @@
             RADIUS: 9999
         };
 
-        let schoolMap = {};
+        let schoolMap = {};       // Key: B열 학교코드 (code)
         let academyMap = {};
         let branchDataList = [];
 
@@ -130,7 +130,12 @@
                     const keyword = e.target.value.trim().toLowerCase();
                     if (!keyword) { searchResults.style.display = 'none'; return; }
 
-                    const matchingSchools = Object.keys(schoolMap).filter(name => name.toLowerCase().includes(keyword));
+                    // 학교코드 또는 학교명 매칭 (동명 학교도 학교코드별로 모두 노출)
+                    const matchingSchoolKeys = Object.keys(schoolMap).filter(codeKey => {
+                        const item = schoolMap[codeKey];
+                        return item.name.toLowerCase().includes(keyword) || item.code.toLowerCase().includes(keyword);
+                    });
+
                     const matchingAcademies = Object.keys(academyMap).filter(addr => addr.toLowerCase().includes(keyword));
                     const matchingBranches = branchDataList.filter(b => b.name.toLowerCase().includes(keyword));
 
@@ -138,9 +143,9 @@
                     matchingBranches.forEach(b => {
                         html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">🎓 [지점] ${b.name} (학생수: ${b.studentCount}명)</div>`;
                     });
-                    matchingSchools.slice(0, 5).forEach(name => {
-                        const item = schoolMap[name];
-                        html += `<div class="search-item" data-type="school" data-name="${name}">🏫 [학교] ${name} (총원: ${item.total2026}명)</div>`;
+                    matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
+                        const item = schoolMap[codeKey];
+                        html += `<div class="search-item" data-type="school" data-code="${item.code}">🏫 [학교] ${item.name} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingAcademies.slice(0, 5).forEach(addr => {
                         const item = academyMap[addr];
@@ -168,14 +173,14 @@
                             drawRadius3km(pos);
                             searchInput.value = item.dataset.name;
                         } else if (type === 'school') {
-                            const schoolName = item.dataset.name;
-                            const data = schoolMap[schoolName];
+                            const code = item.dataset.code;
+                            const data = schoolMap[code];
                             if (data && data.pos) {
                                 map.setLevel(5);
                                 map.panTo(data.pos);
-                                openDetailModal(schoolName);
+                                openDetailModalByCode(code);
                             }
-                            searchInput.value = schoolName;
+                            searchInput.value = data ? data.name : '';
                         } else if (type === 'academy') {
                             const addr = item.dataset.addr;
                             const data = academyMap[addr];
@@ -205,7 +210,6 @@
                 window.clearRadiusOverlay();
             });
 
-            // 🔍 줌 레벨 변경 이벤트 (줌아웃 시 마커 합치고, 줌인 시 마커 나눔)
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
                 renderSchoolMarkers();
             });
@@ -331,8 +335,8 @@
             let totalAcademyLocs3km = 0;
             let totalBranchStudents3km = 0;
 
-            Object.keys(schoolMap).forEach(name => {
-                const item = schoolMap[name];
+            Object.keys(schoolMap).forEach(code => {
+                const item = schoolMap[code];
                 if (item && item.pos) {
                     const dist = getDistance(position, item.pos);
                     if (dist <= 3000) {
@@ -404,6 +408,7 @@
             });
         }
 
+        // --- 구글 시트 3대 데이터 수집 (B열 학교코드 기반 고유 Key 수집으로 동명 학교 100% 보존!) ---
         function loadAllGoogleSheetData() {
             // 1. 학교 데이터 (GID: 630627369)
             fetch(SCHOOL_CSV_URL)
@@ -412,14 +417,14 @@
                     const rows = data.split('\n').slice(1);
                     schoolMap = {};
 
-                    rows.forEach(row => {
+                    rows.forEach((row, idx) => {
                         if (!row.trim()) return;
                         const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         if (columns.length < 6) return;
 
                         const periodRaw = (columns[0] || "").replace(/"/g, '').trim();
-                        const code = (columns[1] || "").replace(/"/g, '').trim();
-                        const schoolName = (columns[2] || "").replace(/"/g, '').trim();
+                        const code = (columns[1] || "").replace(/"/g, '').trim(); // B열 학교코드 (e.g. S010000391)
+                        const schoolName = (columns[2] || "").replace(/"/g, '').trim(); // C열 학교명 (e.g. 광남고등학교)
                         
                         const latStr = columns[3] ? columns[3].replace(/"/g, '').replace(/[^0-9.-]/g, '').trim() : '';
                         const lngStr = columns[4] ? columns[4].replace(/"/g, '').replace(/[^0-9.-]/g, '').trim() : '';
@@ -437,15 +442,18 @@
 
                         if (!schoolName) return;
 
-                        if (!schoolMap[schoolName]) {
+                        // 💡 중요: 학교명 대신 B열 정보공시 학교코드(code)를 고유 Key로 사용하여 동명 학교 100% 수집!
+                        const uniqueKey = code || (schoolName + '_' + idx);
+
+                        if (!schoolMap[uniqueKey]) {
                             let pos = null;
                             if (!isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
                                 pos = new kakao.maps.LatLng(lat, lng);
                             }
 
-                            schoolMap[schoolName] = {
+                            schoolMap[uniqueKey] = {
                                 period: '2026년',
-                                code: code,
+                                code: code || 'N/A',
                                 name: schoolName,
                                 pos: pos,
                                 total2026: total2026,
@@ -534,7 +542,6 @@
                 .catch(err => { console.error('Branch CSV Data fetch error:', err); });
         }
 
-        // 🏫 학생수 기준 보라색 5단계 클래스 (1000, 800, 600, 400, <400)
         function getPurpleHeatmapLevelClass(totalCount) {
             if (totalCount >= 1000) return 'purple-lvl-5 size-xl';
             if (totalCount >= 800) return 'purple-lvl-4 size-lg';
@@ -543,7 +550,6 @@
             return 'purple-lvl-1 size-xs';
         }
 
-        // 📚 학원수 기준 원형 5단계 클래스 (100, 80, 60, 40, <40)
         function getAcademyCircleClass(count) {
             if (count >= 100) return 'lvl-red size-xl';
             if (count >= 80) return 'lvl-orange size-lg';
@@ -552,7 +558,7 @@
             return 'lvl-blue size-xs';
         }
 
-        // 🏫 학교 마커 렌더링 (줌아웃 레벨 >= 8 시 근접 학교 학생수 합치기, 줌인 레벨 < 8 시 개별 나누기)
+        // 🏫 학교코드(B열) 기준 100% 완전 표현 마커 렌더링
         function renderSchoolMarkers() {
             schoolOverlays.forEach(ol => ol.setMap(null));
             schoolOverlays = [];
@@ -560,15 +566,15 @@
             clusterOverlays = [];
 
             const zoomLevel = map.getLevel();
-            const schoolNames = Object.keys(schoolMap).filter(name => schoolMap[name].pos !== null);
+            const schoolCodeKeys = Object.keys(schoolMap).filter(codeKey => schoolMap[codeKey].pos !== null);
 
             if (zoomLevel >= 8) {
-                // 🔍 줌아웃 상태: 근접한 학교 학생수를 하나로 합쳐서 표시 (클러스터링)
+                // 🔍 줌아웃 상태: 근접한 학교들의 학생수를 하나로 클러스터링
                 const clusters = [];
-                const clusterThresholdMeters = zoomLevel * 600; // 줌 레벨에 비례한 거리 임계값
+                const clusterThresholdMeters = zoomLevel * 600;
 
-                schoolNames.forEach(name => {
-                    const item = schoolMap[name];
+                schoolCodeKeys.forEach(codeKey => {
+                    const item = schoolMap[codeKey];
                     let addedToCluster = false;
 
                     for (let c of clusters) {
@@ -605,7 +611,7 @@
                     labelContent.onclick = (e) => {
                         if (e) { e.preventDefault(); e.stopPropagation(); }
                         if (count === 1) {
-                            openDetailModal(c.schools[0].name);
+                            openDetailModalByCode(c.schools[0].code);
                         } else {
                             map.setLevel(zoomLevel - 2);
                             map.panTo(c.centerPos);
@@ -626,9 +632,9 @@
                 });
 
             } else {
-                // 🔍 줌인 상태: 각 개별 학교 마커로 나누어서 정밀 표시
-                schoolNames.forEach(name => {
-                    const item = schoolMap[name];
+                // 🔍 줌인 상태: 개별 학교 마커로 나누어 동명 학교도 누락 없이 전부 표시
+                schoolCodeKeys.forEach(codeKey => {
+                    const item = schoolMap[codeKey];
                     const total = item.total2026;
                     const heatClass = getPurpleHeatmapLevelClass(total);
 
@@ -641,7 +647,7 @@
 
                     labelContent.onclick = (e) => {
                         if (e) { e.preventDefault(); e.stopPropagation(); }
-                        openDetailModal(name);
+                        openDetailModalByCode(item.code);
                     };
 
                     const overlay = new kakao.maps.CustomOverlay({
@@ -659,7 +665,6 @@
             }
         }
 
-        // 📚 학원가 순수 동그라미 원 렌더링 (~동 ~리 텍스트 완전 제거)
         function renderAcademyMarkers() {
             academyOverlays.forEach(ol => ol.setMap(null));
             academyOverlays = [];
@@ -749,8 +754,9 @@
             return text;
         }
 
-        function openDetailModal(schoolName) {
-            const item = schoolMap[schoolName];
+        // B열 학교코드(code) 기준으로 팝업 모달을 오픈하도록 보완
+        function openDetailModalByCode(schoolCode) {
+            const item = schoolMap[schoolCode];
             if (!item) return;
 
             const modal = document.getElementById('detail-modal');
