@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전국 학교 & 학원가 & 지점 통합 분석 지도</title>
+    <!-- Google Fonts & Chart.js -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- 좌상단: 제목 및 검색창 -->
+    <div id="top-left-container">
+        <div id="title-box" class="map-overlay">
+            <h1>전국 학교 & 학원가 & 지점 통합 지도</h1>
+            <p>데이터: 2026년 학교 총원·학년별 현황 / 학원가 지번 / 교육 지점</p>
+        </div>
+
+        <div id="search-box" class="map-overlay">
+            <input type="text" id="branch-search" placeholder="학교명, 지번주소 또는 지점명 검색 (예: 경기고, 대치동, 강동)" autocomplete="off">
+            <div id="search-results"></div>
+        </div>
+    </div>
+
+    <!-- 우측 하단 범례 -->
+    <div id="legend" class="map-overlay">
+        <div class="legend-title">마커 범례 및 구분</div>
+        <div class="legend-item"><span class="circle lvl-red"></span> 🏫 학교 (1,000명 이상)</div>
+        <div class="legend-item"><span class="circle lvl-orange"></span> 🏫 학교 (800~999명)</div>
+        <div class="legend-item"><span class="circle lvl-yellow"></span> 🏫 학교 (600~799명)</div>
+        <div class="legend-item"><span class="circle lvl-green"></span> 🏫 학교 (400~599명)</div>
+        <div class="legend-item"><span class="circle lvl-blue"></span> 🏫 학교 (400명 미만)</div>
+        <div class="legend-item"><span class="academy-legend-icon">📚</span> 학원가 위치 (학원수 표시)</div>
+        <div class="legend-item"><span class="branch-legend-icon">🎓</span> 교육 지점 위치 (학생수 표시)</div>
+        <div class="legend-note">* 지도 클릭 시 시작점-끝점 직선 거리(km)가 실시간 계산됩니다. (우클릭 시 지우기)</div>
+    </div>
+
+    <!-- 카카오 맵 로딩 에러 안내 패널 -->
+    <div id="sdk-error-notice" class="map-overlay" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:99999; max-width:480px; text-align:center; padding:24px; border:2px solid #ff4757;">
+        <h3 style="color:#ff4757; font-size:18px; margin-bottom:10px;">⚠️ 카카오 지도 SDK 로드 실패</h3>
+        <p style="font-size:13px; color:#ddd; line-height:1.6;">
+            카카오 맵 API 인증에 실패했거나 일일 쿼터 한도가 초과되었습니다.<br><br>
+            <b>[확인 조치 방법]</b><br>
+            1. Kakao Developers 콘솔 (<code>https://developers.kakao.com/</code>) 접속<br>
+            2. <b>내 애플리케이션 → 플랫폼 → Web</b> 메뉴 이동<br>
+            3. 사이트 도메인에 <code>http://localhost:8080</code> 이 등록되어 있는지 확인
+        </p>
+    </div>
+
+    <!-- 클릭 시 상세 리포트 모달 팝업 -->
+    <div id="detail-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content map-overlay">
+            <button class="modal-close" id="btn-modal-close">✕</button>
+            <div class="modal-header">
+                <div class="modal-tag" id="modal-school-code">학교코드: S010000375</div>
+                <h2 id="modal-address-name">경기고등학교</h2>
+                <button class="btn-copy-address" id="btn-copy-address">📋 복사하기</button>
+            </div>
+            <div class="modal-body">
+                <!-- 현황 그리드 -->
+                <div class="school-summary-grid" id="modal-summary-grid">
+                    <div class="school-summary-box total-box">
+                        <span class="year-title">2026년 총원</span>
+                        <span class="count-num" id="val-total">0명</span>
+                    </div>
+                    <div class="school-summary-box">
+                        <span class="year-title">1학년</span>
+                        <span class="count-num" id="val-g1">0명</span>
+                    </div>
+                    <div class="school-summary-box">
+                        <span class="year-title">2학년</span>
+                        <span class="count-num" id="val-g2">0명</span>
+                    </div>
+                    <div class="school-summary-box">
+                        <span class="year-title">3학년</span>
+                        <span class="count-num" id="val-g3">0명</span>
+                    </div>
+                </div>
+
+                <!-- 💡 3개년 변화 추이 분석 카드 -->
+                <div class="analysis-box">
+                    <div class="analysis-title" id="modal-analysis-title">📊 3개년 변화 추이 (2024 ~ 2026년)</div>
+                    <div class="analysis-metrics">
+                        <div class="metric-item">
+                            <span class="m-label">2024년 (2년전)</span>
+                            <span class="m-val" id="val-2024">0명</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="m-label">2025년 (1년전)</span>
+                            <span class="m-val" id="val-2025">0명</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="m-label">2026년 (현재)</span>
+                            <span class="m-val active" id="val-2026">0명</span>
+                        </div>
+                    </div>
+                    <div class="analysis-text" id="analysis-summary-text">
+                        3개년 변화를 계산 중입니다...
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 지도 컨테이너 -->
+    <div id="map"></div>
+
+    <!-- 카카오 맵 SDK 로더 -->
+    <script>
+        window.kakaoSdkLoaded = false;
+        function handleKakaoError() {
+            if (!window.kakaoSdkLoaded) {
+                const errNotice = document.getElementById('sdk-error-notice');
+                if (errNotice) errNotice.style.display = 'block';
+            }
+        }
+    </script>
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9ca57e95d045ad1907d5c789a7a2aad8&libraries=clusterer,services&autoload=false" onerror="handleKakaoError()"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>

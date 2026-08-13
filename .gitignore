@@ -1,0 +1,19 @@
+# Temporary and log files
+*.log
+scratch_test.csv
+school_test.csv
+sheet_meta.json
+gid_results.txt
+test_parse.js
+test_gid.ps1
+test_all_sheets.ps1
+find_gids.ps1
+find_exact_gids.ps1
+find_rdb_context.ps1
+find_sheets_json.ps1
+check_gids_detail.ps1
+save_gid_results.ps1
+
+# OS files
+.DS_Store
+Thumbs.db

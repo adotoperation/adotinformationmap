@@ -1,0 +1,496 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body, #map {
+    width: 100%;
+    height: 100%;
+    background-color: #1a1a1a;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #ffffff;
+    overflow: hidden;
+}
+
+/* 상단 좌측 컨테이너 */
+#top-left-container {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 390px;
+}
+
+/* 공통 오버레이 스타일 (다크 글래스모피즘) */
+.map-overlay {
+    background: rgba(25, 28, 38, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* 제목 박스 */
+#title-box h1 {
+    font-size: 19px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #a5a5a5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#title-box p {
+    font-size: 11px;
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 검색창 */
+#search-box {
+    padding: 10px 14px;
+}
+
+#branch-search {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 14px;
+    outline: none;
+}
+
+#branch-search::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#search-results {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 8px;
+    display: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 13px;
+}
+
+.search-item:hover {
+    background: rgba(108, 92, 231, 0.2);
+    color: #a29bfe;
+}
+
+/* 범례 */
+#legend {
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    min-width: 230px;
+    z-index: 10;
+    padding: 14px 16px;
+}
+
+.legend-title {
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #a29bfe;
+    letter-spacing: 0.5px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* 히트맵 5단계 색상 규격 (학교 총원 규모 기준) */
+.circle.lvl-red, .circle-badge.lvl-red { background-color: rgba(231, 76, 60, 0.92); border-color: #ffffff; }
+.circle.lvl-orange, .circle-badge.lvl-orange { background-color: rgba(230, 126, 34, 0.92); border-color: #ffffff; }
+.circle.lvl-yellow, .circle-badge.lvl-yellow { background-color: rgba(241, 196, 15, 0.92); border-color: #ffffff; color: #111111 !important; }
+.circle.lvl-green, .circle-badge.lvl-green { background-color: rgba(46, 204, 113, 0.92); border-color: #ffffff; }
+.circle.lvl-blue, .circle-badge.lvl-blue { background-color: rgba(52, 152, 219, 0.92); border-color: #ffffff; }
+
+.legend-note {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 6px;
+}
+
+/* 🏫 학교 오버레이 마커 디자인 */
+.circle-badge {
+    position: relative;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+}
+
+.circle-badge:hover {
+    transform: scale(1.2);
+    z-index: 99999 !important;
+}
+
+.circle-badge.size-xl { width: 72px; height: 72px; border-width: 2.5px; box-shadow: 0 0 20px rgba(231, 76, 60, 0.6); }
+.circle-badge.size-lg { width: 62px; height: 62px; }
+.circle-badge.size-md { width: 52px; height: 52px; }
+.circle-badge.size-sm { width: 44px; height: 44px; }
+.circle-badge.size-xs { width: 36px; height: 36px; border-width: 1.5px; }
+
+.badge-count-num { font-size: 12px; line-height: 1.1; }
+.circle-badge.size-xl .badge-count-num { font-size: 15px; }
+.circle-badge.size-lg .badge-count-num { font-size: 13.5px; }
+.circle-badge.size-md .badge-count-num { font-size: 12px; }
+.circle-badge.size-sm .badge-count-num { font-size: 11px; }
+.circle-badge.size-xs .badge-count-num { font-size: 10px; }
+
+.badge-diff-sub { font-size: 9px; opacity: 0.9; font-weight: 700; line-height: 1; margin-top: 1px; }
+.circle-badge.size-xl .badge-diff-sub { font-size: 10.5px; }
+.circle-badge.size-lg .badge-diff-sub { font-size: 10px; }
+
+/* 📚 학원가 지번 오버레이 마커 디자인 */
+.academy-badge {
+    background: linear-gradient(135deg, #10ac84, #1dd1a1);
+    color: #ffffff;
+    padding: 5px 12px;
+    border-radius: 16px;
+    border: 2px solid #ffffff;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(16, 172, 132, 0.6);
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.academy-badge:hover {
+    transform: scale(1.15) translateY(-3px);
+    z-index: 99999 !important;
+}
+
+.academy-legend-icon {
+    font-size: 13px;
+    margin-right: 6px;
+}
+
+/* 🎓 지점 전용 배지 오버레이 스타일 */
+.branch-badge {
+    background: linear-gradient(135deg, #7950f2, #4c6ef5);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 18px;
+    border: 2px solid #ffffff;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 4px 18px rgba(121, 80, 242, 0.7);
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.branch-badge:hover {
+    transform: scale(1.15) translateY(-3px);
+    z-index: 999999 !important;
+}
+
+.branch-legend-icon {
+    font-size: 13px;
+    margin-right: 6px;
+}
+
+/* 반경 3km 집계 오버레이 라벨 스타일 */
+.radius-summary-label {
+    background: rgba(20, 24, 38, 0.95);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 18px;
+    border: 1.5px solid #ff4757;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    white-space: nowrap;
+    animation: fadeInRadius 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 9999;
+    backdrop-filter: blur(12px);
+}
+
+.rs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    gap: 12px;
+}
+
+.rs-title {
+    font-size: 13px;
+    color: #ff4757;
+    font-weight: 800;
+}
+
+.rs-close-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.rs-address {
+    font-size: 12px;
+    color: #e0e0e0;
+    font-weight: 700;
+}
+
+.rs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rs-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.rs-item label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.rs-item value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #ff4757;
+}
+
+/* 📏 직선 거리 측정 오버레이 배지 스타일 */
+.distance-summary-badge {
+    background: rgba(20, 24, 38, 0.95);
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 2px solid #ff4757;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(255, 71, 87, 0.7);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    animation: fadeInRadius 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10000;
+    backdrop-filter: blur(12px);
+}
+
+.distance-summary-badge span.dist-val {
+    color: #ff6b81;
+    font-size: 15px;
+}
+
+/* 모달 팝업 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    width: 500px;
+    max-width: 92vw;
+    padding: 24px;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.modal-tag {
+    font-size: 11px;
+    color: #a29bfe;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.modal-header h2 {
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.btn-copy-address {
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.btn-copy-address:hover {
+    background: rgba(108, 92, 231, 0.3);
+    color: #ffffff;
+}
+
+.modal-body {
+    margin-top: 16px;
+}
+
+.school-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.school-summary-box {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 6px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.school-summary-box.total-box {
+    background: rgba(108, 92, 231, 0.18);
+    border-color: rgba(108, 92, 231, 0.4);
+}
+
+.school-summary-box.total-box .count-num {
+    color: #a29bfe;
+}
+
+.year-title {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.count-num {
+    font-size: 15px;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+}
+
+.analysis-box {
+    background: rgba(108, 92, 231, 0.1);
+    border: 1px solid rgba(108, 92, 231, 0.25);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.analysis-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #a29bfe;
+}
+
+.analysis-metrics {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.metric-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.m-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.m-val {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+}
+
+.m-val.active { color: #a29bfe; }
+
+.analysis-text {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #6c5ce7;
+}
+
+.chart-container {
+    height: 180px;
+    position: relative;
+}
