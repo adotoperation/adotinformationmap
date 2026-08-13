@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 및 구글 시트 실시간 자동 연동 (Auto Refresh 5분)
+// 카카오 맵 SDK 로드 및 학교 보라색 계열 5단계 & 학원가 원형 5단계 스케일 + 줌인/줌아웃 클러스터링 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -27,6 +27,7 @@
         let branchDataList = [];
 
         let schoolOverlays = [];
+        let clusterOverlays = [];
         let academyOverlays = [];
         let branchOverlays = [];
         let trendChart = null;
@@ -45,7 +46,7 @@
         const container = document.getElementById('map');
         const options = {
             center: new kakao.maps.LatLng(37.49802, 127.05817), // 대치동 중심
-            level: 8
+            level: 7
         };
         const map = new kakao.maps.Map(container, options);
 
@@ -78,9 +79,8 @@
         };
 
         setupUIEvents();
-        loadAllGoogleSheetData(); // 최초 수집
+        loadAllGoogleSheetData();
 
-        // 🔄 5분마다 구글 시트 최신 데이터 실시간 자동 연동 (Auto Sync)
         setInterval(() => {
             console.log('🔄 Google Sheets 실시간 최신 데이터 자동 동기화 중...');
             loadAllGoogleSheetData();
@@ -163,6 +163,7 @@
                         const type = item.dataset.type;
                         if (type === 'branch') {
                             const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
+                            map.setLevel(6);
                             map.panTo(pos);
                             drawRadius3km(pos);
                             searchInput.value = item.dataset.name;
@@ -170,6 +171,7 @@
                             const schoolName = item.dataset.name;
                             const data = schoolMap[schoolName];
                             if (data && data.pos) {
+                                map.setLevel(5);
                                 map.panTo(data.pos);
                                 openDetailModal(schoolName);
                             }
@@ -178,6 +180,7 @@
                             const addr = item.dataset.addr;
                             const data = academyMap[addr];
                             if (data && data.pos) {
+                                map.setLevel(6);
                                 map.panTo(data.pos);
                                 drawRadius3km(data.pos);
                             }
@@ -200,6 +203,11 @@
             kakao.maps.event.addListener(map, 'rightclick', (mouseEvent) => {
                 if (mouseEvent && mouseEvent.preventDefault) mouseEvent.preventDefault();
                 window.clearRadiusOverlay();
+            });
+
+            // 🔍 줌 레벨 변경 이벤트 (줌아웃 시 마커 합치고, 줌인 시 마커 나눔)
+            kakao.maps.event.addListener(map, 'zoom_changed', () => {
+                renderSchoolMarkers();
             });
 
             container.addEventListener('contextmenu', (e) => {
@@ -396,7 +404,6 @@
             });
         }
 
-        // --- 구글 시트 3대 데이터 일괄 로드 함수 ---
         function loadAllGoogleSheetData() {
             // 1. 학교 데이터 (GID: 630627369)
             fetch(SCHOOL_CSV_URL)
@@ -527,50 +534,132 @@
                 .catch(err => { console.error('Branch CSV Data fetch error:', err); });
         }
 
-        function getHeatmapLevelClass(totalCount) {
-            if (totalCount >= 1000) return 'lvl-red size-xl';
-            if (totalCount >= 800) return 'lvl-orange size-lg';
-            if (totalCount >= 600) return 'lvl-yellow size-md';
-            if (totalCount >= 400) return 'lvl-green size-sm';
+        // 🏫 학생수 기준 보라색 5단계 클래스 (1000, 800, 600, 400, <400)
+        function getPurpleHeatmapLevelClass(totalCount) {
+            if (totalCount >= 1000) return 'purple-lvl-5 size-xl';
+            if (totalCount >= 800) return 'purple-lvl-4 size-lg';
+            if (totalCount >= 600) return 'purple-lvl-3 size-md';
+            if (totalCount >= 400) return 'purple-lvl-2 size-sm';
+            return 'purple-lvl-1 size-xs';
+        }
+
+        // 📚 학원수 기준 원형 5단계 클래스 (100, 80, 60, 40, <40)
+        function getAcademyCircleClass(count) {
+            if (count >= 100) return 'lvl-red size-xl';
+            if (count >= 80) return 'lvl-orange size-lg';
+            if (count >= 60) return 'lvl-yellow size-md';
+            if (count >= 40) return 'lvl-green size-sm';
             return 'lvl-blue size-xs';
         }
 
+        // 🏫 학교 마커 렌더링 (줌아웃 레벨 >= 8 시 근접 학교 학생수 합치기, 줌인 레벨 < 8 시 개별 나누기)
         function renderSchoolMarkers() {
             schoolOverlays.forEach(ol => ol.setMap(null));
             schoolOverlays = [];
+            clusterOverlays.forEach(ol => ol.setMap(null));
+            clusterOverlays = [];
 
+            const zoomLevel = map.getLevel();
             const schoolNames = Object.keys(schoolMap).filter(name => schoolMap[name].pos !== null);
-            schoolNames.forEach(name => {
-                const item = schoolMap[name];
-                const total = item.total2026;
-                const heatClass = getHeatmapLevelClass(total);
 
-                const labelContent = document.createElement('div');
-                labelContent.className = `circle-badge ${heatClass}`;
-                labelContent.innerHTML = `
-                    <span class="badge-count-num">${total.toLocaleString()}명</span>
-                    <span class="badge-diff-sub">(🏫)</span>
-                `;
+            if (zoomLevel >= 8) {
+                // 🔍 줌아웃 상태: 근접한 학교 학생수를 하나로 합쳐서 표시 (클러스터링)
+                const clusters = [];
+                const clusterThresholdMeters = zoomLevel * 600; // 줌 레벨에 비례한 거리 임계값
 
-                labelContent.onclick = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    openDetailModal(name);
-                };
+                schoolNames.forEach(name => {
+                    const item = schoolMap[name];
+                    let addedToCluster = false;
 
-                const overlay = new kakao.maps.CustomOverlay({
-                    position: item.pos,
-                    content: labelContent,
-                    yAnchor: 0.5,
-                    xAnchor: 0.5,
-                    clickable: true,
-                    zIndex: Z_INDEX.SCHOOL + total
+                    for (let c of clusters) {
+                        const dist = getDistance(c.centerPos, item.pos);
+                        if (dist <= clusterThresholdMeters) {
+                            c.schools.push(item);
+                            c.totalStudents += item.total2026;
+                            addedToCluster = true;
+                            break;
+                        }
+                    }
+
+                    if (!addedToCluster) {
+                        clusters.push({
+                            centerPos: item.pos,
+                            schools: [item],
+                            totalStudents: item.total2026
+                        });
+                    }
                 });
 
-                overlay.setMap(map);
-                schoolOverlays.push(overlay);
-            });
+                clusters.forEach(c => {
+                    const total = c.totalStudents;
+                    const count = c.schools.length;
+                    const heatClass = getPurpleHeatmapLevelClass(total);
+
+                    const labelContent = document.createElement('div');
+                    labelContent.className = `circle-badge ${heatClass}`;
+                    labelContent.innerHTML = `
+                        <span class="badge-count-num">${total.toLocaleString()}명</span>
+                        <span class="badge-diff-sub">(${count}개교)</span>
+                    `;
+
+                    labelContent.onclick = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                        if (count === 1) {
+                            openDetailModal(c.schools[0].name);
+                        } else {
+                            map.setLevel(zoomLevel - 2);
+                            map.panTo(c.centerPos);
+                        }
+                    };
+
+                    const overlay = new kakao.maps.CustomOverlay({
+                        position: c.centerPos,
+                        content: labelContent,
+                        yAnchor: 0.5,
+                        xAnchor: 0.5,
+                        clickable: true,
+                        zIndex: Z_INDEX.SCHOOL + total
+                    });
+
+                    overlay.setMap(map);
+                    clusterOverlays.push(overlay);
+                });
+
+            } else {
+                // 🔍 줌인 상태: 각 개별 학교 마커로 나누어서 정밀 표시
+                schoolNames.forEach(name => {
+                    const item = schoolMap[name];
+                    const total = item.total2026;
+                    const heatClass = getPurpleHeatmapLevelClass(total);
+
+                    const labelContent = document.createElement('div');
+                    labelContent.className = `circle-badge ${heatClass}`;
+                    labelContent.innerHTML = `
+                        <span class="badge-count-num">${total.toLocaleString()}명</span>
+                        <span class="badge-diff-sub">(🏫)</span>
+                    `;
+
+                    labelContent.onclick = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                        openDetailModal(name);
+                    };
+
+                    const overlay = new kakao.maps.CustomOverlay({
+                        position: item.pos,
+                        content: labelContent,
+                        yAnchor: 0.5,
+                        xAnchor: 0.5,
+                        clickable: true,
+                        zIndex: Z_INDEX.SCHOOL + total
+                    });
+
+                    overlay.setMap(map);
+                    schoolOverlays.push(overlay);
+                });
+            }
         }
 
+        // 📚 학원가 순수 동그라미 원 렌더링 (~동 ~리 텍스트 완전 제거)
         function renderAcademyMarkers() {
             academyOverlays.forEach(ol => ol.setMap(null));
             academyOverlays = [];
@@ -578,11 +667,13 @@
             const addrs = Object.keys(academyMap).filter(a => academyMap[a].pos !== null);
             addrs.forEach(addr => {
                 const item = academyMap[addr];
+                const count = item.count;
+                const circleClass = getAcademyCircleClass(count);
+
                 const labelContent = document.createElement('div');
-                labelContent.className = 'academy-badge';
+                labelContent.className = `academy-circle-badge ${circleClass}`;
                 labelContent.innerHTML = `
-                    <span>📚 ${item.address.split(' ').slice(-1)[0]}</span>
-                    <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${item.count}개</span>
+                    <span class="badge-count-num">${count}개</span>
                 `;
 
                 labelContent.onclick = (e) => {
@@ -596,7 +687,7 @@
                     yAnchor: 0.5,
                     xAnchor: 0.5,
                     clickable: true,
-                    zIndex: Z_INDEX.ACADEMY + item.count
+                    zIndex: Z_INDEX.ACADEMY + count
                 });
 
                 overlay.setMap(map);
@@ -706,10 +797,10 @@
                     datasets: [{
                         label: '학교 총원 (명)',
                         data: dataArray,
-                        borderColor: '#ff4757',
-                        backgroundColor: 'rgba(255, 71, 87, 0.18)',
+                        borderColor: '#ba68c8',
+                        backgroundColor: 'rgba(186, 104, 200, 0.2)',
                         borderWidth: 3,
-                        pointBackgroundColor: '#ff6b81',
+                        pointBackgroundColor: '#e1bee7',
                         pointRadius: 6,
                         pointHoverRadius: 8,
                         fill: true,

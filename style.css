@@ -97,7 +97,7 @@ html, body, #map {
     position: absolute;
     bottom: 25px;
     right: 25px;
-    min-width: 230px;
+    min-width: 240px;
     z-index: 10;
     padding: 14px 16px;
 }
@@ -122,27 +122,35 @@ html, body, #map {
     height: 12px;
     border-radius: 50%;
     margin-right: 8px;
+    display: inline-block;
 }
 
-/* 히트맵 5단계 색상 규격 (학교 총원 규모 기준) */
-.circle.lvl-red, .circle-badge.lvl-red { background-color: rgba(231, 76, 60, 0.92); border-color: #ffffff; }
-.circle.lvl-orange, .circle-badge.lvl-orange { background-color: rgba(230, 126, 34, 0.92); border-color: #ffffff; }
-.circle.lvl-yellow, .circle-badge.lvl-yellow { background-color: rgba(241, 196, 15, 0.92); border-color: #ffffff; color: #111111 !important; }
-.circle.lvl-green, .circle-badge.lvl-green { background-color: rgba(46, 204, 113, 0.92); border-color: #ffffff; }
-.circle.lvl-blue, .circle-badge.lvl-blue { background-color: rgba(52, 152, 219, 0.92); border-color: #ffffff; }
+/* 🏫 학교 학생수 5단계 보라색 계열 규격 (짙은 보라 ~ 연보라) */
+.circle.purple-lvl-5, .circle-badge.purple-lvl-5 { background-color: rgba(74, 20, 140, 0.95); border-color: #ffffff; color: #ffffff; }
+.circle.purple-lvl-4, .circle-badge.purple-lvl-4 { background-color: rgba(123, 31, 162, 0.95); border-color: #ffffff; color: #ffffff; }
+.circle.purple-lvl-3, .circle-badge.purple-lvl-3 { background-color: rgba(156, 39, 176, 0.95); border-color: #ffffff; color: #ffffff; }
+.circle.purple-lvl-2, .circle-badge.purple-lvl-2 { background-color: rgba(186, 104, 200, 0.95); border-color: #ffffff; color: #ffffff; }
+.circle.purple-lvl-1, .circle-badge.purple-lvl-1 { background-color: rgba(225, 190, 231, 0.95); border-color: #ffffff; color: #111111 !important; }
+
+/* 📚 학원수 5단계 원형 규격 (빨강 ~ 파랑: 100, 80, 60, 40, <40) */
+.circle.lvl-red, .academy-circle-badge.lvl-red { background-color: rgba(231, 76, 60, 0.92); border-color: #ffffff; color: #ffffff; }
+.circle.lvl-orange, .academy-circle-badge.lvl-orange { background-color: rgba(230, 126, 34, 0.92); border-color: #ffffff; color: #ffffff; }
+.circle.lvl-yellow, .academy-circle-badge.lvl-yellow { background-color: rgba(241, 196, 15, 0.92); border-color: #ffffff; color: #111111 !important; }
+.circle.lvl-green, .academy-circle-badge.lvl-green { background-color: rgba(46, 204, 113, 0.92); border-color: #ffffff; color: #ffffff; }
+.circle.lvl-blue, .academy-circle-badge.lvl-blue { background-color: rgba(52, 152, 219, 0.92); border-color: #ffffff; color: #ffffff; }
 
 .legend-note {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    margin-top: 6px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 5px;
+    line-height: 1.35;
 }
 
-/* 🏫 학교 오버레이 마커 디자인 */
+/* 🏫 학교 오버레이 원형 마커 디자인 */
 .circle-badge {
     position: relative;
     border-radius: 50%;
     border: 2px solid #ffffff;
-    color: #ffffff;
     font-family: 'Outfit', 'Noto Sans KR', sans-serif;
     font-weight: 800;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -157,11 +165,12 @@ html, body, #map {
 }
 
 .circle-badge:hover {
-    transform: scale(1.2);
+    transform: scale(1.25);
     z-index: 99999 !important;
 }
 
-.circle-badge.size-xl { width: 72px; height: 72px; border-width: 2.5px; box-shadow: 0 0 20px rgba(231, 76, 60, 0.6); }
+/* 동그라미 원 지름 크기 5단계 스케일 */
+.circle-badge.size-xl { width: 72px; height: 72px; border-width: 2.5px; box-shadow: 0 0 22px rgba(123, 31, 162, 0.7); }
 .circle-badge.size-lg { width: 62px; height: 62px; }
 .circle-badge.size-md { width: 52px; height: 52px; }
 .circle-badge.size-sm { width: 44px; height: 44px; }
@@ -178,34 +187,41 @@ html, body, #map {
 .circle-badge.size-xl .badge-diff-sub { font-size: 10.5px; }
 .circle-badge.size-lg .badge-diff-sub { font-size: 10px; }
 
-/* 📚 학원가 지번 오버레이 마커 디자인 */
-.academy-badge {
-    background: linear-gradient(135deg, #10ac84, #1dd1a1);
-    color: #ffffff;
-    padding: 5px 12px;
-    border-radius: 16px;
+/* 📚 학원가 순수 동그라미 원 배지 디자인 (~동 ~리 제거) */
+.academy-circle-badge {
+    position: relative;
+    border-radius: 50%;
     border: 2px solid #ffffff;
     font-family: 'Outfit', 'Noto Sans KR', sans-serif;
-    font-size: 12px;
     font-weight: 800;
-    box-shadow: 0 4px 15px rgba(16, 172, 132, 0.6);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
     cursor: pointer;
-    white-space: nowrap;
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    text-align: center;
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
 }
 
-.academy-badge:hover {
-    transform: scale(1.15) translateY(-3px);
+.academy-circle-badge:hover {
+    transform: scale(1.2);
     z-index: 99999 !important;
 }
 
-.academy-legend-icon {
-    font-size: 13px;
-    margin-right: 6px;
-}
+.academy-circle-badge.size-xl { width: 64px; height: 64px; border-width: 2.5px; box-shadow: 0 0 18px rgba(231, 76, 60, 0.6); }
+.academy-circle-badge.size-lg { width: 54px; height: 54px; }
+.academy-circle-badge.size-md { width: 44px; height: 44px; }
+.academy-circle-badge.size-sm { width: 36px; height: 36px; }
+.academy-circle-badge.size-xs { width: 28px; height: 28px; border-width: 1.5px; }
+
+.academy-circle-badge .badge-count-num { font-size: 11px; line-height: 1.1; }
+.academy-circle-badge.size-xl .badge-count-num { font-size: 14px; }
+.academy-circle-badge.size-lg .badge-count-num { font-size: 12.5px; }
+.academy-circle-badge.size-md .badge-count-num { font-size: 11.5px; }
+.academy-circle-badge.size-sm .badge-count-num { font-size: 10px; }
+.academy-circle-badge.size-xs .badge-count-num { font-size: 9px; }
 
 /* 🎓 지점 전용 배지 오버레이 스타일 */
 .branch-badge {
@@ -332,6 +348,11 @@ html, body, #map {
 .distance-summary-badge span.dist-val {
     color: #ff6b81;
     font-size: 15px;
+}
+
+@keyframes fadeInRadius {
+    from { opacity: 0; transform: translateY(10px) scale(0.92); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* 모달 팝업 */

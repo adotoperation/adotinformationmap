@@ -29,15 +29,23 @@
 
     <!-- 우측 하단 범례 -->
     <div id="legend" class="map-overlay">
-        <div class="legend-title">마커 범례 및 구분</div>
-        <div class="legend-item"><span class="circle lvl-red"></span> 🏫 학교 (1,000명 이상)</div>
-        <div class="legend-item"><span class="circle lvl-orange"></span> 🏫 학교 (800~999명)</div>
-        <div class="legend-item"><span class="circle lvl-yellow"></span> 🏫 학교 (600~799명)</div>
-        <div class="legend-item"><span class="circle lvl-green"></span> 🏫 학교 (400~599명)</div>
-        <div class="legend-item"><span class="circle lvl-blue"></span> 🏫 학교 (400명 미만)</div>
-        <div class="legend-item"><span class="academy-legend-icon">📚</span> 학원가 위치 (학원수 표시)</div>
-        <div class="legend-item"><span class="branch-legend-icon">🎓</span> 교육 지점 위치 (학생수 표시)</div>
-        <div class="legend-note">* 지도 클릭 시 시작점-끝점 직선 거리(km)가 실시간 계산됩니다. (우클릭 시 지우기)</div>
+        <div class="legend-title">🏫 학교 학생수 (보라색 스케일)</div>
+        <div class="legend-item"><span class="circle purple-lvl-5"></span> 1,000명 이상 (짙은 보라)</div>
+        <div class="legend-item"><span class="circle purple-lvl-4"></span> 800 ~ 999명</div>
+        <div class="legend-item"><span class="circle purple-lvl-3"></span> 600 ~ 799명</div>
+        <div class="legend-item"><span class="circle purple-lvl-2"></span> 400 ~ 599명</div>
+        <div class="legend-item"><span class="circle purple-lvl-1"></span> 400명 미만 (연보라)</div>
+        
+        <div class="legend-title" style="margin-top:12px;">📚 학원가 수 (원형 스케일)</div>
+        <div class="legend-item"><span class="circle lvl-red"></span> 학원 100개 이상 (빨강)</div>
+        <div class="legend-item"><span class="circle lvl-orange"></span> 학원 80 ~ 99개 (주황)</div>
+        <div class="legend-item"><span class="circle lvl-yellow"></span> 학원 60 ~ 79개 (노랑)</div>
+        <div class="legend-item"><span class="circle lvl-green"></span> 학원 40 ~ 59개 (초록)</div>
+        <div class="legend-item"><span class="circle lvl-blue"></span> 학원 40개 미만 (파랑)</div>
+
+        <div class="legend-item" style="margin-top:8px;"><span class="branch-legend-icon">🎓</span> 교육 지점 위치</div>
+        <div class="legend-note">* 지도 줌아웃 시 근접 학교 학생수가 합쳐져 표기됩니다.</div>
+        <div class="legend-note">* 클릭 시 두 점 간 직선 거리(km) 계산 (우클릭 시 지우기)</div>
     </div>
 
     <!-- 카카오 맵 로딩 에러 안내 패널 -->
@@ -48,7 +56,7 @@
             <b>[확인 조치 방법]</b><br>
             1. Kakao Developers 콘솔 (<code>https://developers.kakao.com/</code>) 접속<br>
             2. <b>내 애플리케이션 → 플랫폼 → Web</b> 메뉴 이동<br>
-            3. 사이트 도메인에 <code>http://localhost:8080</code> 이 등록되어 있는지 확인
+            3. 사이트 도메인에 <code>http://localhost:8080</code> 또는 Vercel 주소가 등록되어 있는지 확인
         </p>
     </div>
 
@@ -62,7 +70,6 @@
                 <button class="btn-copy-address" id="btn-copy-address">📋 복사하기</button>
             </div>
             <div class="modal-body">
-                <!-- 현황 그리드 -->
                 <div class="school-summary-grid" id="modal-summary-grid">
                     <div class="school-summary-box total-box">
                         <span class="year-title">2026년 총원</span>
@@ -82,7 +89,6 @@
                     </div>
                 </div>
 
-                <!-- 💡 3개년 변화 추이 분석 카드 -->
                 <div class="analysis-box">
                     <div class="analysis-title" id="modal-analysis-title">📊 3개년 변화 추이 (2024 ~ 2026년)</div>
                     <div class="analysis-metrics">
