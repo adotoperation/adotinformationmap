@@ -520,37 +520,38 @@
 
                     computeTop30SnuSchools();
                     renderSchoolMarkers();
+                    updateGlobalSummaryBar();
                 })
                 .catch(err => { console.error('School CSV Data fetch error:', err); });
-
+ 
             // 2. 학원가 데이터 (GID: 1376867691)
             fetch(ACADEMY_CSV_URL)
                 .then(response => response.text())
                 .then(data => {
                     const rows = data.split('\n').slice(1);
                     academyMap = {};
-
+ 
                     rows.forEach(row => {
                         if (!row.trim()) return;
                         const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         if (columns.length < 5) return;
-
+ 
                         const jibunAddr = (columns[1] || "").replace(/"/g, '').trim();
                         const latStr = columns[2] ? columns[2].replace(/"/g, '').replace(/[^0-9.-]/g, '').trim() : '';
                         const lngStr = columns[3] ? columns[3].replace(/"/g, '').replace(/[^0-9.-]/g, '').trim() : '';
                         const count = parseInt(columns[4]?.replace(/"/g, '').trim()) || 0;
-
+ 
                         const lat = parseFloat(latStr);
                         const lng = parseFloat(lngStr);
-
+ 
                         if (!jibunAddr) return;
-
+ 
                         if (!academyMap[jibunAddr]) {
                             let pos = null;
                             if (!isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
                                 pos = new kakao.maps.LatLng(lat, lng);
                             }
-
+ 
                             academyMap[jibunAddr] = {
                                 address: jibunAddr,
                                 pos: pos,
@@ -558,28 +559,28 @@
                             };
                         }
                     });
-
+ 
                     renderAcademyMarkers();
                 })
                 .catch(err => { console.error('Academy CSV Data fetch error:', err); });
-
+ 
             // 3. 지점 데이터 (GID: 211834294)
             fetch(BRANCH_CSV_URL)
                 .then(response => response.text())
                 .then(data => {
                     const rows = data.split('\n').slice(1);
                     branchDataList = [];
-
+ 
                     rows.forEach(row => {
                         if (!row.trim()) return;
                         const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         if (columns.length < 3) return;
-
+ 
                         const branchName = (columns[0] || "").replace(/"/g, '').trim();
                         const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
                         const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
                         const studentCount = parseInt(columns[3]?.replace(/"/g, '').trim()) || 0;
-
+ 
                         if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
                             const pos = new kakao.maps.LatLng(lat, lng);
                             branchDataList.push({
@@ -589,10 +590,59 @@
                             });
                         }
                     });
-
+ 
                     renderBranchMarkers();
+                    updateGlobalSummaryBar();
                 })
                 .catch(err => { console.error('Branch CSV Data fetch error:', err); });
+        }
+ 
+        // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
+        function updateGlobalSummaryBar() {
+            const branchCount = branchDataList.length;
+            const schoolKeys = Object.keys(schoolMap);
+            
+            if (branchCount === 0 || schoolKeys.length === 0) return;
+ 
+            const totalBranchStudents = branchDataList.reduce((sum, b) => sum + (b.studentCount || 0), 0);
+            
+            // 각 지점의 3km 반경 내 학교 학생수 합산의 총합 구하기
+            let totalTargetSchoolStudents = 0;
+            branchDataList.forEach(b => {
+                let branch3kmStudents = 0;
+                schoolKeys.forEach(key => {
+                    const school = schoolMap[key];
+                    if (school && school.pos) {
+                        const dist = getDistance(b.pos, school.pos);
+                        if (dist <= 3000) {
+                            branch3kmStudents += (school.total2026 || 0);
+                        }
+                    }
+                });
+                totalTargetSchoolStudents += branch3kmStudents;
+            });
+ 
+            // 점유율 계산 (실질 타겟 학생수 대비)
+            let ratioText = "0.00%";
+            if (totalTargetSchoolStudents > 0) {
+                const ratio = (totalBranchStudents / totalTargetSchoolStudents) * 100;
+                ratioText = ratio.toFixed(2) + "%";
+            }
+ 
+            // 잠정 고객수 계산 (실질 타겟 학생수의 5%를 반올림 처리)
+            const potentialCustomers = Math.round(totalTargetSchoolStudents * 0.05);
+ 
+            const bar = document.getElementById('total-summary-bar');
+            const valBranch = document.getElementById('total-branch-students');
+            const valRatio = document.getElementById('total-branch-ratio');
+            const valPotential = document.getElementById('total-potential-customers');
+ 
+            if (bar && valBranch && valRatio && valPotential) {
+                valBranch.textContent = `${totalBranchStudents.toLocaleString()}명`;
+                valRatio.textContent = ratioText;
+                valPotential.textContent = `${potentialCustomers.toLocaleString()}명`;
+                bar.style.display = 'flex';
+            }
         }
 
         function getPurpleHeatmapLevelClass(totalCount) {
