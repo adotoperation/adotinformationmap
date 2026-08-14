@@ -210,7 +210,32 @@ html, body, #map {
     z-index: 99999 !important;
 }
 
-/* 동그라미 원 지름 크기 5단계 스케일 */
+/* 🏛️ 서울대 합격자 마크 (학교 마커 우측 상단 뱃지) */
+.snu-tag {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: linear-gradient(135deg, #0f2b5c, #1d4ed8);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 12px;
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    animation: snuPulse 2s infinite alternate;
+}
+
+@keyframes snuPulse {
+    0% { transform: scale(1); box-shadow: 0 0 8px rgba(29, 78, 216, 0.6); }
+    100% { transform: scale(1.08); box-shadow: 0 0 14px rgba(59, 130, 246, 0.9); }
+}
+
 .circle-badge.size-xl { width: 72px; height: 72px; border-width: 2.5px; box-shadow: 0 0 22px rgba(123, 31, 162, 0.7); }
 .circle-badge.size-lg { width: 62px; height: 62px; }
 .circle-badge.size-md { width: 52px; height: 52px; }
@@ -228,7 +253,7 @@ html, body, #map {
 .circle-badge.size-xl .badge-diff-sub { font-size: 10.5px; }
 .circle-badge.size-lg .badge-diff-sub { font-size: 10px; }
 
-/* 📚 학원가 순수 동그라미 원 배지 디자인 (~동 ~리 제거) */
+/* 📚 학원가 순수 동그라미 원 배지 디자인 */
 .academy-circle-badge {
     position: relative;
     border-radius: 50%;
@@ -412,7 +437,7 @@ html, body, #map {
 }
 
 .modal-content {
-    width: 500px;
+    width: 520px;
     max-width: 92vw;
     padding: 24px;
     position: relative;
@@ -459,6 +484,42 @@ html, body, #map {
 
 .modal-body {
     margin-top: 16px;
+}
+
+/* 🏛️ 서울대 합격자 전용 모달 요약 카드 */
+.snu-modal-card {
+    background: linear-gradient(135deg, rgba(15, 43, 92, 0.4), rgba(29, 78, 216, 0.25));
+    border: 1.5px solid rgba(59, 130, 246, 0.5);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.snu-modal-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.snu-modal-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #60a5fa;
+}
+
+.snu-modal-source {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.snu-modal-val {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #93c5fd;
 }
 
 .school-summary-grid {

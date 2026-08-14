@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 - 에이닷지점 기본 체크 & 지점 클릭 시 반경 3km 학생수/학원수/학교수 팝업 표출 지도 가동
+// 카카오 맵 SDK 로드 - L열 서울대 합격자수 마커 우측 상단 뱃지 & 모달 출처(베리타스 신문사) 표기 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -159,7 +159,8 @@
                     matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
                         const item = schoolMap[codeKey];
                         const icon = item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]';
-                        html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name} (${item.code}) - 총원 ${item.total2026}명</div>`;
+                        const snuBadge = item.snuCount > 0 ? ` <span style="color:#60a5fa; font-weight:800;">(🏛️서울대 ${item.snuCount}명)</span>` : '';
+                        html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingAcademies.slice(0, 5).forEach(addr => {
                         const item = academyMap[addr];
@@ -428,9 +429,9 @@
             });
         }
 
-        // --- 구글 시트 3대 데이터 수집 ---
+        // --- 구글 시트 3대 데이터 수집 (L열 서울대 합격자수 포함) ---
         function loadAllGoogleSheetData() {
-            // 1. 학교 데이터 (GID: 630627369)
+            // 1. 학교 데이터 (GID: 630627369, L열: 서울대 합격자수)
             fetch(SCHOOL_CSV_URL)
                 .then(response => response.text())
                 .then(data => {
@@ -457,6 +458,9 @@
                         const total2025 = (columns.length > 9 && columns[9]) ? (parseInt(columns[9].replace(/"/g, '').trim()) || total2026) : total2026;
                         const total2024 = (columns.length > 10 && columns[10]) ? (parseInt(columns[10].replace(/"/g, '').trim()) || total2025) : total2025;
 
+                        // 🏛️ L열 (11번 컬럼): 서울대 합격자수 (23학년도 이후 평균)
+                        const snuCount = (columns.length > 11 && columns[11]) ? (parseInt(columns[11].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
+
                         const lat = parseFloat(latStr);
                         const lng = parseFloat(lngStr);
 
@@ -482,7 +486,8 @@
                                 grade2: grade2,
                                 grade3: grade3,
                                 total2025: total2025,
-                                total2024: total2024
+                                total2024: total2024,
+                                snuCount: snuCount
                             };
                         }
                     });
@@ -579,7 +584,7 @@
             return 'lvl-blue size-xs';
         }
 
-        // 🏫 학교 마커 렌더링
+        // 🏫 학교 마커 렌더링 (서울대 합격자수 > 0 일 때 우측 상단 🏛️ SNU 뱃지 부착)
         function renderSchoolMarkers() {
             schoolOverlays.forEach(ol => ol.setMap(null));
             schoolOverlays = [];
@@ -589,7 +594,6 @@
             const isHighChecked = document.getElementById('chk-high')?.checked ?? false;
             const isMiddleChecked = document.getElementById('chk-middle')?.checked ?? false;
 
-            // 학교 체크박스가 둘 다 안 되어있으면 마커 안 그림
             if (!isHighChecked && !isMiddleChecked) return;
 
             const zoomLevel = map.getLevel();
@@ -616,6 +620,7 @@
                         if (dist <= clusterThresholdMeters) {
                             c.schools.push(item);
                             c.totalStudents += item.total2026;
+                            c.totalSnu += item.snuCount;
                             addedToCluster = true;
                             break;
                         }
@@ -625,7 +630,8 @@
                         clusters.push({
                             centerPos: item.pos,
                             schools: [item],
-                            totalStudents: item.total2026
+                            totalStudents: item.total2026,
+                            totalSnu: item.snuCount
                         });
                     }
                 });
@@ -634,10 +640,12 @@
                     const total = c.totalStudents;
                     const count = c.schools.length;
                     const heatClass = getPurpleHeatmapLevelClass(total);
+                    const snuHtml = c.totalSnu > 0 ? `<span class="snu-tag">🏛️ ${c.totalSnu}명</span>` : '';
 
                     const labelContent = document.createElement('div');
                     labelContent.className = `circle-badge ${heatClass}`;
                     labelContent.innerHTML = `
+                        ${snuHtml}
                         <span class="badge-count-num">${total.toLocaleString()}명</span>
                         <span class="badge-diff-sub">(${count}개교)</span>
                     `;
@@ -672,10 +680,13 @@
                     const item = schoolMap[codeKey];
                     const total = item.total2026;
                     const heatClass = getPurpleHeatmapLevelClass(total);
+                    // 🏛️ 서울대 합격자수 > 0 일 때 마커 우측 상단 뱃지 부착
+                    const snuHtml = item.snuCount > 0 ? `<span class="snu-tag">🏛️ ${item.snuCount}명</span>` : '';
 
                     const labelContent = document.createElement('div');
                     labelContent.className = `circle-badge ${heatClass}`;
                     labelContent.innerHTML = `
+                        ${snuHtml}
                         <span class="badge-count-num">${total.toLocaleString()}명</span>
                         <span class="badge-diff-sub">(🏫)</span>
                     `;
@@ -760,7 +771,6 @@
                 labelContent.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     isMarkerClickHandled = true;
-                    // 🔥 1. 에이닷지점 클릭 시 반경 3km 점선 원 생성 + 반경 3km 내 학생수/학원수/학교수 종합 집계 표출!
                     showBranchOverlayPopup(b);
                 };
 
@@ -820,7 +830,6 @@
         function showBranchOverlayPopup(b) {
             window.clearRadiusOverlay();
 
-            // 1. 에이닷지점 위치 중심 반경 3km 원 생성
             clickCircle = new kakao.maps.Circle({
                 center: b.pos,
                 radius: 3000,
@@ -834,7 +843,6 @@
             });
             clickCircle.setMap(map);
 
-            // 2. 반경 3km 내 학교수, 학교학생수, 학원수 계산
             let totalSchools3km = 0;
             let totalSchoolStudents3km = 0;
             let totalAcademies3km = 0;
@@ -862,7 +870,6 @@
                 }
             });
 
-            // 3. 지점 전용 반경 3km 종합 집계 팝업 라벨 생성
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
 
@@ -921,6 +928,7 @@
             return text;
         }
 
+        // 팝업 모달 오픈 시 서울대 합격자수(L열) 카드 및 "출처: 베리타스 알파 / 베리타스 신문사" 표기!
         function openDetailModalByCode(schoolCode) {
             const item = schoolMap[schoolCode];
             if (!item) return;
@@ -935,6 +943,7 @@
             const g3 = item.grade3;
             const v25 = item.total2025;
             const v24 = item.total2024;
+            const snuCount = item.snuCount;
 
             document.getElementById('val-total').textContent = `${v26.toLocaleString()}명`;
             document.getElementById('val-g1').textContent = `${g1.toLocaleString()}명`;
@@ -944,6 +953,18 @@
             document.getElementById('val-2024').textContent = `${v24.toLocaleString()}명`;
             document.getElementById('val-2025').textContent = `${v25.toLocaleString()}명`;
             document.getElementById('val-2026').textContent = `${v26.toLocaleString()}명`;
+
+            // 🏛️ 서울대 합격자수 정보 & 출처: 베리타스 신문사 표기
+            const snuCard = document.getElementById('snu-card-container');
+            const valSnu = document.getElementById('val-snu-count');
+            if (snuCard && valSnu) {
+                if (snuCount > 0) {
+                    valSnu.textContent = `${snuCount}명`;
+                    snuCard.style.display = 'block';
+                } else {
+                    snuCard.style.display = 'none';
+                }
+            }
 
             document.getElementById('analysis-summary-text').innerHTML = generateAnalysisSummaryText(item);
 
