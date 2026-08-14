@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 - L열 서울대 합격자수 기준 전국 TOP 30위권 고등학교 자동 산출 & 골드 뱃지 시각화 지도 가동
+// 카카오 맵 SDK 로드 - M열(26학년도 서울대 합격자수) 기준 마커/TOP30 산출 & 첨부 서울대 마크 이미지 연동 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -158,8 +158,8 @@
                     });
                     matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
                         const item = schoolMap[codeKey];
-                        const icon = item.isTop30 ? '🏆 [서울대 TOP30]' : (item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]');
-                        const snuBadge = item.snuCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(서울대 ${item.snuCount}명)</span>` : '';
+                        const icon = item.isTop30 ? '🏆 [26년 서울대 TOP30]' : (item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]');
+                        const snuBadge = item.snuCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(26년 서울대 ${item.snuCount}명)</span>` : '';
                         html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingAcademies.slice(0, 5).forEach(addr => {
@@ -428,16 +428,16 @@
             });
         }
 
-        // --- 🏆 서울대 합격자수 기준 전국 TOP 30위권 고등학교 자동 산출 ---
+        // --- 🏆 26학년도 서울대 합격자수(M열) 기준 전국 TOP 30위권 고등학교 자동 산출 ---
         function computeTop30SnuSchools() {
             const highSchools = Object.keys(schoolMap)
                 .map(key => schoolMap[key])
                 .filter(item => !item.isMiddle && item.snuCount > 0);
 
-            // 서울대 합격자수 내림차순 정렬
+            // M열 26학년도 서울대 합격자수 내림차순 정렬
             highSchools.sort((a, b) => b.snuCount - a.snuCount);
 
-            // 상위 30개 학교 플래그 및 순위 설정
+            // 상위 30개 고등학교에 isTop30 및 순위 설정
             highSchools.forEach((item, index) => {
                 if (index < 30) {
                     item.isTop30 = true;
@@ -450,7 +450,7 @@
         }
 
         function loadAllGoogleSheetData() {
-            // 1. 학교 데이터 (GID: 630627369, L열: 서울대 합격자수)
+            // 1. 학교 데이터 (GID: 630627369, M열: 26학년도 서울대 합격자수)
             fetch(SCHOOL_CSV_URL)
                 .then(response => response.text())
                 .then(data => {
@@ -477,8 +477,8 @@
                         const total2025 = (columns.length > 9 && columns[9]) ? (parseInt(columns[9].replace(/"/g, '').trim()) || total2026) : total2026;
                         const total2024 = (columns.length > 10 && columns[10]) ? (parseInt(columns[10].replace(/"/g, '').trim()) || total2025) : total2025;
 
-                        // 🏛️ L열: 서울대 합격자수
-                        const snuCount = (columns.length > 11 && columns[11]) ? (parseInt(columns[11].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
+                        // 🎓 M열 (12번 컬럼): 26학년도 서울대 합격자수 데이터
+                        const snuCount = (columns.length > 12 && columns[12]) ? (parseInt(columns[12].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
 
                         const lat = parseFloat(latStr);
                         const lng = parseFloat(lngStr);
@@ -513,7 +513,7 @@
                         }
                     });
 
-                    // 🏆 서울대 TOP 30위권 고등학교 정렬 및 랭킹 산출
+                    // 🏆 26학년도 M열 서울대 합격자수 기준 TOP 30위권 자동 도출
                     computeTop30SnuSchools();
 
                     renderSchoolMarkers();
@@ -608,7 +608,7 @@
             return 'lvl-blue size-xs';
         }
 
-        // 🏫 학교 마커 렌더링 (Top30 학교는 🏆 TOP N 골드 뱃지 부착)
+        // 🏫 학교 마커 렌더링 (M열 26년 데이터 및 첨부 서울대 마크 이미지 연동)
         function renderSchoolMarkers() {
             schoolOverlays.forEach(ol => ol.setMap(null));
             schoolOverlays = [];
@@ -664,7 +664,7 @@
                     const total = c.totalStudents;
                     const count = c.schools.length;
                     const heatClass = getPurpleHeatmapLevelClass(total);
-                    const snuHtml = c.totalSnu > 0 ? `<span class="snu-tag">🏛️ ${c.totalSnu}명</span>` : '';
+                    const snuHtml = c.totalSnu > 0 ? `<span class="snu-tag"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> ${c.totalSnu}명</span>` : '';
 
                     const labelContent = document.createElement('div');
                     labelContent.className = `circle-badge ${heatClass}`;
@@ -705,12 +705,12 @@
                     const total = item.total2026;
                     const heatClass = getPurpleHeatmapLevelClass(total);
                     
-                    // 🏆 Top30 학교는 골드 뱃지, 일반 서울대 합격자 학교는 블루 뱃지
+                    // 🎓 첨부 서울대 마크 이미지 연동 뱃지
                     let snuHtml = '';
                     if (item.isTop30) {
-                        snuHtml = `<span class="snu-tag top30">🏆 TOP ${item.snuRank} (${item.snuCount}명)</span>`;
+                        snuHtml = `<span class="snu-tag top30"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> 🏆 TOP ${item.snuRank} (${item.snuCount}명)</span>`;
                     } else if (item.snuCount > 0) {
-                        snuHtml = `<span class="snu-tag">🏛️ ${item.snuCount}명</span>`;
+                        snuHtml = `<span class="snu-tag"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> ${item.snuCount}명</span>`;
                     }
 
                     const labelContent = document.createElement('div');
@@ -958,7 +958,7 @@
             return text;
         }
 
-        // 🏆 Top30 고등학교 이름 옆 골드 뱃지 표시 ("🏆 23학년도 이후 서울대 TOP 30위권 학교")
+        // 🏆 "26학년도 서울대 TOP 30위권 (전국 N위)" 라벨 표시
         function openDetailModalByCode(schoolCode) {
             const item = schoolMap[schoolCode];
             if (!item) return;
@@ -970,7 +970,7 @@
             const top30Badge = document.getElementById('modal-top30-badge');
             if (top30Badge) {
                 if (item.isTop30) {
-                    top30Badge.innerHTML = `🏆 23학년도 이후 서울대 TOP 30위권 (전국 ${item.snuRank}위)`;
+                    top30Badge.innerHTML = `🏆 26학년도 서울대 TOP 30위권 (전국 ${item.snuRank}위)`;
                     top30Badge.style.display = 'inline-flex';
                 } else {
                     top30Badge.style.display = 'none';
