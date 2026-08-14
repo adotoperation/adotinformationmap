@@ -236,6 +236,28 @@ html, body, #map {
     100% { transform: scale(1.08); box-shadow: 0 0 14px rgba(59, 130, 246, 0.9); }
 }
 
+/* 🏆 서울대 TOP 30위권 전용 골드 뱃지 스타일 */
+.top30-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    letter-spacing: -0.3px;
+}
+
+.snu-tag.top30 {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    border-color: #fef08a;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+}
+
 .circle-badge.size-xl { width: 72px; height: 72px; border-width: 2.5px; box-shadow: 0 0 22px rgba(123, 31, 162, 0.7); }
 .circle-badge.size-lg { width: 62px; height: 62px; }
 .circle-badge.size-md { width: 52px; height: 52px; }

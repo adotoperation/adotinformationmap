@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 - L열 서울대 합격자수 마커 우측 상단 뱃지 & 모달 출처(베리타스 신문사) 표기 지도 가동
+// 카카오 맵 SDK 로드 - L열 서울대 합격자수 기준 전국 TOP 30위권 고등학교 자동 산출 & 골드 뱃지 시각화 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -158,8 +158,8 @@
                     });
                     matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
                         const item = schoolMap[codeKey];
-                        const icon = item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]';
-                        const snuBadge = item.snuCount > 0 ? ` <span style="color:#60a5fa; font-weight:800;">(🏛️서울대 ${item.snuCount}명)</span>` : '';
+                        const icon = item.isTop30 ? '🏆 [서울대 TOP30]' : (item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]');
+                        const snuBadge = item.snuCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(서울대 ${item.snuCount}명)</span>` : '';
                         html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingAcademies.slice(0, 5).forEach(addr => {
@@ -213,7 +213,6 @@
                 document.addEventListener('click', (e) => { if (!e.target.closest('#search-box')) searchResults.style.display = 'none'; });
             }
 
-            // 🎯 지도 빈 공간(바탕) 클릭 시 3km 반경/통합 집계 팝업창 오픈
             kakao.maps.event.addListener(map, 'click', (mouseEvent) => {
                 const detailModal = document.getElementById('detail-modal');
                 if (detailModal && detailModal.style.display === 'flex') return;
@@ -429,7 +428,27 @@
             });
         }
 
-        // --- 구글 시트 3대 데이터 수집 (L열 서울대 합격자수 포함) ---
+        // --- 🏆 서울대 합격자수 기준 전국 TOP 30위권 고등학교 자동 산출 ---
+        function computeTop30SnuSchools() {
+            const highSchools = Object.keys(schoolMap)
+                .map(key => schoolMap[key])
+                .filter(item => !item.isMiddle && item.snuCount > 0);
+
+            // 서울대 합격자수 내림차순 정렬
+            highSchools.sort((a, b) => b.snuCount - a.snuCount);
+
+            // 상위 30개 학교 플래그 및 순위 설정
+            highSchools.forEach((item, index) => {
+                if (index < 30) {
+                    item.isTop30 = true;
+                    item.snuRank = index + 1;
+                } else {
+                    item.isTop30 = false;
+                    item.snuRank = index + 1;
+                }
+            });
+        }
+
         function loadAllGoogleSheetData() {
             // 1. 학교 데이터 (GID: 630627369, L열: 서울대 합격자수)
             fetch(SCHOOL_CSV_URL)
@@ -458,7 +477,7 @@
                         const total2025 = (columns.length > 9 && columns[9]) ? (parseInt(columns[9].replace(/"/g, '').trim()) || total2026) : total2026;
                         const total2024 = (columns.length > 10 && columns[10]) ? (parseInt(columns[10].replace(/"/g, '').trim()) || total2025) : total2025;
 
-                        // 🏛️ L열 (11번 컬럼): 서울대 합격자수 (23학년도 이후 평균)
+                        // 🏛️ L열: 서울대 합격자수
                         const snuCount = (columns.length > 11 && columns[11]) ? (parseInt(columns[11].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
 
                         const lat = parseFloat(latStr);
@@ -487,10 +506,15 @@
                                 grade3: grade3,
                                 total2025: total2025,
                                 total2024: total2024,
-                                snuCount: snuCount
+                                snuCount: snuCount,
+                                isTop30: false,
+                                snuRank: 0
                             };
                         }
                     });
+
+                    // 🏆 서울대 TOP 30위권 고등학교 정렬 및 랭킹 산출
+                    computeTop30SnuSchools();
 
                     renderSchoolMarkers();
                 })
@@ -584,7 +608,7 @@
             return 'lvl-blue size-xs';
         }
 
-        // 🏫 학교 마커 렌더링 (서울대 합격자수 > 0 일 때 우측 상단 🏛️ SNU 뱃지 부착)
+        // 🏫 학교 마커 렌더링 (Top30 학교는 🏆 TOP N 골드 뱃지 부착)
         function renderSchoolMarkers() {
             schoolOverlays.forEach(ol => ol.setMap(null));
             schoolOverlays = [];
@@ -680,8 +704,14 @@
                     const item = schoolMap[codeKey];
                     const total = item.total2026;
                     const heatClass = getPurpleHeatmapLevelClass(total);
-                    // 🏛️ 서울대 합격자수 > 0 일 때 마커 우측 상단 뱃지 부착
-                    const snuHtml = item.snuCount > 0 ? `<span class="snu-tag">🏛️ ${item.snuCount}명</span>` : '';
+                    
+                    // 🏆 Top30 학교는 골드 뱃지, 일반 서울대 합격자 학교는 블루 뱃지
+                    let snuHtml = '';
+                    if (item.isTop30) {
+                        snuHtml = `<span class="snu-tag top30">🏆 TOP ${item.snuRank} (${item.snuCount}명)</span>`;
+                    } else if (item.snuCount > 0) {
+                        snuHtml = `<span class="snu-tag">🏛️ ${item.snuCount}명</span>`;
+                    }
 
                     const labelContent = document.createElement('div');
                     labelContent.className = `circle-badge ${heatClass}`;
@@ -928,7 +958,7 @@
             return text;
         }
 
-        // 팝업 모달 오픈 시 서울대 합격자수(L열) 카드 및 "출처: 베리타스 알파 / 베리타스 신문사" 표기!
+        // 🏆 Top30 고등학교 이름 옆 골드 뱃지 표시 ("🏆 23학년도 이후 서울대 TOP 30위권 학교")
         function openDetailModalByCode(schoolCode) {
             const item = schoolMap[schoolCode];
             if (!item) return;
@@ -936,6 +966,16 @@
             const modal = document.getElementById('detail-modal');
             document.getElementById('modal-address-name').textContent = item.name;
             document.getElementById('modal-school-code').textContent = `학교코드: ${item.code || 'N/A'}`;
+
+            const top30Badge = document.getElementById('modal-top30-badge');
+            if (top30Badge) {
+                if (item.isTop30) {
+                    top30Badge.innerHTML = `🏆 23학년도 이후 서울대 TOP 30위권 (전국 ${item.snuRank}위)`;
+                    top30Badge.style.display = 'inline-flex';
+                } else {
+                    top30Badge.style.display = 'none';
+                }
+            }
 
             const v26 = item.total2026;
             const g1 = item.grade1;
@@ -954,7 +994,6 @@
             document.getElementById('val-2025').textContent = `${v25.toLocaleString()}명`;
             document.getElementById('val-2026').textContent = `${v26.toLocaleString()}명`;
 
-            // 🏛️ 서울대 합격자수 정보 & 출처: 베리타스 신문사 표기
             const snuCard = document.getElementById('snu-card-container');
             const valSnu = document.getElementById('val-snu-count');
             if (snuCard && valSnu) {
