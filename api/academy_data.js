@@ -1,6 +1,6 @@
 // Vercel Serverless Function: RDB_학원정보 (GID 1376867691)
 export default async function handler(req, res) {
-    const googleAcademyCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/export?format=csv&gid=1376867691";
+    const googleAcademyCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=1376867691";
     
     try {
         const response = await fetch(googleAcademyCsvUrl, {
