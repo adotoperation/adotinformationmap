@@ -70,7 +70,7 @@
             });
         };
 
-        window.clearRadiusOverlay = function () {
+        window.clearRadiusOverlay = function (excludeRecommendCheck = false) {
             if (clickCircle) { clickCircle.setMap(null); clickCircle = null; }
             if (clickMarker) { clickMarker.setMap(null); clickMarker = null; }
             if (radiusLabel) { radiusLabel.setMap(null); radiusLabel = null; }
@@ -81,11 +81,13 @@
             if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
             startPoint = null;
 
-            // 🏆 추천 입지 마커 및 필터 체크박스 상태 소거 연동
-            recommendOverlays.forEach(ol => ol.setMap(null));
-            recommendOverlays = [];
-            const chkRecommend = document.getElementById('chk-recommend');
-            if (chkRecommend) chkRecommend.checked = false;
+            // 🏆 추천 입지 마커 및 필터 체크박스 상태 소거 연동 (요청 시 제외 가능)
+            if (!excludeRecommendCheck) {
+                recommendOverlays.forEach(ol => ol.setMap(null));
+                recommendOverlays = [];
+                const chkRecommend = document.getElementById('chk-recommend');
+                if (chkRecommend) chkRecommend.checked = false;
+            }
 
             closeDetailModal();
         };
@@ -1328,9 +1330,9 @@
             radiusLabel.setMap(map);
         }
 
-        // 🏆 에이닷 신규 지점 최적지 TOP 5 추천 기능
+        // 🏆 에이닷 신규 지점 최적지 추천 기능
         function recommendTop5NewBranches() {
-            window.clearRadiusOverlay();
+            window.clearRadiusOverlay(true);
             recommendOverlays.forEach(ol => ol.setMap(null));
             recommendOverlays = [];
 
