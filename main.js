@@ -1401,11 +1401,11 @@
                     }
                 });
 
-                // 조건 2: 아파트 배후 세대수 1만 세대 이상 보장
-                if (aptFamilies < 10000) return;
+                // 조건 2: 아파트 배후 세대수 1만 5천 세대 이상 보장
+                if (aptFamilies < 15000) return;
 
-                // 조건 3: 학원가 형성 (학원수 1개 이상)
-                if (academyCount === 0) return;
+                // 조건 3: 중, 고등학생 수 합계 1만 명 이상 보장
+                if (schoolStudents < 10000) return;
 
                 results.push({
                     name: c.name,
@@ -1425,7 +1425,7 @@
             const top5 = results.slice(0, 5);
 
             if (top5.length === 0) {
-                alert("조건(기존 지점 3km 이외, 학원가 존재, 아파트 1만세대 이상)을 모두 충족하는 신규 후보지가 없습니다.");
+                alert("조건(기존 지점 3km 이외, 아파트 1만 5천세대 이상, 학생수 1만명 이상)을 모두 충족하는 신규 후보지가 없습니다.");
                 return;
             }
 
