@@ -708,3 +708,43 @@ html, body, #map {
         font-size: 13px;
     }
 }
+
+/* 🏢 아파트 세대수 원형 마커 스타일 및 색상 범례 */
+.circle.apt-lvl-darkgreen, .apartment-circle-badge.apt-lvl-darkgreen { background-color: rgba(27, 94, 32, 0.92); border-color: #ffffff; color: #ffffff; }
+.circle.apt-lvl-green, .apartment-circle-badge.apt-lvl-green { background-color: rgba(46, 125, 50, 0.92); border-color: #ffffff; color: #ffffff; }
+.circle.apt-lvl-medgreen, .apartment-circle-badge.apt-lvl-medgreen { background-color: rgba(76, 175, 80, 0.92); border-color: #ffffff; color: #ffffff; }
+.circle.apt-lvl-lightgreen, .apartment-circle-badge.apt-lvl-lightgreen { background-color: rgba(129, 199, 132, 0.92); border-color: #ffffff; color: #111111 !important; }
+.circle.apt-lvl-lime, .apartment-circle-badge.apt-lvl-lime { background-color: rgba(197, 225, 165, 0.92); border-color: #ffffff; color: #111111 !important; }
+
+.apartment-circle-badge {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    font-weight: 800;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.apartment-circle-badge:hover {
+    transform: scale(1.15) !important;
+    z-index: 9999 !important;
+    box-shadow: 0 0 16px rgba(46, 204, 113, 0.8) !important;
+}
+
+.apartment-circle-badge.size-xl { width: 64px; height: 64px; border-width: 2.5px; box-shadow: 0 0 18px rgba(27, 94, 32, 0.6); }
+.apartment-circle-badge.size-lg { width: 54px; height: 54px; }
+.apartment-circle-badge.size-md { width: 44px; height: 44px; }
+.apartment-circle-badge.size-sm { width: 36px; height: 36px; }
+.apartment-circle-badge.size-xs { width: 28px; height: 28px; border-width: 1.5px; }
+
+.apartment-circle-badge .badge-count-num { font-size: 11px; line-height: 1.1; }
+.apartment-circle-badge.size-xl .badge-count-num { font-size: 13px; }
+.apartment-circle-badge.size-lg .badge-count-num { font-size: 11.5px; }
+.apartment-circle-badge.size-md .badge-count-num { font-size: 10.5px; }
+.apartment-circle-badge.size-sm .badge-count-num { font-size: 9.5px; }
+.apartment-circle-badge.size-xs .badge-count-num { font-size: 8.5px; }

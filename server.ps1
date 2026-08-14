@@ -12,6 +12,9 @@ $googleAcademyCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay6
 # GID 211834294 : RDB_지점좌표 (지점 정보)
 $googleBranchCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/export?format=csv&gid=211834294"
 
+# GID 642130592 : RDB_아파트세대수 (아파트 정보)
+$googleApartmentCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/export?format=csv&gid=642130592"
+
 while ($listener.IsListening) {
     $context = $listener.GetContext()
     $req = $context.Request
@@ -62,6 +65,24 @@ while ($listener.IsListening) {
             $webClient = New-Object System.Net.WebClient
             $webClient.Encoding = [System.Text.Encoding]::UTF8
             $csvText = $webClient.DownloadString($googleBranchCsvUrl)
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($csvText)
+            $res.ContentLength64 = $bytes.Length
+            $res.OutputStream.Write($bytes, 0, $bytes.Length)
+        } catch {
+            $res.StatusCode = 500
+        } finally {
+            $res.Close()
+        }
+        continue
+    }
+
+    # 아파트 데이터 (/api/apartment_data)
+    if ($localPath.StartsWith("api/apartment_data")) {
+        $res.ContentType = "text/csv; charset=utf-8"
+        try {
+            $webClient = New-Object System.Net.WebClient
+            $webClient.Encoding = [System.Text.Encoding]::UTF8
+            $csvText = $webClient.DownloadString($googleApartmentCsvUrl)
             $bytes = [System.Text.Encoding]::UTF8.GetBytes($csvText)
             $res.ContentLength64 = $bytes.Length
             $res.OutputStream.Write($bytes, 0, $bytes.Length)

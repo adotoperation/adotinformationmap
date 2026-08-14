@@ -13,6 +13,7 @@
         const SCHOOL_CSV_URL = `/api/data`;          // GID 630627369 : RDB_당년학교정보
         const ACADEMY_CSV_URL = `/api/academy_data`; // GID 1376867691 : RDB_학원정보
         const BRANCH_CSV_URL = `/api/branch_data`;    // GID 211834294 : RDB_지점좌표
+        const APARTMENT_CSV_URL = `/api/apartment_data`; // GID 642130592 : RDB_아파트세대수
 
         const Z_INDEX = {
             SCHOOL: 2200,
@@ -25,11 +26,13 @@
         let schoolMap = {};
         let academyMap = {};
         let branchDataList = [];
+        let apartmentDataList = [];
 
         let schoolOverlays = [];
         let clusterOverlays = [];
         let academyOverlays = [];
         let branchOverlays = [];
+        let apartmentOverlays = [];
         let trendChart = null;
 
         let clickCircle = null;
@@ -129,11 +132,13 @@
             const chkMiddle = document.getElementById('chk-middle');
             const chkBranch = document.getElementById('chk-branch');
             const chkAcademy = document.getElementById('chk-academy');
+            const chkApartment = document.getElementById('chk-apartment');
 
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
             if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
             if (chkAcademy) chkAcademy.addEventListener('change', () => renderAcademyMarkers());
+            if (chkApartment) chkApartment.addEventListener('change', () => renderApartmentMarkers());
 
             // 🔍 통합 검색창
             const searchInput = document.getElementById('branch-search');
@@ -151,6 +156,7 @@
 
                     const matchingAcademies = Object.keys(academyMap).filter(addr => addr.toLowerCase().includes(keyword));
                     const matchingBranches = branchDataList.filter(b => b.name.toLowerCase().includes(keyword));
+                    const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
 
                     let html = '';
                     matchingBranches.forEach(b => {
@@ -165,6 +171,9 @@
                     matchingAcademies.slice(0, 5).forEach(addr => {
                         const item = academyMap[addr];
                         html += `<div class="search-item" data-type="academy" data-addr="${addr}">📚 [학원가] ${addr} (학원수: ${item.count}개)</div>`;
+                    });
+                    matchingApts.slice(0, 5).forEach(apt => {
+                        html += `<div class="search-item" data-type="apartment" data-addr="${apt.address}">🏢 [아파트] ${apt.address} (${apt.count.toLocaleString()}세대)</div>`;
                     });
 
                     if (html) {
@@ -203,6 +212,15 @@
                             if (data && data.pos) {
                                 map.setLevel(6);
                                 map.panTo(data.pos);
+                            }
+                            searchInput.value = addr;
+                        } else if (type === 'apartment') {
+                            const addr = item.dataset.addr;
+                            const data = apartmentDataList.find(apt => apt.address === addr);
+                            if (data && data.pos) {
+                                map.setLevel(6);
+                                map.panTo(data.pos);
+                                showApartmentOverlayPopup(data);
                             }
                             searchInput.value = addr;
                         }
@@ -354,6 +372,8 @@
             let totalAcademies3km = 0;
             let totalAcademyLocs3km = 0;
             let totalBranchStudents3km = 0;
+            let totalApts3km = 0;
+            let totalAptFamilies3km = 0;
 
             Object.keys(schoolMap).forEach(code => {
                 const item = schoolMap[code];
@@ -386,6 +406,16 @@
                 }
             });
 
+            apartmentDataList.forEach(apt => {
+                if (apt && apt.pos) {
+                    const dist = getDistance(position, apt.pos);
+                    if (dist <= 3000) {
+                        totalAptFamilies3km += (apt.count || 0);
+                        totalApts3km++;
+                    }
+                }
+            });
+
             geocoder.coord2Address(position.getLng(), position.getLat(), (result, status) => {
                 let addrText = status === kakao.maps.services.Status.OK ?
                     (result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name)
@@ -404,12 +434,13 @@
 
                 labelContent.innerHTML = `
                     <div class="rs-header">
-                        <span class="rs-title">🎯 반경 3km 학교 & 학원가 통합 집계</span>
+                        <span class="rs-title">🎯 반경 3km 학교 & 학원가 & 아파트 통합 집계</span>
                     </div>
                     <div class="rs-address">📍 ${addrText}</div>
                     <div class="rs-grid">
                         <div class="rs-item"><label>🏫 반경 3km 학교 수 / 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
                         <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
+                        <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
                         ${totalBranchStudents3km > 0 ? `<div class="rs-item"><label>🎓 반경 3km 에이닷지점 학생수</label><value style="color:#7950f2;">${totalBranchStudents3km.toLocaleString()}명</value></div>` : ''}
                     </div>
                 `;
@@ -595,6 +626,37 @@
                     updateGlobalSummaryBar();
                 })
                 .catch(err => { console.error('Branch CSV Data fetch error:', err); });
+
+            // 4. 아파트 세대수 데이터 (GID: 642130592)
+            fetch(APARTMENT_CSV_URL)
+                .then(response => response.text())
+                .then(data => {
+                    const rows = data.split('\n').slice(1);
+                    apartmentDataList = [];
+
+                    rows.forEach(row => {
+                        if (!row.trim()) return;
+                        const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        if (columns.length < 4) return;
+
+                        const address = (columns[0] || "").replace(/"/g, '').trim();
+                        const count = parseInt(columns[1]?.replace(/"/g, '').trim()) || 0;
+                        const lat = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                        const lng = parseFloat(columns[3]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+
+                        if (address && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
+                            const pos = new kakao.maps.LatLng(lat, lng);
+                            apartmentDataList.push({
+                                address: address,
+                                count: count,
+                                pos: pos
+                            });
+                        }
+                    });
+
+                    renderApartmentMarkers();
+                })
+                .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
         }
  
         // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
@@ -929,6 +991,8 @@
             let totalSchoolStudents3km = 0;
             let totalAcademies3km = 0;
             let totalAcademyLocs3km = 0;
+            let totalApts3km = 0;
+            let totalAptFamilies3km = 0;
 
             Object.keys(schoolMap).forEach(code => {
                 const item = schoolMap[code];
@@ -948,6 +1012,16 @@
                     if (dist <= 3000) {
                         totalAcademies3km += (item.count || 0);
                         totalAcademyLocs3km++;
+                    }
+                }
+            });
+
+            apartmentDataList.forEach(apt => {
+                if (apt && apt.pos) {
+                    const dist = getDistance(b.pos, apt.pos);
+                    if (dist <= 3000) {
+                        totalAptFamilies3km += (apt.count || 0);
+                        totalApts3km++;
                     }
                 }
             });
@@ -982,6 +1056,7 @@
                 <div class="rs-grid" style="margin-top:8px;">
                     <div class="rs-item"><label>🏫 반경 3km 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
                     <div class="rs-item"><label>📚 반경 3km 총 학원 수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
+                    <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
                 </div>
             `;
 
@@ -1122,6 +1197,90 @@
                     }
                 }
             });
+        }
+
+        // 🏢 아파트 세대수 마커 렌더링
+        function renderApartmentMarkers() {
+            apartmentOverlays.forEach(ol => ol.setMap(null));
+            apartmentOverlays = [];
+
+            const isApartmentChecked = document.getElementById('chk-apartment')?.checked ?? false;
+            if (!isApartmentChecked) return;
+
+            apartmentDataList.forEach(apt => {
+                const circleClass = getApartmentCircleClass(apt.count);
+
+                const labelContent = document.createElement('div');
+                labelContent.className = `apartment-circle-badge ${circleClass}`;
+                labelContent.innerHTML = `
+                    <span class="badge-count-num">${apt.count.toLocaleString()}세대</span>
+                `;
+
+                labelContent.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    isMarkerClickHandled = true;
+                    showApartmentOverlayPopup(apt);
+                };
+
+                const overlay = new kakao.maps.CustomOverlay({
+                    position: apt.pos,
+                    content: labelContent,
+                    yAnchor: 0.5,
+                    xAnchor: 0.5,
+                    clickable: true,
+                    zIndex: Z_INDEX.ACADEMY - 50 // 학원가보다 약간 아래 레이어
+                });
+
+                overlay.setMap(map);
+                apartmentOverlays.push(overlay);
+            });
+        }
+
+        // 🏢 아파트 세대수 색상 스케일 매핑
+        function getApartmentCircleClass(count) {
+            if (count >= 10000) return 'apt-lvl-darkgreen size-xl';
+            if (count >= 8000) return 'apt-lvl-green size-lg';
+            if (count >= 6000) return 'apt-lvl-medgreen size-md';
+            if (count >= 4000) return 'apt-lvl-lightgreen size-sm';
+            return 'apt-lvl-lime size-xs';
+        }
+
+        // 🏢 아파트 클릭 전용 팝업
+        function showApartmentOverlayPopup(apt) {
+            if (radiusLabel) radiusLabel.setMap(null);
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                if (radiusLabel) radiusLabel.setMap(null);
+            };
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:#2ecc71;">🏢 아파트 상세 정보</span>
+                </div>
+                <div class="rs-address">📍 ${apt.address}</div>
+                <div class="rs-grid">
+                    <div class="rs-item"><label>아파트 세대수</label><value style="color:#2ecc71;">${apt.count.toLocaleString()}세대</value></div>
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            radiusLabel = new kakao.maps.CustomOverlay({
+                position: apt.pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS
+            });
+
+            radiusLabel.setMap(map);
         }
     });
 })();
