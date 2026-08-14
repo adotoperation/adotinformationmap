@@ -654,6 +654,7 @@
                         }
                     });
 
+                    console.log(`🏢 Apartment CSV data successfully parsed: ${apartmentDataList.length} rows`);
                     renderApartmentMarkers();
                 })
                 .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
@@ -1205,6 +1206,7 @@
             apartmentOverlays = [];
 
             const isApartmentChecked = document.getElementById('chk-apartment')?.checked ?? false;
+            console.log(`🏢 Checking apartment filter state: ${isApartmentChecked}. Current data size: ${apartmentDataList.length}`);
             if (!isApartmentChecked) return;
 
             apartmentDataList.forEach(apt => {
