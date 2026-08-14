@@ -34,6 +34,8 @@
         let branchOverlays = [];
         let apartmentOverlays = [];
         let recommendOverlays = [];
+        let recommendDataList = [];
+        let currentRecommendPage = 1;
         let trendChart = null;
 
         let clickCircle = null;
@@ -87,6 +89,9 @@
                 recommendOverlays = [];
                 const chkRecommend = document.getElementById('chk-recommend');
                 if (chkRecommend) chkRecommend.checked = false;
+
+                const recPanel = document.getElementById('recommend-panel');
+                if (recPanel) recPanel.style.display = 'none';
             }
 
             closeDetailModal();
@@ -264,6 +269,14 @@
             const chkRecommend = document.getElementById('chk-recommend');
             if (chkRecommend) {
                 chkRecommend.addEventListener('change', () => {
+                    recommendTop5NewBranches();
+                });
+            }
+
+            const btnRecRefresh = document.getElementById('btn-recommend-refresh');
+            if (btnRecRefresh) {
+                btnRecRefresh.addEventListener('click', (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
                     recommendTop5NewBranches();
                 });
             }
@@ -1337,7 +1350,12 @@
             recommendOverlays = [];
 
             const isChecked = document.getElementById('chk-recommend')?.checked ?? false;
-            if (!isChecked) return;
+            const recPanel = document.getElementById('recommend-panel');
+
+            if (!isChecked) {
+                if (recPanel) recPanel.style.display = 'none';
+                return;
+            }
 
             const candidates = [];
             const visitedCoords = new Set();
@@ -1427,17 +1445,19 @@
                 });
             });
 
-            // 조건 4: 배후 학교 학생수 기준 내림차순 정렬
+            // 조건 4: 배후 학교 학생수 기준 내림차순 정렬 및 최대 50위 슬라이싱
             results.sort((a, b) => b.schoolStudents - a.schoolStudents);
-            const top5 = results; // 이름은 top5로 유지하여 하위 코드 호환성 유지 (전체 노출)
+            recommendDataList = results.slice(0, 50);
+            currentRecommendPage = 1;
 
-            if (top5.length === 0) {
+            if (recommendDataList.length === 0) {
                 alert("조건(기존 지점 3km 이외, 아파트 1만세대 이상, 학생수 8천명 이상)을 모두 충족하는 신규 후보지가 없습니다.");
+                if (recPanel) recPanel.style.display = 'none';
                 return;
             }
 
-            // 모든 최적지 마커 그리기
-            top5.forEach((item, index) => {
+            // 모든 최적지 마커 그리기 (최대 50개)
+            recommendDataList.forEach((item, index) => {
                 const rank = index + 1;
                 const badge = document.createElement('div');
                 badge.className = `recommend-badge ${rank <= 3 ? 'rank-top3' : ''}`;
@@ -1462,7 +1482,100 @@
 
             // 1위 후보지로 카메라 이동
             map.setLevel(6);
-            map.panTo(top5[0].pos);
+            map.panTo(recommendDataList[0].pos);
+
+            // 추천 목록 패널 렌더링 기동
+            if (recPanel) recPanel.style.display = 'block';
+            renderRecommendList();
+        }
+
+        // 🏆 추천 입지 목록 카드 렌더링 함수 (페이지당 10개씩)
+        function renderRecommendList() {
+            const listContainer = document.getElementById('recommend-list-container');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = '';
+
+            const itemsPerPage = 10;
+            const startIndex = (currentRecommendPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, recommendDataList.length);
+
+            const pageItems = recommendDataList.slice(startIndex, endIndex);
+
+            pageItems.forEach((item, index) => {
+                const absoluteRank = startIndex + index + 1;
+                
+                const card = document.createElement('div');
+                card.className = `recommend-list-item ${absoluteRank <= 3 ? 'rank-top3-item' : ''}`;
+                card.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="rank-badge-item">${absoluteRank}위</span>
+                        <span style="font-size: 11.5px; font-weight: bold; color: #f8fafc;">${item.name}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <span style="font-size: 11px; font-weight: 800; color: #f59e0b;">${item.schoolStudents.toLocaleString()}명</span>
+                        <span style="font-size: 9.5px; color: #94a3b8;">${item.aptFamilies.toLocaleString()}세대</span>
+                    </div>
+                `;
+
+                card.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    map.setLevel(6);
+                    map.panTo(item.pos);
+                    showRecommendDetailPopup(item, absoluteRank);
+                };
+
+                listContainer.appendChild(card);
+            });
+
+            updateRecommendPagination();
+        }
+
+        // 🏆 추천 목록 페이지네이션(이전/다음 옆으로 클릭) 컨트롤 생성 함수
+        function updateRecommendPagination() {
+            const paginationContainer = document.getElementById('recommend-pagination');
+            if (!paginationContainer) return;
+
+            paginationContainer.innerHTML = '';
+
+            const itemsPerPage = 10;
+            const totalPages = Math.ceil(recommendDataList.length / itemsPerPage);
+
+            if (totalPages <= 1) return; // 1페이지 이하면 컨트롤 숨김
+
+            //이전 버튼
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.innerHTML = '◀ 이전';
+            prevBtn.disabled = currentRecommendPage === 1;
+            prevBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                if (currentRecommendPage > 1) {
+                    currentRecommendPage--;
+                    renderRecommendList();
+                }
+            };
+            paginationContainer.appendChild(prevBtn);
+
+            //페이지 정보 텍스트
+            const pageInfo = document.createElement('span');
+            pageInfo.className = 'pagination-info';
+            pageInfo.innerHTML = `${currentRecommendPage} / ${totalPages} 페이지`;
+            paginationContainer.appendChild(pageInfo);
+
+            //다음 버튼
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.innerHTML = '다음 ▶';
+            nextBtn.disabled = currentRecommendPage === totalPages;
+            nextBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                if (currentRecommendPage < totalPages) {
+                    currentRecommendPage++;
+                    renderRecommendList();
+                }
+            };
+            paginationContainer.appendChild(nextBtn);
         }
 
         // 🏆 추천 최적지 클릭 전용 팝업
@@ -1480,8 +1593,12 @@
                 // 🏆 추천 마커 및 필터 체크박스 상태 소거 연동
                 recommendOverlays.forEach(ol => ol.setMap(null));
                 recommendOverlays = [];
+                
                 const chkRecommend = document.getElementById('chk-recommend');
                 if (chkRecommend) chkRecommend.checked = false;
+
+                const recPanel = document.getElementById('recommend-panel');
+                if (recPanel) recPanel.style.display = 'none';
 
                 if (radiusLabel) radiusLabel.setMap(null);
             };

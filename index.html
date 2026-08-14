@@ -37,6 +37,21 @@
                     <label class="filter-item" style="color: #f59e0b; font-weight: bold;"><input type="checkbox" id="chk-recommend"> 🏆 신규 입지 추천 (전체)</label>
                 </div>
             </div>
+            <!-- 🏆 신규 지점 추천 목록 패널 -->
+            <div id="recommend-panel" style="display: none; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 12px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 4px;">🏆 추천 입지 순위 (최대 50위)</span>
+                    <button id="btn-recommend-refresh" style="background: none; border: none; color: #f59e0b; cursor: pointer; font-size: 11px; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-weight: bold;">
+                        🔄 새로고침
+                    </button>
+                </div>
+                <div id="recommend-list-container" style="display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto;">
+                    <!-- 스크립트에서 동적 카드 생성 -->
+                </div>
+                <div id="recommend-pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; font-size: 11px;">
+                    <!-- 이전 / 페이지 번호 / 다음 동적 생성 -->
+                </div>
+            </div>
         </div>
     </div>
 

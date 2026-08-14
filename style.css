@@ -785,3 +785,64 @@ html, body, #map {
     border-radius: 10px;
     margin-right: 4px;
 }
+
+/* 🏆 추천 입지 목록 카드 */
+.recommend-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.recommend-list-item:hover {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.recommend-list-item .rank-badge-item {
+    font-weight: 800;
+    font-size: 11px;
+    color: #94a3b8;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+}
+
+.recommend-list-item.rank-top3-item .rank-badge-item {
+    color: #ffffff;
+    background: linear-gradient(135deg, #ff4757, #f59e0b);
+}
+
+/* 페이지네이션 버튼 */
+.pagination-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #eee;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-weight: bold;
+    color: #f59e0b;
+    font-size: 11px;
+}
