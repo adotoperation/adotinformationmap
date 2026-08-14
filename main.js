@@ -1400,11 +1400,11 @@
                     }
                 });
 
-                // 조건 2: 아파트 배후 세대수 1만 5천 세대 이상 보장
-                if (aptFamilies < 15000) return;
+                // 조건 2: 아파트 배후 세대수 1만 세대 이상 보장
+                if (aptFamilies < 10000) return;
 
-                // 조건 3: 중, 고등학생 수 합계 1만 명 이상 보장
-                if (schoolStudents < 10000) return;
+                // 조건 3: 중, 고등학생 수 합계 8천 명 이상 보장
+                if (schoolStudents < 8000) return;
 
                 results.push({
                     name: c.name,
@@ -1419,21 +1419,21 @@
                 });
             });
 
-            // 조건 4: 배후 학교 학생수 기준 내림차순 정렬 및 TOP 5 선정
+            // 조건 4: 배후 학교 학생수 기준 내림차순 정렬
             results.sort((a, b) => b.schoolStudents - a.schoolStudents);
-            const top5 = results.slice(0, 5);
+            const top5 = results; // 이름은 top5로 유지하여 하위 코드 호환성 유지 (전체 노출)
 
             if (top5.length === 0) {
-                alert("조건(기존 지점 3km 이외, 아파트 1만 5천세대 이상, 학생수 1만명 이상)을 모두 충족하는 신규 후보지가 없습니다.");
+                alert("조건(기존 지점 3km 이외, 아파트 1만세대 이상, 학생수 8천명 이상)을 모두 충족하는 신규 후보지가 없습니다.");
                 return;
             }
 
-            // 5개 최적지 마커 그리기
+            // 모든 최적지 마커 그리기
             top5.forEach((item, index) => {
                 const rank = index + 1;
                 const badge = document.createElement('div');
-                badge.className = `recommend-badge ${rank === 1 ? 'rank-1' : ''}`;
-                badge.innerHTML = `<span class="rank-num-title">👑 TOP ${rank}</span><span>${item.name}</span>`;
+                badge.className = `recommend-badge ${rank <= 3 ? 'rank-top3' : ''}`;
+                badge.innerHTML = `<span class="rank-num-title">👑 ${rank}위</span><span>${item.name}</span>`;
 
                 badge.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
