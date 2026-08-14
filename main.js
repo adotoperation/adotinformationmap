@@ -1465,6 +1465,7 @@
 
                 badge.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
+                    isMarkerClickHandled = true;
                     showRecommendDetailPopup(item, rank);
                 };
 
@@ -1520,6 +1521,7 @@
 
                 card.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
+                    isMarkerClickHandled = true;
                     map.setLevel(6);
                     map.panTo(item.pos);
                     showRecommendDetailPopup(item, absoluteRank);
