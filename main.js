@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 - 모달 카드(23학년도 이후 L열 서울대 합격자수) & TOP30(26학년도 M열) 연동 지도 가동
+// 카카오 맵 SDK 로드 - 26/1/1 최신 데이터만 엄격 필터링 & 23학년도 이후 서울대 평균 합격자수(L열) 연동 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -159,7 +159,7 @@
                     matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
                         const item = schoolMap[codeKey];
                         const icon = item.isTop30 ? '[26년 서울대 TOP30]' : (item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]');
-                        const snuBadge = item.snuAvgCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(23년~ 서울대 ${item.snuAvgCount}명)</span>` : '';
+                        const snuBadge = item.snuAvgCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(23년~ 평균 ${item.snuAvgCount}명)</span>` : '';
                         html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingAcademies.slice(0, 5).forEach(addr => {
@@ -428,7 +428,7 @@
             });
         }
 
-        // --- 26학년도 서울대 합격자수(M열) 기준 전국 TOP 30위권 고등학교 산출 ---
+        // --- 🏆 26/1/1 데이터 기준 서울대 합격자수(M열) 전국 TOP 30위권 고등학교 산출 ---
         function computeTop30SnuSchools() {
             const highSchools = Object.keys(schoolMap)
                 .map(key => schoolMap[key])
@@ -448,7 +448,7 @@
         }
 
         function loadAllGoogleSheetData() {
-            // 1. 학교 데이터 (GID: 630627369, L열: 23학년도 이후 평균, M열: 26학년도 서울대 합격자수)
+            // 1. 학교 데이터 (GID: 630627369, A열: 26/1/1 연월 필터링)
             fetch(SCHOOL_CSV_URL)
                 .then(response => response.text())
                 .then(data => {
@@ -461,6 +461,10 @@
                         if (columns.length < 6) return;
 
                         const periodRaw = (columns[0] || "").replace(/"/g, '').trim();
+
+                        // 🔥 26/1/1 등 최신 26년도 데이터만 엄격하게 필터링! (과거 24년/25년에만 있는 학교 자동 제외)
+                        if (!periodRaw.startsWith('26')) return;
+
                         const code = (columns[1] || "").replace(/"/g, '').trim();
                         const schoolName = (columns[2] || "").replace(/"/g, '').trim();
                         
@@ -475,7 +479,7 @@
                         const total2025 = (columns.length > 9 && columns[9]) ? (parseInt(columns[9].replace(/"/g, '').trim()) || total2026) : total2026;
                         const total2024 = (columns.length > 10 && columns[10]) ? (parseInt(columns[10].replace(/"/g, '').trim()) || total2025) : total2025;
 
-                        // 🎓 L열 (11번 컬럼): 23학년도 이후 평균 서울대 합격자수
+                        // 🎓 L열 (11번 컬럼): 23학년도 이후 서울대 평균 합격자수
                         const snuAvgCount = (columns.length > 11 && columns[11]) ? (parseInt(columns[11].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
                         // 🎓 M열 (12번 컬럼): 26학년도 서울대 합격자수
                         const snu2026Count = (columns.length > 12 && columns[12]) ? (parseInt(columns[12].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
@@ -495,7 +499,7 @@
                             }
 
                             schoolMap[uniqueKey] = {
-                                period: '2026년',
+                                period: periodRaw,
                                 code: code || 'N/A',
                                 name: schoolName,
                                 isMiddle: isMiddle,
@@ -506,8 +510,8 @@
                                 grade3: grade3,
                                 total2025: total2025,
                                 total2024: total2024,
-                                snuAvgCount: snuAvgCount,   // L열 (23학년도 이후 평균)
-                                snu2026Count: snu2026Count, // M열 (26학년도)
+                                snuAvgCount: snuAvgCount,   // L열 (23학년도 이후 평균 합격자수)
+                                snu2026Count: snu2026Count, // M열 (26학년도 합격자수)
                                 isTop30: false,
                                 snuRank: 0
                             };
@@ -956,7 +960,7 @@
             return text;
         }
 
-        // 모달 팝업 오픈 시 L열 데이터(23학년도 이후 평균 서울대 합격자수) 연동!
+        // 🎓 모달 팝업 오픈 시 "23학년도 이후 서울대 평균 합격자수" (L열 데이터) 연동!
         function openDetailModalByCode(schoolCode) {
             const item = schoolMap[schoolCode];
             if (!item) return;
@@ -982,7 +986,7 @@
             const v25 = item.total2025;
             const v24 = item.total2024;
             
-            // 🎓 모달 요약 카드는 L열 데이터 (23학년도 이후 평균 서울대 합격자수) 사용!
+            // 🎓 모달 요약 카드는 L열 데이터 (23학년도 이후 서울대 평균 합격자수) 연동!
             const snuAvgCount = item.snuAvgCount;
 
             document.getElementById('val-total').textContent = `${v26.toLocaleString()}명`;
