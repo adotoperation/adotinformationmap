@@ -1,4 +1,4 @@
-// 카카오 맵 SDK 로드 - 서울대 마크 옆 아이콘 제거 & M열(26학년도 서울대 합격자수) 기반 깔끔한 지도 가동
+// 카카오 맵 SDK 로드 - 모달 카드(23학년도 이후 L열 서울대 합격자수) & TOP30(26학년도 M열) 연동 지도 가동
 (function initAllDataMapApp() {
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Map SDK is not loaded!');
@@ -159,7 +159,7 @@
                     matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
                         const item = schoolMap[codeKey];
                         const icon = item.isTop30 ? '[26년 서울대 TOP30]' : (item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]');
-                        const snuBadge = item.snuCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(26년 서울대 ${item.snuCount}명)</span>` : '';
+                        const snuBadge = item.snuAvgCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(23년~ 서울대 ${item.snuAvgCount}명)</span>` : '';
                         html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingAcademies.slice(0, 5).forEach(addr => {
@@ -432,9 +432,9 @@
         function computeTop30SnuSchools() {
             const highSchools = Object.keys(schoolMap)
                 .map(key => schoolMap[key])
-                .filter(item => !item.isMiddle && item.snuCount > 0);
+                .filter(item => !item.isMiddle && item.snu2026Count > 0);
 
-            highSchools.sort((a, b) => b.snuCount - a.snuCount);
+            highSchools.sort((a, b) => b.snu2026Count - a.snu2026Count);
 
             highSchools.forEach((item, index) => {
                 if (index < 30) {
@@ -448,7 +448,7 @@
         }
 
         function loadAllGoogleSheetData() {
-            // 1. 학교 데이터 (GID: 630627369, M열: 26학년도 서울대 합격자수)
+            // 1. 학교 데이터 (GID: 630627369, L열: 23학년도 이후 평균, M열: 26학년도 서울대 합격자수)
             fetch(SCHOOL_CSV_URL)
                 .then(response => response.text())
                 .then(data => {
@@ -475,8 +475,10 @@
                         const total2025 = (columns.length > 9 && columns[9]) ? (parseInt(columns[9].replace(/"/g, '').trim()) || total2026) : total2026;
                         const total2024 = (columns.length > 10 && columns[10]) ? (parseInt(columns[10].replace(/"/g, '').trim()) || total2025) : total2025;
 
-                        // M열 (12번 컬럼): 26학년도 서울대 합격자수
-                        const snuCount = (columns.length > 12 && columns[12]) ? (parseInt(columns[12].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
+                        // 🎓 L열 (11번 컬럼): 23학년도 이후 평균 서울대 합격자수
+                        const snuAvgCount = (columns.length > 11 && columns[11]) ? (parseInt(columns[11].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
+                        // 🎓 M열 (12번 컬럼): 26학년도 서울대 합격자수
+                        const snu2026Count = (columns.length > 12 && columns[12]) ? (parseInt(columns[12].replace(/"/g, '').replace(/[^0-9]/g, '').trim()) || 0) : 0;
 
                         const lat = parseFloat(latStr);
                         const lng = parseFloat(lngStr);
@@ -504,7 +506,8 @@
                                 grade3: grade3,
                                 total2025: total2025,
                                 total2024: total2024,
-                                snuCount: snuCount,
+                                snuAvgCount: snuAvgCount,   // L열 (23학년도 이후 평균)
+                                snu2026Count: snu2026Count, // M열 (26학년도)
                                 isTop30: false,
                                 snuRank: 0
                             };
@@ -604,7 +607,7 @@
             return 'lvl-blue size-xs';
         }
 
-        // 🏫 학교 마커 렌더링 (서울대 마크 로고 깔끔하게 연동)
+        // 🏫 학교 마커 렌더링
         function renderSchoolMarkers() {
             schoolOverlays.forEach(ol => ol.setMap(null));
             schoolOverlays = [];
@@ -640,7 +643,7 @@
                         if (dist <= clusterThresholdMeters) {
                             c.schools.push(item);
                             c.totalStudents += item.total2026;
-                            c.totalSnu += item.snuCount;
+                            c.totalSnu += item.snu2026Count;
                             addedToCluster = true;
                             break;
                         }
@@ -651,7 +654,7 @@
                             centerPos: item.pos,
                             schools: [item],
                             totalStudents: item.total2026,
-                            totalSnu: item.snuCount
+                            totalSnu: item.snu2026Count
                         });
                     }
                 });
@@ -701,12 +704,11 @@
                     const total = item.total2026;
                     const heatClass = getPurpleHeatmapLevelClass(total);
                     
-                    // 서울대 로고 마크 연동 뱃지 (불필요한 아이콘 제거)
                     let snuHtml = '';
                     if (item.isTop30) {
-                        snuHtml = `<span class="snu-tag top30"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> TOP ${item.snuRank} (${item.snuCount}명)</span>`;
-                    } else if (item.snuCount > 0) {
-                        snuHtml = `<span class="snu-tag"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> ${item.snuCount}명</span>`;
+                        snuHtml = `<span class="snu-tag top30"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> TOP ${item.snuRank} (${item.snu2026Count}명)</span>`;
+                    } else if (item.snu2026Count > 0) {
+                        snuHtml = `<span class="snu-tag"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> ${item.snu2026Count}명</span>`;
                     }
 
                     const labelContent = document.createElement('div');
@@ -954,6 +956,7 @@
             return text;
         }
 
+        // 모달 팝업 오픈 시 L열 데이터(23학년도 이후 평균 서울대 합격자수) 연동!
         function openDetailModalByCode(schoolCode) {
             const item = schoolMap[schoolCode];
             if (!item) return;
@@ -978,7 +981,9 @@
             const g3 = item.grade3;
             const v25 = item.total2025;
             const v24 = item.total2024;
-            const snuCount = item.snuCount;
+            
+            // 🎓 모달 요약 카드는 L열 데이터 (23학년도 이후 평균 서울대 합격자수) 사용!
+            const snuAvgCount = item.snuAvgCount;
 
             document.getElementById('val-total').textContent = `${v26.toLocaleString()}명`;
             document.getElementById('val-g1').textContent = `${g1.toLocaleString()}명`;
@@ -992,8 +997,8 @@
             const snuCard = document.getElementById('snu-card-container');
             const valSnu = document.getElementById('val-snu-count');
             if (snuCard && valSnu) {
-                if (snuCount > 0) {
-                    valSnu.textContent = `${snuCount}명`;
+                if (snuAvgCount > 0) {
+                    valSnu.textContent = `${snuAvgCount}명`;
                     snuCard.style.display = 'block';
                 } else {
                     snuCard.style.display = 'none';
