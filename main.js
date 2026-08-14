@@ -33,9 +33,6 @@
         let academyOverlays = [];
         let branchOverlays = [];
         let apartmentOverlays = [];
-        let recommendOverlays = [];
-        let recommendDataList = [];
-        let currentRecommendPage = 1;
         let trendChart = null;
 
         let clickCircle = null;
@@ -72,7 +69,7 @@
             });
         };
 
-        window.clearRadiusOverlay = function (clearRecommendMarkers = false) {
+        window.clearRadiusOverlay = function () {
             if (clickCircle) { clickCircle.setMap(null); clickCircle = null; }
             if (clickMarker) { clickMarker.setMap(null); clickMarker = null; }
             if (radiusLabel) { radiusLabel.setMap(null); radiusLabel = null; }
@@ -82,12 +79,6 @@
             if (distancePolyline) { distancePolyline.setMap(null); distancePolyline = null; }
             if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
             startPoint = null;
-
-            // 명시적으로 요청(우클릭이나 X표 클릭)이 있는 경우에만 추천 마커 소거
-            if (clearRecommendMarkers) {
-                recommendOverlays.forEach(ol => ol.setMap(null));
-                recommendOverlays = [];
-            }
 
             closeDetailModal();
         };
@@ -254,27 +245,19 @@
 
             kakao.maps.event.addListener(map, 'rightclick', (mouseEvent) => {
                 if (mouseEvent && mouseEvent.preventDefault) mouseEvent.preventDefault();
-                window.clearRadiusOverlay(true);
+                window.clearRadiusOverlay();
             });
 
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
                 renderSchoolMarkers();
             });
 
-            const btnRecRefresh = document.getElementById('btn-recommend-refresh');
-            if (btnRecRefresh) {
-                btnRecRefresh.addEventListener('click', (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    recommendTop5NewBranches();
-                });
-            }
-
             container.addEventListener('contextmenu', (e) => {
                 if (e) {
                     e.preventDefault();
                     e.stopPropagation();
                 }
-                window.clearRadiusOverlay(true);
+                window.clearRadiusOverlay();
                 return false;
             });
         }
@@ -688,9 +671,6 @@
 
                     console.log(`🏢 Apartment CSV data successfully parsed: ${apartmentDataList.length} rows`);
                     renderApartmentMarkers();
-
-                    // 🏆 구글 시트 데이터 로딩 완료 시점 추천 자동 연산 최초 기동
-                    recommendTop5NewBranches();
                 })
                 .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
         }
@@ -1325,309 +1305,6 @@
 
             radiusLabel = new kakao.maps.CustomOverlay({
                 position: apt.pos,
-                content: labelContent,
-                yAnchor: 1.25,
-                clickable: true,
-                zIndex: Z_INDEX.RADIUS + 1000
-            });
-
-            radiusLabel.setMap(map);
-        }
-
-        // 🏆 에이닷 신규 지점 최적지 추천 기능
-        function recommendTop5NewBranches() {
-            window.clearRadiusOverlay(true);
-            recommendOverlays.forEach(ol => ol.setMap(null));
-            recommendOverlays = [];
-
-            const recPanel = document.getElementById('recommend-panel');
-
-            const candidates = [];
-            const visitedCoords = new Set();
-
-            const checkAndAdd = (pos, name) => {
-                if (!pos) return;
-                const key = `${pos.getLat().toFixed(4)}_${pos.getLng().toFixed(4)}`;
-                if (!visitedCoords.has(key)) {
-                    visitedCoords.add(key);
-                    candidates.push({ pos: pos, name: name });
-                }
-            };
-
-            apartmentDataList.forEach(apt => checkAndAdd(apt.pos, apt.address));
-            Object.keys(academyMap).forEach(key => checkAndAdd(academyMap[key].pos, academyMap[key].address));
-
-            if (candidates.length === 0) {
-                alert("입지 분석을 위한 데이터가 충분하지 않습니다.");
-                return;
-            }
-
-            const results = [];
-
-            candidates.forEach(c => {
-                // 조건 1: 기존 에이닷 지점과의 3km 중복 제거 (3km 초과 거리만 가능)
-                let hasExistingBranch3km = false;
-                for (let b of branchDataList) {
-                    if (getDistance(c.pos, b.pos) <= 3000) {
-                        hasExistingBranch3km = true;
-                        break;
-                    }
-                }
-                if (hasExistingBranch3km) return;
-
-                // 3km 반경 내 집계 시뮬레이션
-                let schoolStudents = 0;
-                let highStudents = 0;
-                let middleStudents = 0;
-                let highSchools = 0;
-                let middleSchools = 0;
-                let academyCount = 0;
-                let aptFamilies = 0;
-
-                Object.keys(schoolMap).forEach(code => {
-                    const school = schoolMap[code];
-                    if (school && school.pos && getDistance(c.pos, school.pos) <= 3000) {
-                        schoolStudents += (school.total2026 || 0);
-                        if (school.isMiddle) {
-                            middleStudents += (school.total2026 || 0);
-                            middleSchools++;
-                        } else {
-                            highStudents += (school.total2026 || 0);
-                            highSchools++;
-                        }
-                    }
-                });
-
-                Object.keys(academyMap).forEach(addr => {
-                    const academy = academyMap[addr];
-                    if (academy && academy.pos && getDistance(c.pos, academy.pos) <= 3000) {
-                        academyCount += (academy.count || 0);
-                    }
-                });
-
-                apartmentDataList.forEach(apt => {
-                    if (apt && apt.pos && getDistance(c.pos, apt.pos) <= 3000) {
-                        aptFamilies += (apt.count || 0);
-                    }
-                });
-
-                // 조건 2: 아파트 배후 세대수 1만 세대 이상 보장
-                if (aptFamilies < 10000) return;
-
-                // 조건 3: 중, 고등학생 수 합계 8천 명 이상 보장
-                if (schoolStudents < 8000) return;
-
-                results.push({
-                    name: c.name,
-                    pos: c.pos,
-                    schoolStudents: schoolStudents,
-                    highStudents: highStudents,
-                    middleStudents: middleStudents,
-                    highSchools: highSchools,
-                    middleSchools: middleSchools,
-                    academyCount: academyCount,
-                    aptFamilies: aptFamilies
-                });
-            });
-
-            // 조건 4: 배후 학교 학생수 기준 내림차순 정렬 및 최대 50위 슬라이싱
-            results.sort((a, b) => b.schoolStudents - a.schoolStudents);
-            recommendDataList = results.slice(0, 50);
-            currentRecommendPage = 1;
-
-            if (recommendDataList.length === 0) {
-                alert("조건(기존 지점 3km 이외, 아파트 1만세대 이상, 학생수 8천명 이상)을 모두 충족하는 신규 후보지가 없습니다.");
-                if (recPanel) recPanel.style.display = 'none';
-                return;
-            }
-
-            // 모든 최적지 마커 그리기 (최대 50개)
-            recommendDataList.forEach((item, index) => {
-                const rank = index + 1;
-                const badge = document.createElement('div');
-                badge.className = `recommend-badge ${rank <= 3 ? 'rank-top3' : ''}`;
-                badge.innerHTML = `<span class="rank-num-title">👑 ${rank}위</span><span>${item.name}</span>`;
-
-                badge.onclick = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    isMarkerClickHandled = true;
-                    showRecommendDetailPopup(item, rank);
-                };
-
-                const overlay = new kakao.maps.CustomOverlay({
-                    position: item.pos,
-                    content: badge,
-                    yAnchor: 0.5,
-                    xAnchor: 0.5,
-                    zIndex: Z_INDEX.RADIUS + 50
-                });
-
-                overlay.setMap(map);
-                recommendOverlays.push(overlay);
-            });
-
-            // 1위 후보지로 카메라 이동
-            map.setLevel(6);
-            map.panTo(recommendDataList[0].pos);
-
-            // 추천 목록 패널 렌더링 기동
-            if (recPanel) recPanel.style.display = 'block';
-            renderRecommendList();
-        }
-
-        // 🏆 추천 입지 목록 카드 렌더링 함수 (페이지당 10개씩)
-        function renderRecommendList() {
-            const listContainer = document.getElementById('recommend-list-container');
-            if (!listContainer) return;
-
-            listContainer.innerHTML = '';
-
-            const itemsPerPage = 10;
-            const startIndex = (currentRecommendPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, recommendDataList.length);
-
-            const pageItems = recommendDataList.slice(startIndex, endIndex);
-
-            pageItems.forEach((item, index) => {
-                const absoluteRank = startIndex + index + 1;
-                
-                const card = document.createElement('div');
-                card.className = `recommend-list-item ${absoluteRank <= 3 ? 'rank-top3-item' : ''}`;
-                card.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="rank-badge-item">${absoluteRank}위</span>
-                        <span style="font-size: 11.5px; font-weight: bold; color: #f8fafc;">${item.name}</span>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                        <span style="font-size: 11px; font-weight: 800; color: #f59e0b;">${item.schoolStudents.toLocaleString()}명</span>
-                        <span style="font-size: 9.5px; color: #94a3b8;">${item.aptFamilies.toLocaleString()}세대</span>
-                    </div>
-                `;
-
-                card.onclick = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    isMarkerClickHandled = true;
-
-                    // 🏆 만약 추천 마커들이 소거된 상태라면, 지도 위에 다시 마커들을 렌더링해 줍니다.
-                    if (recommendOverlays.length === 0) {
-                        recommendDataList.forEach((recItem, recIndex) => {
-                            const r = recIndex + 1;
-                            const badge = document.createElement('div');
-                            badge.className = `recommend-badge ${r <= 3 ? 'rank-top3' : ''}`;
-                            badge.innerHTML = `<span class="rank-num-title">👑 ${r}위</span><span>${recItem.name}</span>`;
-
-                            badge.onclick = (ev) => {
-                                if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-                                isMarkerClickHandled = true;
-                                showRecommendDetailPopup(recItem, r);
-                            };
-
-                            const overlay = new kakao.maps.CustomOverlay({
-                                position: recItem.pos,
-                                content: badge,
-                                yAnchor: 0.5,
-                                xAnchor: 0.5,
-                                zIndex: Z_INDEX.RADIUS + 50
-                            });
-
-                            overlay.setMap(map);
-                            recommendOverlays.push(overlay);
-                        });
-                    }
-
-                    map.setLevel(6);
-                    map.panTo(item.pos);
-                    showRecommendDetailPopup(item, absoluteRank);
-                };
-
-                listContainer.appendChild(card);
-            });
-
-            updateRecommendPagination();
-        }
-
-        // 🏆 추천 목록 페이지네이션(이전/다음 옆으로 클릭) 컨트롤 생성 함수
-        function updateRecommendPagination() {
-            const paginationContainer = document.getElementById('recommend-pagination');
-            if (!paginationContainer) return;
-
-            paginationContainer.innerHTML = '';
-
-            const itemsPerPage = 10;
-            const totalPages = Math.ceil(recommendDataList.length / itemsPerPage);
-
-            if (totalPages <= 1) return; // 1페이지 이하면 컨트롤 숨김
-
-            //이전 버튼
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'pagination-btn';
-            prevBtn.innerHTML = '◀ 이전';
-            prevBtn.disabled = currentRecommendPage === 1;
-            prevBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                if (currentRecommendPage > 1) {
-                    currentRecommendPage--;
-                    renderRecommendList();
-                }
-            };
-            paginationContainer.appendChild(prevBtn);
-
-            //페이지 정보 텍스트
-            const pageInfo = document.createElement('span');
-            pageInfo.className = 'pagination-info';
-            pageInfo.innerHTML = `${currentRecommendPage} / ${totalPages} 페이지`;
-            paginationContainer.appendChild(pageInfo);
-
-            //다음 버튼
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'pagination-btn';
-            nextBtn.innerHTML = '다음 ▶';
-            nextBtn.disabled = currentRecommendPage === totalPages;
-            nextBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                if (currentRecommendPage < totalPages) {
-                    currentRecommendPage++;
-                    renderRecommendList();
-                }
-            };
-            paginationContainer.appendChild(nextBtn);
-        }
-
-        // 🏆 추천 최적지 클릭 전용 팝업
-        function showRecommendDetailPopup(item, rank) {
-            if (radiusLabel) radiusLabel.setMap(null);
-
-            const labelContent = document.createElement('div');
-            labelContent.className = 'radius-summary-label';
-
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'rs-close-btn';
-            closeBtn.innerHTML = '✕';
-            closeBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                // 🏆 추천 마커 소거
-                recommendOverlays.forEach(ol => ol.setMap(null));
-                recommendOverlays = [];
-
-                if (radiusLabel) radiusLabel.setMap(null);
-            };
-
-            labelContent.innerHTML = `
-                <div class="rs-header">
-                    <span class="rs-title" style="color:#f59e0b;">👑 신규 입지 ${rank}위 요약</span>
-                </div>
-                <div class="rs-address">📍 추천 권역: <b>${item.name}</b></div>
-                <div class="rs-grid" style="margin-top: 8px;">
-                    <div class="rs-item"><label>🏫 중·고교 총 학생수</label><value style="color:#ff6b81;">${item.schoolStudents.toLocaleString()}명</value></div>
-                    <div class="rs-item"><label>🎯 잠재 고객수 (5%)</label><value style="color:#f43f5e;">${Math.round(item.schoolStudents * 0.05).toLocaleString()}명</value></div>
-                    <div class="rs-item"><label>🏢 배후 아파트 세대수</label><value style="color:#2ecc71;">${item.aptFamilies.toLocaleString()}세대</value></div>
-                </div>
-            `;
-
-            labelContent.querySelector('.rs-header').appendChild(closeBtn);
-
-            radiusLabel = new kakao.maps.CustomOverlay({
-                position: item.pos,
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,
