@@ -749,34 +749,6 @@ html, body, #map {
 .apartment-circle-badge.size-sm .badge-count-num { font-size: 9.5px; }
 .apartment-circle-badge.size-xs .badge-count-num { font-size: 8.5px; }
 
-/* 🏆 최적지 추천 버튼 스타일 */
-.recommend-btn {
-    margin-top: 12px;
-    width: 100%;
-    padding: 10px;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    border: none;
-    border-radius: 8px;
-    color: #ffffff;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-    font-size: 11.5px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.recommend-btn:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
-}
-
-.recommend-btn:active {
-    transform: scale(0.98);
-}
 
 /* 🏆 신규 지점 추천 마커 뱃지 */
 .recommend-badge {

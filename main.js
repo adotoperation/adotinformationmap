@@ -81,9 +81,6 @@
             if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
             startPoint = null;
 
-            recommendOverlays.forEach(ol => ol.setMap(null));
-            recommendOverlays = [];
-
             closeDetailModal();
         };
 
@@ -256,10 +253,9 @@
                 renderSchoolMarkers();
             });
 
-            const btnRecommend = document.getElementById('btn-recommend-top5');
-            if (btnRecommend) {
-                btnRecommend.addEventListener('click', (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
+            const chkRecommend = document.getElementById('chk-recommend');
+            if (chkRecommend) {
+                chkRecommend.addEventListener('change', () => {
                     recommendTop5NewBranches();
                 });
             }
@@ -1331,6 +1327,9 @@
             window.clearRadiusOverlay();
             recommendOverlays.forEach(ol => ol.setMap(null));
             recommendOverlays = [];
+
+            const isChecked = document.getElementById('chk-recommend')?.checked ?? false;
+            if (!isChecked) return;
 
             const candidates = [];
             const visitedCoords = new Set();
