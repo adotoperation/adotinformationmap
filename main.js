@@ -902,6 +902,16 @@
                 }
             });
 
+            // 점유율 계산 (소수점 둘째 자리까지 표시)
+            let ratioText = "0%";
+            if (totalSchoolStudents3km > 0) {
+                const ratio = (b.studentCount / totalSchoolStudents3km) * 100;
+                ratioText = ratio.toFixed(2) + "%";
+            }
+
+            // 잠정 고객수 계산 (3km 총 학생수의 5%를 반올림 처리)
+            const potentialCustomers = Math.round(totalSchoolStudents3km * 0.05);
+
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
 
@@ -917,8 +927,9 @@
                 <div class="rs-header">
                     <span class="rs-title" style="color:#7950f2;">🎓 에이닷 ${b.name} 지점 (반경 3km 분석)</span>
                 </div>
-                <div class="rs-address">📍 지점 학생수: <b style="color:#7950f2;">${b.studentCount.toLocaleString()}명</b></div>
-                <div class="rs-grid">
+                <div class="rs-address">📍 지점 학생수: <b style="color:#7950f2;">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
+                <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
+                <div class="rs-grid" style="margin-top:8px;">
                     <div class="rs-item"><label>🏫 반경 3km 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
                     <div class="rs-item"><label>📚 반경 3km 총 학원 수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
                 </div>
