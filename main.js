@@ -72,7 +72,7 @@
             });
         };
 
-        window.clearRadiusOverlay = function (excludeRecommendCheck = false) {
+        window.clearRadiusOverlay = function (clearRecommendMarkers = false) {
             if (clickCircle) { clickCircle.setMap(null); clickCircle = null; }
             if (clickMarker) { clickMarker.setMap(null); clickMarker = null; }
             if (radiusLabel) { radiusLabel.setMap(null); radiusLabel = null; }
@@ -83,15 +83,10 @@
             if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
             startPoint = null;
 
-            // 🏆 추천 입지 마커 및 필터 체크박스 상태 소거 연동 (요청 시 제외 가능)
-            if (!excludeRecommendCheck) {
+            // 명시적으로 요청(우클릭이나 X표 클릭)이 있는 경우에만 추천 마커 소거
+            if (clearRecommendMarkers) {
                 recommendOverlays.forEach(ol => ol.setMap(null));
                 recommendOverlays = [];
-                const chkRecommend = document.getElementById('chk-recommend');
-                if (chkRecommend) chkRecommend.checked = false;
-
-                const recPanel = document.getElementById('recommend-panel');
-                if (recPanel) recPanel.style.display = 'none';
             }
 
             closeDetailModal();
@@ -259,19 +254,12 @@
 
             kakao.maps.event.addListener(map, 'rightclick', (mouseEvent) => {
                 if (mouseEvent && mouseEvent.preventDefault) mouseEvent.preventDefault();
-                window.clearRadiusOverlay();
+                window.clearRadiusOverlay(true);
             });
 
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
                 renderSchoolMarkers();
             });
-
-            const chkRecommend = document.getElementById('chk-recommend');
-            if (chkRecommend) {
-                chkRecommend.addEventListener('change', () => {
-                    recommendTop5NewBranches();
-                });
-            }
 
             const btnRecRefresh = document.getElementById('btn-recommend-refresh');
             if (btnRecRefresh) {
@@ -286,7 +274,7 @@
                     e.preventDefault();
                     e.stopPropagation();
                 }
-                window.clearRadiusOverlay();
+                window.clearRadiusOverlay(true);
                 return false;
             });
         }
@@ -700,6 +688,9 @@
 
                     console.log(`🏢 Apartment CSV data successfully parsed: ${apartmentDataList.length} rows`);
                     renderApartmentMarkers();
+
+                    // 🏆 구글 시트 데이터 로딩 완료 시점 추천 자동 연산 최초 기동
+                    recommendTop5NewBranches();
                 })
                 .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
         }
@@ -1349,13 +1340,7 @@
             recommendOverlays.forEach(ol => ol.setMap(null));
             recommendOverlays = [];
 
-            const isChecked = document.getElementById('chk-recommend')?.checked ?? false;
             const recPanel = document.getElementById('recommend-panel');
-
-            if (!isChecked) {
-                if (recPanel) recPanel.style.display = 'none';
-                return;
-            }
 
             const candidates = [];
             const visitedCoords = new Set();
@@ -1522,6 +1507,34 @@
                 card.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     isMarkerClickHandled = true;
+
+                    // 🏆 만약 추천 마커들이 소거된 상태라면, 지도 위에 다시 마커들을 렌더링해 줍니다.
+                    if (recommendOverlays.length === 0) {
+                        recommendDataList.forEach((recItem, recIndex) => {
+                            const r = recIndex + 1;
+                            const badge = document.createElement('div');
+                            badge.className = `recommend-badge ${r <= 3 ? 'rank-top3' : ''}`;
+                            badge.innerHTML = `<span class="rank-num-title">👑 ${r}위</span><span>${recItem.name}</span>`;
+
+                            badge.onclick = (ev) => {
+                                if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+                                isMarkerClickHandled = true;
+                                showRecommendDetailPopup(recItem, r);
+                            };
+
+                            const overlay = new kakao.maps.CustomOverlay({
+                                position: recItem.pos,
+                                content: badge,
+                                yAnchor: 0.5,
+                                xAnchor: 0.5,
+                                zIndex: Z_INDEX.RADIUS + 50
+                            });
+
+                            overlay.setMap(map);
+                            recommendOverlays.push(overlay);
+                        });
+                    }
+
                     map.setLevel(6);
                     map.panTo(item.pos);
                     showRecommendDetailPopup(item, absoluteRank);
@@ -1592,15 +1605,9 @@
             closeBtn.innerHTML = '✕';
             closeBtn.onclick = (e) => {
                 if (e) { e.preventDefault(); e.stopPropagation(); }
-                // 🏆 추천 마커 및 필터 체크박스 상태 소거 연동
+                // 🏆 추천 마커 소거
                 recommendOverlays.forEach(ol => ol.setMap(null));
                 recommendOverlays = [];
-                
-                const chkRecommend = document.getElementById('chk-recommend');
-                if (chkRecommend) chkRecommend.checked = false;
-
-                const recPanel = document.getElementById('recommend-panel');
-                if (recPanel) recPanel.style.display = 'none';
 
                 if (radiusLabel) radiusLabel.setMap(null);
             };
