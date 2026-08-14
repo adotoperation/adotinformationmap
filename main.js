@@ -475,7 +475,7 @@
                     content: labelContent,
                     yAnchor: 1.25,
                     clickable: true,
-                    zIndex: Z_INDEX.RADIUS
+                    zIndex: Z_INDEX.RADIUS + 1000
                 });
 
                 radiusLabel.setMap(map);
@@ -1105,7 +1105,7 @@
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,
-                zIndex: Z_INDEX.RADIUS
+                zIndex: Z_INDEX.RADIUS + 1000
             });
 
             radiusLabel.setMap(map);
@@ -1316,7 +1316,7 @@
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,
-                zIndex: Z_INDEX.RADIUS
+                zIndex: Z_INDEX.RADIUS + 1000
             });
 
             radiusLabel.setMap(map);
@@ -1474,7 +1474,7 @@
 
             labelContent.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:#f59e0b;">👑 신규 입지 TOP ${rank} 상세 분석</span>
+                    <span class="rs-title" style="color:#f59e0b;">👑 신규 입지 ${rank}위 상세 분석</span>
                 </div>
                 <div class="rs-address">📍 추천 권역: <b>${item.name}</b></div>
                 <div class="rs-grid">
@@ -1494,7 +1494,7 @@
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,
-                zIndex: Z_INDEX.RADIUS
+                zIndex: Z_INDEX.RADIUS + 1000
             });
 
             radiusLabel.setMap(map);
