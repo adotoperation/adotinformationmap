@@ -369,6 +369,10 @@
 
             let totalSchools3km = 0;
             let totalSchoolStudents3km = 0;
+            let totalHighSchools3km = 0;
+            let totalHighSchoolStudents3km = 0;
+            let totalMiddleSchools3km = 0;
+            let totalMiddleSchoolStudents3km = 0;
             let totalAcademies3km = 0;
             let totalAcademyLocs3km = 0;
             let totalBranchStudents3km = 0;
@@ -382,6 +386,14 @@
                     if (dist <= 3000) {
                         totalSchoolStudents3km += (item.total2026 || 0);
                         totalSchools3km++;
+
+                        if (item.isMiddle) {
+                            totalMiddleSchoolStudents3km += (item.total2026 || 0);
+                            totalMiddleSchools3km++;
+                        } else {
+                            totalHighSchoolStudents3km += (item.total2026 || 0);
+                            totalHighSchools3km++;
+                        }
                     }
                 }
             });
@@ -438,7 +450,9 @@
                     </div>
                     <div class="rs-address">📍 ${addrText}</div>
                     <div class="rs-grid">
-                        <div class="rs-item"><label>🏫 반경 3km 학교 수 / 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
+                        <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
+                        <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
+                        <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
                         <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
                         <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
                         ${totalBranchStudents3km > 0 ? `<div class="rs-item"><label>🎓 반경 3km 에이닷지점 학생수</label><value style="color:#7950f2;">${totalBranchStudents3km.toLocaleString()}명</value></div>` : ''}
@@ -990,6 +1004,10 @@
 
             let totalSchools3km = 0;
             let totalSchoolStudents3km = 0;
+            let totalHighSchools3km = 0;
+            let totalHighSchoolStudents3km = 0;
+            let totalMiddleSchools3km = 0;
+            let totalMiddleSchoolStudents3km = 0;
             let totalAcademies3km = 0;
             let totalAcademyLocs3km = 0;
             let totalApts3km = 0;
@@ -1002,6 +1020,14 @@
                     if (dist <= 3000) {
                         totalSchoolStudents3km += (item.total2026 || 0);
                         totalSchools3km++;
+
+                        if (item.isMiddle) {
+                            totalMiddleSchoolStudents3km += (item.total2026 || 0);
+                            totalMiddleSchools3km++;
+                        } else {
+                            totalHighSchoolStudents3km += (item.total2026 || 0);
+                            totalHighSchools3km++;
+                        }
                     }
                 }
             });
@@ -1055,7 +1081,9 @@
                 <div class="rs-address">📍 지점 학생수: <b style="color:#7950f2;">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
                 <div class="rs-grid" style="margin-top:8px;">
-                    <div class="rs-item"><label>🏫 반경 3km 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
+                    <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
+                    <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
+                    <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
                     <div class="rs-item"><label>📚 반경 3km 총 학원 수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
                     <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
                 </div>
