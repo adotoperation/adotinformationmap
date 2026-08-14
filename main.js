@@ -33,6 +33,7 @@
         let academyOverlays = [];
         let branchOverlays = [];
         let apartmentOverlays = [];
+        let recommendOverlays = [];
         let trendChart = null;
 
         let clickCircle = null;
@@ -79,6 +80,9 @@
             if (distancePolyline) { distancePolyline.setMap(null); distancePolyline = null; }
             if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
             startPoint = null;
+
+            recommendOverlays.forEach(ol => ol.setMap(null));
+            recommendOverlays = [];
 
             closeDetailModal();
         };
@@ -251,6 +255,14 @@
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
                 renderSchoolMarkers();
             });
+
+            const btnRecommend = document.getElementById('btn-recommend-top5');
+            if (btnRecommend) {
+                btnRecommend.addEventListener('click', (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    recommendTop5NewBranches();
+                });
+            }
 
             container.addEventListener('contextmenu', (e) => {
                 if (e) {
@@ -1305,6 +1317,181 @@
 
             radiusLabel = new kakao.maps.CustomOverlay({
                 position: apt.pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS
+            });
+
+            radiusLabel.setMap(map);
+        }
+
+        // 🏆 에이닷 신규 지점 최적지 TOP 5 추천 기능
+        function recommendTop5NewBranches() {
+            window.clearRadiusOverlay();
+            recommendOverlays.forEach(ol => ol.setMap(null));
+            recommendOverlays = [];
+
+            const candidates = [];
+            const visitedCoords = new Set();
+
+            const checkAndAdd = (pos, name) => {
+                if (!pos) return;
+                const key = `${pos.getLat().toFixed(4)}_${pos.getLng().toFixed(4)}`;
+                if (!visitedCoords.has(key)) {
+                    visitedCoords.add(key);
+                    candidates.push({ pos: pos, name: name });
+                }
+            };
+
+            apartmentDataList.forEach(apt => checkAndAdd(apt.pos, apt.address));
+            Object.keys(academyMap).forEach(key => checkAndAdd(academyMap[key].pos, academyMap[key].address));
+
+            if (candidates.length === 0) {
+                alert("입지 분석을 위한 데이터가 충분하지 않습니다.");
+                return;
+            }
+
+            const results = [];
+
+            candidates.forEach(c => {
+                // 조건 1: 기존 에이닷 지점과의 3km 중복 제거 (3km 초과 거리만 가능)
+                let hasExistingBranch3km = false;
+                for (let b of branchDataList) {
+                    if (getDistance(c.pos, b.pos) <= 3000) {
+                        hasExistingBranch3km = true;
+                        break;
+                    }
+                }
+                if (hasExistingBranch3km) return;
+
+                // 3km 반경 내 집계 시뮬레이션
+                let schoolStudents = 0;
+                let highStudents = 0;
+                let middleStudents = 0;
+                let highSchools = 0;
+                let middleSchools = 0;
+                let academyCount = 0;
+                let aptFamilies = 0;
+
+                Object.keys(schoolMap).forEach(code => {
+                    const school = schoolMap[code];
+                    if (school && school.pos && getDistance(c.pos, school.pos) <= 3000) {
+                        schoolStudents += (school.total2026 || 0);
+                        if (school.isMiddle) {
+                            middleStudents += (school.total2026 || 0);
+                            middleSchools++;
+                        } else {
+                            highStudents += (school.total2026 || 0);
+                            highSchools++;
+                        }
+                    }
+                });
+
+                Object.keys(academyMap).forEach(addr => {
+                    const academy = academyMap[addr];
+                    if (academy && academy.pos && getDistance(c.pos, academy.pos) <= 3000) {
+                        academyCount += (academy.count || 0);
+                    }
+                });
+
+                apartmentDataList.forEach(apt => {
+                    if (apt && apt.pos && getDistance(c.pos, apt.pos) <= 3000) {
+                        aptFamilies += (apt.count || 0);
+                    }
+                });
+
+                // 조건 2: 아파트 배후 세대수 1만 세대 이상 보장
+                if (aptFamilies < 10000) return;
+
+                // 조건 3: 학원가 형성 (학원수 1개 이상)
+                if (academyCount === 0) return;
+
+                results.push({
+                    name: c.name,
+                    pos: c.pos,
+                    schoolStudents: schoolStudents,
+                    highStudents: highStudents,
+                    middleStudents: middleStudents,
+                    highSchools: highSchools,
+                    middleSchools: middleSchools,
+                    academyCount: academyCount,
+                    aptFamilies: aptFamilies
+                });
+            });
+
+            // 조건 4: 배후 학교 학생수 기준 내림차순 정렬 및 TOP 5 선정
+            results.sort((a, b) => b.schoolStudents - a.schoolStudents);
+            const top5 = results.slice(0, 5);
+
+            if (top5.length === 0) {
+                alert("조건(기존 지점 3km 이외, 학원가 존재, 아파트 1만세대 이상)을 모두 충족하는 신규 후보지가 없습니다.");
+                return;
+            }
+
+            // 5개 최적지 마커 그리기
+            top5.forEach((item, index) => {
+                const rank = index + 1;
+                const badge = document.createElement('div');
+                badge.className = `recommend-badge ${rank === 1 ? 'rank-1' : ''}`;
+                badge.innerHTML = `<span class="rank-num-title">👑 TOP ${rank}</span><span>${item.name}</span>`;
+
+                badge.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    showRecommendDetailPopup(item, rank);
+                };
+
+                const overlay = new kakao.maps.CustomOverlay({
+                    position: item.pos,
+                    content: badge,
+                    yAnchor: 0.5,
+                    xAnchor: 0.5,
+                    zIndex: Z_INDEX.RADIUS + 50
+                });
+
+                overlay.setMap(map);
+                recommendOverlays.push(overlay);
+            });
+
+            // 1위 후보지로 카메라 이동
+            map.setLevel(6);
+            map.panTo(top5[0].pos);
+        }
+
+        // 🏆 추천 최적지 클릭 전용 팝업
+        function showRecommendDetailPopup(item, rank) {
+            if (radiusLabel) radiusLabel.setMap(null);
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                if (radiusLabel) radiusLabel.setMap(null);
+            };
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:#f59e0b;">👑 신규 입지 TOP ${rank} 상세 분석</span>
+                </div>
+                <div class="rs-address">📍 추천 권역: <b>${item.name}</b></div>
+                <div class="rs-grid">
+                    <div class="rs-item"><label>🏫 반경 3km 총 학교 / 학생수</label><value style="color:#ff6b81;">${item.highSchools + item.middleSchools}개교 (${item.schoolStudents.toLocaleString()}명)</value></div>
+                    <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${item.highSchools}개교 (${item.highStudents.toLocaleString()}명)</value></div>
+                    <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${item.middleSchools}개교 (${item.middleStudents.toLocaleString()}명)</value></div>
+                    <div class="rs-item" style="padding-left: 20px;"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-size:13.5px;">${Math.round(item.schoolStudents * 0.05).toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>📚 반경 3km 총 학원 수</label><value style="color:#1dd1a1;">${item.academyCount.toLocaleString()}개</value></div>
+                    <div class="rs-item"><label>🏢 반경 3km 배후 세대수</label><value style="color:#2ecc71;">${item.aptFamilies.toLocaleString()}세대</value></div>
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            radiusLabel = new kakao.maps.CustomOverlay({
+                position: item.pos,
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,
