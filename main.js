@@ -81,6 +81,12 @@
             if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
             startPoint = null;
 
+            // 🏆 추천 입지 마커 및 필터 체크박스 상태 소거 연동
+            recommendOverlays.forEach(ol => ol.setMap(null));
+            recommendOverlays = [];
+            const chkRecommend = document.getElementById('chk-recommend');
+            if (chkRecommend) chkRecommend.checked = false;
+
             closeDetailModal();
         };
 
@@ -1469,21 +1475,24 @@
             closeBtn.innerHTML = '✕';
             closeBtn.onclick = (e) => {
                 if (e) { e.preventDefault(); e.stopPropagation(); }
+                // 🏆 추천 마커 및 필터 체크박스 상태 소거 연동
+                recommendOverlays.forEach(ol => ol.setMap(null));
+                recommendOverlays = [];
+                const chkRecommend = document.getElementById('chk-recommend');
+                if (chkRecommend) chkRecommend.checked = false;
+
                 if (radiusLabel) radiusLabel.setMap(null);
             };
 
             labelContent.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:#f59e0b;">👑 신규 입지 ${rank}위 상세 분석</span>
+                    <span class="rs-title" style="color:#f59e0b;">👑 신규 입지 ${rank}위 요약</span>
                 </div>
                 <div class="rs-address">📍 추천 권역: <b>${item.name}</b></div>
-                <div class="rs-grid">
-                    <div class="rs-item"><label>🏫 반경 3km 총 학교 / 학생수</label><value style="color:#ff6b81;">${item.highSchools + item.middleSchools}개교 (${item.schoolStudents.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${item.highSchools}개교 (${item.highStudents.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${item.middleSchools}개교 (${item.middleStudents.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 20px;"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-size:13.5px;">${Math.round(item.schoolStudents * 0.05).toLocaleString()}명</value></div>
-                    <div class="rs-item"><label>📚 반경 3km 총 학원 수</label><value style="color:#1dd1a1;">${item.academyCount.toLocaleString()}개</value></div>
-                    <div class="rs-item"><label>🏢 반경 3km 배후 세대수</label><value style="color:#2ecc71;">${item.aptFamilies.toLocaleString()}세대</value></div>
+                <div class="rs-grid" style="margin-top: 8px;">
+                    <div class="rs-item"><label>🏫 중·고교 총 학생수</label><value style="color:#ff6b81;">${item.schoolStudents.toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>🎯 잠재 고객수 (5%)</label><value style="color:#f43f5e;">${Math.round(item.schoolStudents * 0.05).toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>🏢 배후 아파트 세대수</label><value style="color:#2ecc71;">${item.aptFamilies.toLocaleString()}세대</value></div>
                 </div>
             `;
 
