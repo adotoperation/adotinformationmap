@@ -736,6 +736,46 @@
                     renderAcademyMarkers();
                 })
                 .catch(err => { console.error('Academy CSV Data fetch error:', err); });
+
+            // 4. 아파트 세대수 데이터 (GID: 642130592)
+            fetch(APARTMENT_CSV_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
+                .then(data => {
+                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
+                        console.error('Apartment data response is HTML (Google Sheet non-public or login redirect)');
+                        return;
+                    }
+                    const rows = data.split('\n').slice(1);
+                    apartmentDataList = [];
+
+                    rows.forEach(row => {
+                        if (!row.trim()) return;
+                        const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        if (columns.length < 4) return;
+
+                        const address = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                        const countStr = columns[1] ? columns[1].replace(/"/g, '').replace(/[^0-9]/g, '').trim() : '';
+                        const count = parseInt(countStr, 10) || 0;
+                        const lat = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                        const lng = parseFloat(columns[3]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+
+                        if (address && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
+                            const pos = new kakao.maps.LatLng(lat, lng);
+                            apartmentDataList.push({
+                                address: address,
+                                count: count,
+                                pos: pos
+                            });
+                        }
+                    });
+
+                    console.log(`🏢 Apartment CSV data successfully parsed: ${apartmentDataList.length} rows`);
+                    renderApartmentMarkers();
+                })
+                .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
  
             // 3. RDB_YoY (GID 452840178) 먼저 로딩 후 RDB_지점좌표 (GID 211834294) 순차 로딩 (학생수 0명 방지)
             fetch(YOY_CSV_URL)
