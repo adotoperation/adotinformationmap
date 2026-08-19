@@ -14,6 +14,7 @@
         const ACADEMY_CSV_URL = `/api/academy_data`; // GID 1376867691 : RDB_학원정보
         const BRANCH_CSV_URL = `/api/branch_data`;    // GID 211834294 : RDB_지점좌표
         const APARTMENT_CSV_URL = `/api/apartment_data`; // GID 642130592 : RDB_아파트세대수
+        const YOY_CSV_URL = `/api/yoy_data`;         // GID 452840178 : RDB_YoY (전 지점 최신 학생수 & 증감율)
 
         const Z_INDEX = {
             SCHOOL: 2200,
@@ -27,6 +28,7 @@
         let academyMap = {};
         let branchDataList = [];
         let apartmentDataList = [];
+        let rdbYoyMap = {};
 
         let schoolOverlays = [];
         let clusterOverlays = [];
@@ -37,49 +39,7 @@
         let candidateOverlays = [];
         let trendChart = null;
 
-        const RDB_YOY_MAP = {
-            "김포사우지점": { rank: 1, yoy: 182, count: 301, inc: 119, rate: 65 },
-            "부산명지지점": { rank: 2, yoy: 73, count: 175, inc: 103, rate: 141 },
-            "부산진구지점": { rank: 3, yoy: 121, count: 210, inc: 89, rate: 74 },
-            "수원장안지점": { rank: 4, yoy: 334, count: 409, inc: 74, rate: 22 },
-            "위례지점": { rank: 5, yoy: 92, count: 141, inc: 48, rate: 52 },
-            "대구침산지점": { rank: 6, yoy: 65, count: 109, inc: 46, rate: 71 },
-            "인천청라지점": { rank: 7, yoy: 98, count: 136, inc: 39, rate: 40 },
-            "세종보람지점": { rank: 8, yoy: 66, count: 100, inc: 35, rate: 53 },
-            "산본지점": { rank: 9, yoy: 363, count: 394, inc: 32, rate: 9 },
-            "대전관저지점": { rank: 10, yoy: 60, count: 81, inc: 21, rate: 35 },
-            "수원호매실지점": { rank: 11, yoy: 51, count: 71, inc: 20, rate: 39 },
-            "성남지점": { rank: 12, yoy: 324, count: 335, inc: 18, rate: 6 },
-            "부산사하지점": { rank: 13, yoy: 143, count: 159, inc: 16, rate: 11 },
-            "창원상남지점": { rank: 14, yoy: 189, count: 203, inc: 16, rate: 8 },
-            "목동지점": { rank: 15, yoy: 48, count: 62, inc: 14, rate: 29 },
-            "청주상당지점": { rank: 16, yoy: 168, count: 182, inc: 14, rate: 8 },
-            "마곡지점": { rank: 17, yoy: 109, count: 120, inc: 12, rate: 11 },
-            "은평지점": { rank: 18, yoy: 72, count: 84, inc: 12, rate: 17 },
-            "의정부지점": { rank: 19, yoy: 52, count: 62, inc: 10, rate: 19 },
-            "전주지점": { rank: 20, yoy: 128, count: 136, inc: 8, rate: 6 },
-            "아산지점": { rank: 21, yoy: 202, count: 211, inc: 6, rate: 3 },
-            "양주옥정지점": { rank: 22, yoy: 50, count: 53, inc: 3, rate: 6 },
-            "오산지점": { rank: 23, yoy: 78, count: 77, inc: 2, rate: 3 },
-            "인천송도지점": { rank: 24, yoy: 125, count: 126, inc: 1, rate: 1 },
-            "평촌지점": { rank: 25, yoy: 219, count: 220, inc: 1, rate: 0 },
-            "수원영통지점": { rank: 26, yoy: 179, count: 177, inc: -2, rate: -1 },
-            "안산초지지점": { rank: 27, yoy: 39, count: 34, inc: -5, rate: -13 },
-            "인천부평지점": { rank: 28, yoy: 71, count: 66, inc: -5, rate: -7 },
-            "진주지점": { rank: 29, yoy: 59, count: 52, inc: -7, rate: -12 },
-            "분당지점": { rank: 30, yoy: 69, count: 61, inc: -8, rate: -12 },
-            "광명하안지점": { rank: 31, yoy: 65, count: 56, inc: -9, rate: -14 },
-            "부천상동지점": { rank: 32, yoy: 77, count: 68, inc: -9, rate: -12 },
-            "광주수완지점": { rank: 33, yoy: 72, count: 62, inc: -10, rate: -14 },
-            "대구달서지점": { rank: 34, yoy: 207, count: 197, inc: -10, rate: -5 },
-            "대전유성지점": { rank: 35, yoy: 118, count: 108, inc: -10, rate: -8 },
-            "광주태전지점": { rank: 36, yoy: 29, count: 18, inc: -11, rate: -38 },
-            "마포지점": { rank: 37, yoy: 70, count: 59, inc: -11, rate: -16 },
-            "인천논현지점": { rank: 38, yoy: 200, count: 189, inc: -11, rate: -6 },
-            "대전둔산지점": { rank: 39, yoy: 129, count: 117, inc: -12, rate: -9 },
-            "시흥은행지점": { rank: 40, yoy: 98, count: 86, inc: -12, rate: -12 },
-            "안산고잔지점": { rank: 41, yoy: 142, count: 128, inc: -14, rate: -10 }
-        };
+
 
         const TOP10_GROWTH_BRANCHES = [
             { rank: 1, name: "김포사우지점", lat: 37.6186, lng: 126.7161, count: 301, inc: 119, rate: "65%", note: "김포한강신도시 인근 및 사우동 주거밀집지" },
@@ -856,6 +816,58 @@
                     renderApartmentMarkers();
                 })
                 .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
+
+            // 5. RDB_YoY 전 지점 데이터 (GID: 452840178)
+            fetch(YOY_CSV_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
+                .then(data => {
+                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
+                        console.error('YoY data response is HTML');
+                        return;
+                    }
+                    const rows = data.split('\n').slice(1);
+                    rdbYoyMap = {};
+                    let rankIndex = 1;
+
+                    rows.forEach(row => {
+                        if (!row.trim()) return;
+                        const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        if (columns.length < 5) return;
+
+                        const name = (columns[0] || "").replace(/"/g, '').trim();
+                        const yoy = parseInt(columns[1]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                        const count = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                        const inc = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                        const rate = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+
+                        if (name) {
+                            rdbYoyMap[name] = {
+                                rank: rankIndex++,
+                                yoy,
+                                count,
+                                inc,
+                                rate
+                            };
+                        }
+                    });
+
+                    console.log(`📊 RDB_YoY CSV data successfully loaded: ${Object.keys(rdbYoyMap).length} branches`);
+                    
+                    // 지점 학생수 최신 연동 및 마커 재렌더링
+                    branchDataList.forEach(b => {
+                        const yoyInfo = getYoYInfo(b.name);
+                        if (yoyInfo && yoyInfo.count) {
+                            b.studentCount = yoyInfo.count;
+                        }
+                    });
+
+                    renderBranchMarkers();
+                    updateGlobalSummaryBar();
+                })
+                .catch(err => { console.error('YoY CSV Data fetch error:', err); });
         }
  
         // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
@@ -1098,11 +1110,11 @@
         function getYoYInfo(branchName) {
             if (!branchName) return null;
             const clean = branchName.replace(/지점$/, '').trim();
-            const key = Object.keys(RDB_YOY_MAP).find(k => {
+            const key = Object.keys(rdbYoyMap).find(k => {
                 const kClean = k.replace(/지점$/, '').trim();
                 return kClean === clean || clean.includes(kClean) || kClean.includes(clean);
             });
-            return key ? RDB_YOY_MAP[key] : null;
+            return key ? rdbYoyMap[key] : null;
         }
 
         // 🎓 에이닷지점 마커 렌더링 (Top 10 성장 지점 황금색 & 전체 RDB_YoY 반영)
