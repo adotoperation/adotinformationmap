@@ -39,28 +39,28 @@
 
         const RDB_YOY_MAP = {
             "김포사우지점": { rank: 1, yoy: 182, count: 301, inc: 119, rate: 65 },
-            "부산명지지점": { rank: 2, yoy: 73, count: 176, inc: 103, rate: 141 },
+            "부산명지지점": { rank: 2, yoy: 73, count: 175, inc: 103, rate: 141 },
             "부산진구지점": { rank: 3, yoy: 121, count: 210, inc: 89, rate: 74 },
-            "수원장안지점": { rank: 4, yoy: 334, count: 408, inc: 74, rate: 22 },
-            "위례지점": { rank: 5, yoy: 92, count: 140, inc: 48, rate: 52 },
-            "대구침산지점": { rank: 6, yoy: 65, count: 111, inc: 46, rate: 71 },
-            "인천청라지점": { rank: 7, yoy: 98, count: 137, inc: 39, rate: 40 },
-            "세종보람지점": { rank: 8, yoy: 66, count: 101, inc: 35, rate: 53 },
-            "산본지점": { rank: 9, yoy: 363, count: 395, inc: 32, rate: 9 },
+            "수원장안지점": { rank: 4, yoy: 334, count: 409, inc: 74, rate: 22 },
+            "위례지점": { rank: 5, yoy: 92, count: 141, inc: 48, rate: 52 },
+            "대구침산지점": { rank: 6, yoy: 65, count: 109, inc: 46, rate: 71 },
+            "인천청라지점": { rank: 7, yoy: 98, count: 136, inc: 39, rate: 40 },
+            "세종보람지점": { rank: 8, yoy: 66, count: 100, inc: 35, rate: 53 },
+            "산본지점": { rank: 9, yoy: 363, count: 394, inc: 32, rate: 9 },
             "대전관저지점": { rank: 10, yoy: 60, count: 81, inc: 21, rate: 35 },
             "수원호매실지점": { rank: 11, yoy: 51, count: 71, inc: 20, rate: 39 },
-            "성남지점": { rank: 12, yoy: 324, count: 342, inc: 18, rate: 6 },
+            "성남지점": { rank: 12, yoy: 324, count: 335, inc: 18, rate: 6 },
             "부산사하지점": { rank: 13, yoy: 143, count: 159, inc: 16, rate: 11 },
-            "창원상남지점": { rank: 14, yoy: 189, count: 205, inc: 16, rate: 8 },
+            "창원상남지점": { rank: 14, yoy: 189, count: 203, inc: 16, rate: 8 },
             "목동지점": { rank: 15, yoy: 48, count: 62, inc: 14, rate: 29 },
             "청주상당지점": { rank: 16, yoy: 168, count: 182, inc: 14, rate: 8 },
-            "마곡지점": { rank: 17, yoy: 109, count: 121, inc: 12, rate: 11 },
+            "마곡지점": { rank: 17, yoy: 109, count: 120, inc: 12, rate: 11 },
             "은평지점": { rank: 18, yoy: 72, count: 84, inc: 12, rate: 17 },
             "의정부지점": { rank: 19, yoy: 52, count: 62, inc: 10, rate: 19 },
             "전주지점": { rank: 20, yoy: 128, count: 136, inc: 8, rate: 6 },
-            "아산지점": { rank: 21, yoy: 202, count: 208, inc: 6, rate: 3 },
+            "아산지점": { rank: 21, yoy: 202, count: 211, inc: 6, rate: 3 },
             "양주옥정지점": { rank: 22, yoy: 50, count: 53, inc: 3, rate: 6 },
-            "오산지점": { rank: 23, yoy: 78, count: 80, inc: 2, rate: 3 },
+            "오산지점": { rank: 23, yoy: 78, count: 77, inc: 2, rate: 3 },
             "인천송도지점": { rank: 24, yoy: 125, count: 126, inc: 1, rate: 1 },
             "평촌지점": { rank: 25, yoy: 219, count: 220, inc: 1, rate: 0 },
             "수원영통지점": { rank: 26, yoy: 179, count: 177, inc: -2, rate: -1 },
@@ -798,8 +798,10 @@
                         const branchName = (columns[0] || "").replace(/"/g, '').trim();
                         const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
                         const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                        const yoyInfo = getYoYInfo(branchName);
                         const studentCountStr = columns[3] ? columns[3].replace(/"/g, '').replace(/[^0-9]/g, '').trim() : '';
-                        const studentCount = parseInt(studentCountStr, 10) || 0;
+                        const csvStudentCount = parseInt(studentCountStr, 10) || 0;
+                        const studentCount = (yoyInfo && yoyInfo.count) ? yoyInfo.count : csvStudentCount;
  
                         if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
                             const pos = new kakao.maps.LatLng(lat, lng);
