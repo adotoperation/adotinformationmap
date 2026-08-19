@@ -362,6 +362,11 @@
 
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
                 renderSchoolMarkers();
+                renderApartmentMarkers();
+            });
+
+            kakao.maps.event.addListener(map, 'idle', () => {
+                renderApartmentMarkers();
             });
 
             container.addEventListener('contextmenu', (e) => {
@@ -1637,16 +1642,22 @@
             });
         }
 
-        // 🏢 아파트 세대수 마커 렌더링
+        // 🏢 아파트 세대수 마커 렌더링 (화면 뷰포트 영역 실시간 필터링 적용)
         function renderApartmentMarkers() {
             apartmentOverlays.forEach(ol => ol.setMap(null));
             apartmentOverlays = [];
 
             const isApartmentChecked = document.getElementById('chk-apartment')?.checked ?? false;
-            console.log(`🏢 Checking apartment filter state: ${isApartmentChecked}. Current data size: ${apartmentDataList.length}`);
             if (!isApartmentChecked) return;
 
+            const bounds = map.getBounds();
+            const zoomLevel = map.getLevel();
+
             apartmentDataList.forEach(apt => {
+                if (!apt || !apt.pos) return;
+                // 화면 영역(bounds) 내에 있는 아파트 마커만 렌더링하여 렉 없이 즉각 표출
+                if (bounds && !bounds.contain(apt.pos)) return;
+
                 const circleClass = getApartmentCircleClass(apt.count);
 
                 const labelContent = document.createElement('div');
@@ -1667,12 +1678,13 @@
                     yAnchor: 0.5,
                     xAnchor: 0.5,
                     clickable: true,
-                    zIndex: Z_INDEX.ACADEMY - 50 // 학원가보다 약간 아래 레이어
+                    zIndex: Z_INDEX.ACADEMY - 50
                 });
 
                 overlay.setMap(map);
                 apartmentOverlays.push(overlay);
             });
+            console.log(`🏢 Rendered ${apartmentOverlays.length} apartment markers in current map bounds.`);
         }
 
         // 🏢 아파트 세대수 색상 스케일 매핑
