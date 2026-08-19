@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/data", "dest": "/api/data.js" },
-    { "src": "/api/academy_data", "dest": "/api/academy_data.js" },
-    { "src": "/api/branch_data", "dest": "/api/branch_data.js" },
-    { "src": "/api/apartment_data", "dest": "/api/apartment_data.js" }
+  "rewrites": [
+    { "source": "/api/data", "destination": "/api/data.js" },
+    { "source": "/api/academy_data", "destination": "/api/academy_data.js" },
+    { "source": "/api/branch_data", "destination": "/api/branch_data.js" },
+    { "source": "/api/apartment_data", "destination": "/api/apartment_data.js" }
   ]
 }
+

@@ -6,7 +6,8 @@ export default async function handler(req, res) {
         const response = await fetch(googleAcademyCsvUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-            }
+            },
+            redirect: 'follow'
         });
         
         if (!response.ok) {
@@ -14,6 +15,13 @@ export default async function handler(req, res) {
         }
         
         const csvText = await response.text();
+
+        if (csvText.trim().startsWith('<!DOCTYPE html') || csvText.includes('<html')) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            return res.status(401).json({ 
+                error: 'Google Sheet access denied. Google Sheets에서 "웹에 게시(Publish to web)" 설정을 확인해주세요.' 
+            });
+        }
         
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,6 +29,8 @@ export default async function handler(req, res) {
         res.status(200).send(csvText);
     } catch (error) {
         console.error('Vercel API Academy Data Fetch Error:', error);
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(500).json({ error: 'Failed to fetch academy data from Google Sheets' });
     }
 }
+

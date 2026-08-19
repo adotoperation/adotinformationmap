@@ -496,8 +496,15 @@
         function loadAllGoogleSheetData() {
             // 1. 학교 데이터 (GID: 630627369, A열: 26/1/1 연월 필터링)
             fetch(SCHOOL_CSV_URL)
-                .then(response => response.text())
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
                 .then(data => {
+                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
+                        console.error('School data response is HTML (Google Sheet non-public or login redirect)');
+                        return;
+                    }
                     const rows = data.split('\n').slice(1);
                     schoolMap = {};
 
@@ -572,8 +579,15 @@
  
             // 2. 학원가 데이터 (GID: 1376867691)
             fetch(ACADEMY_CSV_URL)
-                .then(response => response.text())
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
                 .then(data => {
+                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
+                        console.error('Academy data response is HTML (Google Sheet non-public or login redirect)');
+                        return;
+                    }
                     const rows = data.split('\n').slice(1);
                     academyMap = {};
  
@@ -612,8 +626,15 @@
  
             // 3. 지점 데이터 (GID: 211834294)
             fetch(BRANCH_CSV_URL)
-                .then(response => response.text())
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
                 .then(data => {
+                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
+                        console.error('Branch data response is HTML (Google Sheet non-public or login redirect)');
+                        return;
+                    }
                     const rows = data.split('\n').slice(1);
                     branchDataList = [];
  
@@ -644,8 +665,15 @@
 
             // 4. 아파트 세대수 데이터 (GID: 642130592)
             fetch(APARTMENT_CSV_URL)
-                .then(response => response.text())
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
                 .then(data => {
+                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
+                        console.error('Apartment data response is HTML (Google Sheet non-public or login redirect)');
+                        return;
+                    }
                     const rows = data.split('\n').slice(1);
                     apartmentDataList = [];
 
