@@ -1199,6 +1199,75 @@
             });
         }
 
+        function calculate3kmMetrics(position) {
+            let totalSchools3km = 0;
+            let totalSchoolStudents3km = 0;
+            let totalHighSchools3km = 0;
+            let totalHighSchoolStudents3km = 0;
+            let totalMiddleSchools3km = 0;
+            let totalMiddleSchoolStudents3km = 0;
+            let totalAcademies3km = 0;
+            let totalAcademyLocs3km = 0;
+            let totalApts3km = 0;
+            let totalAptFamilies3km = 0;
+
+            Object.keys(schoolMap).forEach(code => {
+                const item = schoolMap[code];
+                if (item && item.pos) {
+                    const dist = getDistance(position, item.pos);
+                    if (dist <= 3000) {
+                        totalSchoolStudents3km += (item.total2026 || 0);
+                        totalSchools3km++;
+
+                        if (item.isMiddle) {
+                            totalMiddleSchoolStudents3km += (item.total2026 || 0);
+                            totalMiddleSchools3km++;
+                        } else {
+                            totalHighSchoolStudents3km += (item.total2026 || 0);
+                            totalHighSchools3km++;
+                        }
+                    }
+                }
+            });
+
+            Object.keys(academyMap).forEach(addr => {
+                const item = academyMap[addr];
+                if (item && item.pos) {
+                    const dist = getDistance(position, item.pos);
+                    if (dist <= 3000) {
+                        totalAcademies3km += (item.count || 0);
+                        totalAcademyLocs3km++;
+                    }
+                }
+            });
+
+            apartmentDataList.forEach(apt => {
+                if (apt && apt.pos) {
+                    const dist = getDistance(position, apt.pos);
+                    if (dist <= 3000) {
+                        totalAptFamilies3km += (apt.count || 0);
+                        totalApts3km++;
+                    }
+                }
+            });
+
+            const potentialCustomers = Math.round(totalSchoolStudents3km * 0.05);
+
+            return {
+                totalSchools3km,
+                totalSchoolStudents3km,
+                totalHighSchools3km,
+                totalHighSchoolStudents3km,
+                totalMiddleSchools3km,
+                totalMiddleSchoolStudents3km,
+                totalAcademies3km,
+                totalAcademyLocs3km,
+                totalApts3km,
+                totalAptFamilies3km,
+                potentialCustomers
+            };
+        }
+
         function showCandidateOverlayPopup(c) {
             window.clearRadiusOverlay();
 
