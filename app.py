@@ -66,7 +66,7 @@ if __name__ == '__main__':
     
     window = webview.create_window(
         '전국 학교 & 학원가 & 지점 통합 분석 지도',
-        f'http://127.0.0.1:{PORT}',
+        f'http://localhost:{PORT}',
         width=1400,
         height=900,
         min_size=(1024, 768)
