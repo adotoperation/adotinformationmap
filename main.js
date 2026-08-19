@@ -55,7 +55,8 @@
         ];
 
         const CANDIDATE_LOCATIONS = [
-            // 🏭 1. 반도체 (Semiconductor) 배후도시 및 핵심지구
+            // 🏭 1. 반도체 및 소부장 (Semiconductor & Equipment) 배후도시 및 핵심지구
+            { name: "김포골드밸리 (양촌·학운 산단)", category: "첨단소부장/광반도체", lat: 37.6420, lng: 126.5820, desc: "9개 산단(190만 평) 1,700여 개 기업 밀집 & 광반도체·소부장 대기업 공급망 핵심 배후" },
             { name: "용인 처인구(원삼·남사)", category: "반도체 배후", lat: 37.1950, lng: 127.2000, desc: "SK하이닉스 반도체 클러스터 & 삼성전자 시스템반도체 국가산단 조성 배후" },
             { name: "경기 오산 세교 2·3지구", category: "반도체 배후", lat: 37.1720, lng: 127.0560, desc: "화성·용인·평택 반도체 벨트 중심 직주근접 대표 배후 도시" },
             { name: "충남 아산 탕정·천안", category: "반도체/자동차", lat: 36.7865, lng: 127.0601, desc: "삼성디스플레이 아산캠퍼스 및 삼성전자 온양·천안 사업장(HBM 생산시설) 배후" },
@@ -1259,12 +1260,26 @@
                 window.clearRadiusOverlay();
             };
 
+            let extraIndustryInfo = '';
+            if (c.name.includes("김포") || c.name.includes("골드밸리") || c.name.includes("학운")) {
+                extraIndustryInfo = `
+                    <div style="margin-top:10px; padding:10px 12px; background:rgba(245, 158, 11, 0.12); border:1px solid rgba(245, 158, 11, 0.35); border-radius:8px; font-size:12px; line-height:1.55; color:#fef08a; text-align:left;">
+                        <div style="font-weight:700; color:#fbbf24; margin-bottom:4px; font-size:13px;">🏭 [김포시 코스피 대장주 연관 산업 특징]</div>
+                        <div style="color:#e2e8f0; margin-bottom:6px;">앞서 살펴본 김포사우지점이 포함된 김포시 지역은 코스피 핵심 대장주 산업들과 다음과 같은 깊은 연관성과 특징을 가지고 있습니다.</div>
+                        <div style="font-weight:700; color:#60a5fa; margin-top:6px;">1. 경기 서북부 첨단 산업 및 소재·부품·장비(소부장) 배후 벨트</div>
+                        <div style="margin-top:4px; color:#cbd5e1;">• <b>김포골드밸리 (양촌·학운 산업단지 일대)</b>: 김포시 양촌읍 학운리 일원에는 9개의 일반 산업단지(약 190만 평 규모)가 조성되어 있으며, 기계, 금속, 전기·전자, 화학 등 1,700여 개의 중소·중견 제조 및 부품 기업들이 입주해 있습니다. 이들은 인근 수도권 대기업들의 공급망을 뒷받침하는 핵심 소부장 역할을 하고 있습니다.</div>
+                        <div style="margin-top:4px; color:#cbd5e1;">• <b>광반도체 및 차세대 부품 연계</b>: 김포 학운산단 등에서는 전기·광학 신호 해독 장치 및 관련 광반도체·정밀기기 제조와 관련된 기술 개발 및 산업 인프라가 점차 확충되는 추세입니다.</div>
+                    </div>
+                `;
+            }
+
             labelContent.innerHTML = `
                 <div class="rs-header">
                     <span class="rs-title" style="color:#fbbf24;">🎯 [신규지점 유력 후보지] ${c.name}</span>
                 </div>
                 <div class="rs-address">🏷️ 구분: <b style="color:#fbbf24;">${c.category}</b></div>
                 <div class="rs-address" style="margin-top:4px;">💡 입지 및 유입 특징: <b>${c.desc}</b></div>
+                ${extraIndustryInfo}
                 
                 <div class="rs-header" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.15); padding-top:8px;">
                     <span class="rs-title" style="color:#60a5fa;">🎯 반경 3km 학교 & 학원가 & 아파트 통합 집계</span>
@@ -1440,6 +1455,19 @@
                 }
             }
 
+            let extraIndustryInfo = '';
+            if (b.name.includes("김포") || b.name.includes("골드밸리") || b.name.includes("학운")) {
+                extraIndustryInfo = `
+                    <div style="margin-top:10px; padding:10px 12px; background:rgba(245, 158, 11, 0.12); border:1px solid rgba(245, 158, 11, 0.35); border-radius:8px; font-size:12px; line-height:1.55; color:#fef08a; text-align:left;">
+                        <div style="font-weight:700; color:#fbbf24; margin-bottom:4px; font-size:13px;">🏭 [김포시 코스피 대장주 연관 산업 특징]</div>
+                        <div style="color:#e2e8f0; margin-bottom:6px;">앞서 살펴본 김포사우지점이 포함된 김포시 지역은 코스피 핵심 대장주 산업들과 다음과 같은 깊은 연관성과 특징을 가지고 있습니다.</div>
+                        <div style="font-weight:700; color:#60a5fa; margin-top:6px;">1. 경기 서북부 첨단 산업 및 소재·부품·장비(소부장) 배후 벨트</div>
+                        <div style="margin-top:4px; color:#cbd5e1;">• <b>김포골드밸리 (양촌·학운 산업단지 일대)</b>: 김포시 양촌읍 학운리 일원에는 9개의 일반 산업단지(약 190만 평 규모)가 조성되어 있으며, 기계, 금속, 전기·전자, 화학 등 1,700여 개의 중소·중견 제조 및 부품 기업들이 입주해 있습니다. 이들은 인근 수도권 대기업들의 공급망을 뒷받침하는 핵심 소부장 역할을 하고 있습니다.</div>
+                        <div style="margin-top:4px; color:#cbd5e1;">• <b>광반도체 및 차세대 부품 연계</b>: 김포 학운산단 등에서는 전기·광학 신호 해독 장치 및 관련 광반도체·정밀기기 제조와 관련된 기술 개발 및 산업 인프라가 점차 확충되는 추세입니다.</div>
+                    </div>
+                `;
+            }
+
             labelContent.innerHTML = `
                 <div class="rs-header">
                     <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${isTop10 ? `(#${yoyInfo.rank} 성장지점)` : ''} (반경 3km 분석)</span>
@@ -1447,6 +1475,7 @@
                 <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
                 ${yoyBanner}
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
+                ${extraIndustryInfo}
                 <div class="rs-grid" style="margin-top:8px;">
                     <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
                     <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
