@@ -186,7 +186,6 @@
 
         setupUIEvents();
         loadAllGoogleSheetData();
-        renderTop10BranchMarkers();
         renderCandidateMarkers();
 
         setInterval(() => {
@@ -232,7 +231,6 @@
 
             // 🔘 필터 체크박스 이벤트 연결
             const chkBranch = document.getElementById('chk-branch');
-            const chkTop10 = document.getElementById('chk-top10');
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
@@ -240,7 +238,6 @@
             const chkApartment = document.getElementById('chk-apartment');
 
             if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
-            if (chkTop10) chkTop10.addEventListener('change', () => renderTop10BranchMarkers());
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
@@ -256,7 +253,6 @@
                     const keyword = e.target.value.trim().toLowerCase();
                     if (!keyword) { searchResults.style.display = 'none'; return; }
 
-                    const matchingTop10 = TOP10_GROWTH_BRANCHES.filter(t => t.name.toLowerCase().includes(keyword) || t.note.toLowerCase().includes(keyword));
                     const matchingCandidates = CANDIDATE_LOCATIONS.filter(c => c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword) || c.desc.toLowerCase().includes(keyword));
 
                     const matchingSchoolKeys = Object.keys(schoolMap).filter(codeKey => {
@@ -269,14 +265,15 @@
                     const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
 
                     let html = '';
-                    matchingTop10.forEach(t => {
-                        html += `<div class="search-item" data-type="top10" data-name="${t.name}" data-lat="${t.lat}" data-lng="${t.lng}">🔥 [Top 10 성장] #${t.rank} ${t.name} (+${t.inc}명 / ${t.rate})</div>`;
+                    matchingBranches.forEach(b => {
+                        const key = Object.keys(TOP10_GROWTH_MAP).find(k => b.name.includes(k));
+                        const top10Info = key ? TOP10_GROWTH_MAP[key] : null;
+                        const icon = top10Info ? `⭐ [Top10 #${top10Info.rank} 지점]` : `🎓 [에이닷지점]`;
+                        const badge = top10Info ? ` <span style="color:#f59e0b; font-weight:bold;">(+${top10Info.inc}명 / +${top10Info.rate}%↑)</span>` : '';
+                        html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">${icon} ${b.name} (학생수: ${b.studentCount}명${badge})</div>`;
                     });
                     matchingCandidates.slice(0, 6).forEach(c => {
                         html += `<div class="search-item" data-type="candidate" data-name="${c.name}" data-lat="${c.lat}" data-lng="${c.lng}">🎯 [${c.category}] ${c.name} (${c.desc.slice(0, 20)}...)</div>`;
-                    });
-                    matchingBranches.forEach(b => {
-                        html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">🎓 [에이닷지점] ${b.name} (학생수: ${b.studentCount}명)</div>`;
                     });
                     matchingSchoolKeys.slice(0, 6).forEach(codeKey => {
                         const item = schoolMap[codeKey];
@@ -306,12 +303,12 @@
                     const item = e.target.closest('.search-item');
                     if (item) {
                         const type = item.dataset.type;
-                        if (type === 'top10') {
+                        if (type === 'branch') {
                             const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
                             map.setLevel(6);
                             map.panTo(pos);
-                            const tObj = TOP10_GROWTH_BRANCHES.find(t => t.name === item.dataset.name);
-                            if (tObj) showTop10OverlayPopup(tObj);
+                            const foundBranch = branchDataList.find(b => b.name === item.dataset.name);
+                            if (foundBranch) showBranchOverlayPopup(foundBranch);
                             searchInput.value = item.dataset.name;
                         } else if (type === 'candidate') {
                             const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
@@ -319,13 +316,6 @@
                             map.panTo(pos);
                             const cObj = CANDIDATE_LOCATIONS.find(c => c.name === item.dataset.name);
                             if (cObj) showCandidateOverlayPopup(cObj);
-                            searchInput.value = item.dataset.name;
-                        } else if (type === 'branch') {
-                            const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
-                            map.setLevel(6);
-                            map.panTo(pos);
-                            const foundBranch = branchDataList.find(b => b.name === item.dataset.name);
-                            if (foundBranch) showBranchOverlayPopup(foundBranch);
                             searchInput.value = item.dataset.name;
                         } else if (type === 'school') {
                             const code = item.dataset.code;
@@ -777,7 +767,8 @@
                         const branchName = (columns[0] || "").replace(/"/g, '').trim();
                         const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
                         const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-                        const studentCount = parseInt(columns[3]?.replace(/"/g, '').trim()) || 0;
+                        const studentCountStr = columns[3] ? columns[3].replace(/"/g, '').replace(/[^0-9]/g, '').trim() : '';
+                        const studentCount = parseInt(studentCountStr, 10) || 0;
  
                         if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
                             const pos = new kakao.maps.LatLng(lat, lng);
@@ -1119,43 +1110,6 @@
             });
         }
 
-        // 🔥 Top 10 성장 지점 마커 렌더링
-        function renderTop10BranchMarkers() {
-            top10BranchOverlays.forEach(ol => ol.setMap(null));
-            top10BranchOverlays = [];
-
-            const isTop10Checked = document.getElementById('chk-top10')?.checked ?? true;
-            if (!isTop10Checked) return;
-
-            TOP10_GROWTH_BRANCHES.forEach(t => {
-                const pos = new kakao.maps.LatLng(t.lat, t.lng);
-                const labelContent = document.createElement('div');
-                labelContent.className = 'top10-branch-overlay';
-                labelContent.innerHTML = `
-                    <span>🔥 #${t.rank} ${t.name}</span>
-                    <span style="font-size:11px; opacity:0.9; margin-left:4px;">(+${t.inc}명 / ${t.rate})</span>
-                `;
-
-                labelContent.onclick = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    isMarkerClickHandled = true;
-                    showTop10OverlayPopup(t);
-                };
-
-                const overlay = new kakao.maps.CustomOverlay({
-                    position: pos,
-                    content: labelContent,
-                    yAnchor: 0.5,
-                    xAnchor: 0.5,
-                    clickable: true,
-                    zIndex: Z_INDEX.BRANCH + 500
-                });
-
-                overlay.setMap(map);
-                top10BranchOverlays.push(overlay);
-            });
-        }
-
         // 🎯 신규지점 유력 후보지 (1/2/3기 신도시 & 택지지구) 마커 렌더링
         function renderCandidateMarkers() {
             candidateOverlays.forEach(ol => ol.setMap(null));
@@ -1191,144 +1145,6 @@
                 overlay.setMap(map);
                 candidateOverlays.push(overlay);
             });
-        }
-
-        function calculate3kmMetrics(position) {
-            let totalSchools3km = 0;
-            let totalSchoolStudents3km = 0;
-            let totalHighSchools3km = 0;
-            let totalHighSchoolStudents3km = 0;
-            let totalMiddleSchools3km = 0;
-            let totalMiddleSchoolStudents3km = 0;
-            let totalAcademies3km = 0;
-            let totalAcademyLocs3km = 0;
-            let totalApts3km = 0;
-            let totalAptFamilies3km = 0;
-
-            Object.keys(schoolMap).forEach(code => {
-                const item = schoolMap[code];
-                if (item && item.pos) {
-                    const dist = getDistance(position, item.pos);
-                    if (dist <= 3000) {
-                        totalSchoolStudents3km += (item.total2026 || 0);
-                        totalSchools3km++;
-
-                        if (item.isMiddle) {
-                            totalMiddleSchoolStudents3km += (item.total2026 || 0);
-                            totalMiddleSchools3km++;
-                        } else {
-                            totalHighSchoolStudents3km += (item.total2026 || 0);
-                            totalHighSchools3km++;
-                        }
-                    }
-                }
-            });
-
-            Object.keys(academyMap).forEach(addr => {
-                const item = academyMap[addr];
-                if (item && item.pos) {
-                    const dist = getDistance(position, item.pos);
-                    if (dist <= 3000) {
-                        totalAcademies3km += (item.count || 0);
-                        totalAcademyLocs3km++;
-                    }
-                }
-            });
-
-            apartmentDataList.forEach(apt => {
-                if (apt && apt.pos) {
-                    const dist = getDistance(position, apt.pos);
-                    if (dist <= 3000) {
-                        totalAptFamilies3km += (apt.count || 0);
-                        totalApts3km++;
-                    }
-                }
-            });
-
-            const potentialCustomers = Math.round(totalSchoolStudents3km * 0.05);
-
-            return {
-                totalSchools3km,
-                totalSchoolStudents3km,
-                totalHighSchools3km,
-                totalHighSchoolStudents3km,
-                totalMiddleSchools3km,
-                totalMiddleSchoolStudents3km,
-                totalAcademies3km,
-                totalAcademyLocs3km,
-                totalApts3km,
-                totalAptFamilies3km,
-                potentialCustomers
-            };
-        }
-
-        function showTop10OverlayPopup(t) {
-            window.clearRadiusOverlay();
-
-            const pos = new kakao.maps.LatLng(t.lat, t.lng);
-            map.panTo(pos);
-
-            clickCircle = new kakao.maps.Circle({
-                center: pos,
-                radius: 3000,
-                strokeWeight: 2,
-                strokeColor: '#f59e0b',
-                strokeOpacity: 0.85,
-                strokeStyle: 'dashed',
-                fillColor: '#f59e0b',
-                fillOpacity: 0.12,
-                zIndex: Z_INDEX.RADIUS - 10
-            });
-            clickCircle.setMap(map);
-
-            const m = calculate3kmMetrics(pos);
-
-            const labelContent = document.createElement('div');
-            labelContent.className = 'radius-summary-label';
-
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'rs-close-btn';
-            closeBtn.innerHTML = '✕';
-            closeBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                window.clearRadiusOverlay();
-            };
-
-            labelContent.innerHTML = `
-                <div class="rs-header">
-                    <span class="rs-title" style="color:#f59e0b;">🔥 [전년대비 성장 Top 10] ${t.rank}위 ${t.name}</span>
-                </div>
-                <div class="rs-address">📍 입지 특징: <b>${t.note}</b></div>
-                <div class="rs-grid" style="margin-top:6px;">
-                    <div class="rs-item"><label>금일 등록 학생수</label><value style="color:#a855f7;">${t.count.toLocaleString()}명</value></div>
-                    <div class="rs-item"><label>전년대비 순증가 인원</label><value style="color:#ef4444;">+${t.inc}명 (${t.rate} 증가)</value></div>
-                </div>
-
-                <div class="rs-header" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.15); padding-top:8px;">
-                    <span class="rs-title" style="color:#60a5fa;">🎯 반경 3km 학교 & 학원가 & 아파트 통합 집계</span>
-                </div>
-                <div class="rs-grid" style="margin-top:6px;">
-                    <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 학생수</label><value style="color:#ff6b81;">${m.totalSchools3km}개교 (${m.totalSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 16px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:12.5px;">${m.totalHighSchools3km}개교 (${m.totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 16px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:12.5px;">${m.totalMiddleSchools3km}개교 (${m.totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-weight:800;">${m.potentialCustomers.toLocaleString()}명</value></div>
-                    <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${m.totalAcademies3km.toLocaleString()}개 (${m.totalAcademyLocs3km}곳)</value></div>
-                    <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${m.totalAptFamilies3km.toLocaleString()}세대 (${m.totalApts3km}곳)</value></div>
-                </div>
-            `;
-
-            labelContent.querySelector('.rs-header').appendChild(closeBtn);
-
-            const overlay = new kakao.maps.CustomOverlay({
-                position: pos,
-                content: labelContent,
-                yAnchor: 1.25,
-                clickable: true,
-                zIndex: Z_INDEX.RADIUS + 1000
-            });
-
-            overlay.setMap(map);
-            popupOverlays.push(overlay);
         }
 
         function showCandidateOverlayPopup(c) {
