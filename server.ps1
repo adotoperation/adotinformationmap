@@ -4,16 +4,16 @@ $listener.Start()
 Write-Host "Server running on http://localhost:8080/"
 
 # GID 630627369 : RDB_당년학교정보 (학교 정보)
-$googleSchoolCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=630627369"
+$googleSchoolCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=630627369"
 
 # GID 1376867691 : RDB_학원정보 (지번 학원 정보)
-$googleAcademyCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=1376867691"
+$googleAcademyCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=1376867691"
 
 # GID 211834294 : RDB_지점좌표 (지점 정보)
-$googleBranchCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=211834294"
+$googleBranchCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=211834294"
 
 # GID 642130592 : RDB_아파트세대수 (아파트 정보)
-$googleApartmentCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=642130592"
+$googleApartmentCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=642130592"
 
 while ($listener.IsListening) {
     $context = $listener.GetContext()

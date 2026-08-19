@@ -1,6 +1,7 @@
 // Vercel Serverless Function: RDB_아파트세대수 (GID 642130592)
 export default async function handler(req, res) {
-    const googleApartmentCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=642130592";
+    const googleApartmentCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=642130592";
+
     
     try {
         const response = await fetch(googleApartmentCsvUrl, {

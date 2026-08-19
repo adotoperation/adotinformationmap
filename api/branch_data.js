@@ -1,6 +1,7 @@
 // Vercel Serverless Function: RDB_지점좌표 (GID 211834294)
 export default async function handler(req, res) {
-    const googleBranchCsvUrl = "https://docs.google.com/spreadsheets/d/1NCnmqHQ1kz0Fjay63LHdoCzXGYgwyUOhYm8cm3y6c9o/pub?output=csv&gid=211834294";
+    const googleBranchCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=211834294";
+
     
     try {
         const response = await fetch(googleBranchCsvUrl, {
