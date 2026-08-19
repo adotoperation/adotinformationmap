@@ -37,17 +37,48 @@
         let candidateOverlays = [];
         let trendChart = null;
 
-        const TOP10_GROWTH_MAP = {
-            "김포사우": { rank: 1, yoy: 182, count: 301, inc: 119, rate: 65 },
-            "부산명지": { rank: 2, yoy: 73, count: 176, inc: 103, rate: 141 },
-            "부산진구": { rank: 3, yoy: 121, count: 210, inc: 89, rate: 74 },
-            "수원장안": { rank: 4, yoy: 334, count: 408, inc: 74, rate: 22 },
-            "위례": { rank: 5, yoy: 92, count: 140, inc: 48, rate: 52 },
-            "대구침산": { rank: 6, yoy: 65, count: 111, inc: 46, rate: 71 },
-            "인천청라": { rank: 7, yoy: 98, count: 137, inc: 39, rate: 40 },
-            "세종보람": { rank: 8, yoy: 66, count: 101, inc: 35, rate: 53 },
-            "산본": { rank: 9, yoy: 363, count: 395, inc: 32, rate: 9 },
-            "대전관저": { rank: 10, yoy: 60, count: 81, inc: 21, rate: 35 }
+        const RDB_YOY_MAP = {
+            "김포사우지점": { rank: 1, yoy: 182, count: 301, inc: 119, rate: 65 },
+            "부산명지지점": { rank: 2, yoy: 73, count: 176, inc: 103, rate: 141 },
+            "부산진구지점": { rank: 3, yoy: 121, count: 210, inc: 89, rate: 74 },
+            "수원장안지점": { rank: 4, yoy: 334, count: 408, inc: 74, rate: 22 },
+            "위례지점": { rank: 5, yoy: 92, count: 140, inc: 48, rate: 52 },
+            "대구침산지점": { rank: 6, yoy: 65, count: 111, inc: 46, rate: 71 },
+            "인천청라지점": { rank: 7, yoy: 98, count: 137, inc: 39, rate: 40 },
+            "세종보람지점": { rank: 8, yoy: 66, count: 101, inc: 35, rate: 53 },
+            "산본지점": { rank: 9, yoy: 363, count: 395, inc: 32, rate: 9 },
+            "대전관저지점": { rank: 10, yoy: 60, count: 81, inc: 21, rate: 35 },
+            "수원호매실지점": { rank: 11, yoy: 51, count: 71, inc: 20, rate: 39 },
+            "성남지점": { rank: 12, yoy: 324, count: 342, inc: 18, rate: 6 },
+            "부산사하지점": { rank: 13, yoy: 143, count: 159, inc: 16, rate: 11 },
+            "창원상남지점": { rank: 14, yoy: 189, count: 205, inc: 16, rate: 8 },
+            "목동지점": { rank: 15, yoy: 48, count: 62, inc: 14, rate: 29 },
+            "청주상당지점": { rank: 16, yoy: 168, count: 182, inc: 14, rate: 8 },
+            "마곡지점": { rank: 17, yoy: 109, count: 121, inc: 12, rate: 11 },
+            "은평지점": { rank: 18, yoy: 72, count: 84, inc: 12, rate: 17 },
+            "의정부지점": { rank: 19, yoy: 52, count: 62, inc: 10, rate: 19 },
+            "전주지점": { rank: 20, yoy: 128, count: 136, inc: 8, rate: 6 },
+            "아산지점": { rank: 21, yoy: 202, count: 208, inc: 6, rate: 3 },
+            "양주옥정지점": { rank: 22, yoy: 50, count: 53, inc: 3, rate: 6 },
+            "오산지점": { rank: 23, yoy: 78, count: 80, inc: 2, rate: 3 },
+            "인천송도지점": { rank: 24, yoy: 125, count: 126, inc: 1, rate: 1 },
+            "평촌지점": { rank: 25, yoy: 219, count: 220, inc: 1, rate: 0 },
+            "수원영통지점": { rank: 26, yoy: 179, count: 177, inc: -2, rate: -1 },
+            "안산초지지점": { rank: 27, yoy: 39, count: 34, inc: -5, rate: -13 },
+            "인천부평지점": { rank: 28, yoy: 71, count: 66, inc: -5, rate: -7 },
+            "진주지점": { rank: 29, yoy: 59, count: 52, inc: -7, rate: -12 },
+            "분당지점": { rank: 30, yoy: 69, count: 61, inc: -8, rate: -12 },
+            "광명하안지점": { rank: 31, yoy: 65, count: 56, inc: -9, rate: -14 },
+            "부천상동지점": { rank: 32, yoy: 77, count: 68, inc: -9, rate: -12 },
+            "광주수완지점": { rank: 33, yoy: 72, count: 62, inc: -10, rate: -14 },
+            "대구달서지점": { rank: 34, yoy: 207, count: 197, inc: -10, rate: -5 },
+            "대전유성지점": { rank: 35, yoy: 118, count: 108, inc: -10, rate: -8 },
+            "광주태전지점": { rank: 36, yoy: 29, count: 18, inc: -11, rate: -38 },
+            "마포지점": { rank: 37, yoy: 70, count: 59, inc: -11, rate: -16 },
+            "인천논현지점": { rank: 38, yoy: 200, count: 189, inc: -11, rate: -6 },
+            "대전둔산지점": { rank: 39, yoy: 129, count: 117, inc: -12, rate: -9 },
+            "시흥은행지점": { rank: 40, yoy: 98, count: 86, inc: -12, rate: -12 },
+            "안산고잔지점": { rank: 41, yoy: 142, count: 128, inc: -14, rate: -10 }
         };
 
         const TOP10_GROWTH_BRANCHES = [
@@ -1062,7 +1093,17 @@
             });
         }
 
-        // 🎓 에이닷지점 마커 렌더링 (Top 10 성장 지점 황금색 & 작년대비 증감율 반영)
+        function getYoYInfo(branchName) {
+            if (!branchName) return null;
+            const clean = branchName.replace(/지점$/, '').trim();
+            const key = Object.keys(RDB_YOY_MAP).find(k => {
+                const kClean = k.replace(/지점$/, '').trim();
+                return kClean === clean || clean.includes(kClean) || kClean.includes(clean);
+            });
+            return key ? RDB_YOY_MAP[key] : null;
+        }
+
+        // 🎓 에이닷지점 마커 렌더링 (Top 10 성장 지점 황금색 & 전체 RDB_YoY 반영)
         function renderBranchMarkers() {
             branchOverlays.forEach(ol => ol.setMap(null));
             branchOverlays = [];
@@ -1071,16 +1112,27 @@
             if (!isBranchChecked) return;
 
             branchDataList.forEach(b => {
-                const key = Object.keys(TOP10_GROWTH_MAP).find(k => b.name.includes(k));
-                const top10Info = key ? TOP10_GROWTH_MAP[key] : null;
+                const yoyInfo = getYoYInfo(b.name);
+                const isTop10 = yoyInfo && yoyInfo.rank <= 10;
 
                 const labelContent = document.createElement('div');
 
-                if (top10Info) {
+                if (isTop10) {
                     labelContent.className = 'top10-branch-overlay';
+                    const incSign = yoyInfo.inc >= 0 ? `+${yoyInfo.inc}` : `${yoyInfo.inc}`;
+                    const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
                     labelContent.innerHTML = `
-                        <span>🔥 #${top10Info.rank} ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${b.studentCount}명 (+${top10Info.inc}명 / ${top10Info.rate}%↑)</span>
+                        <span>🔥 #${yoyInfo.rank} ${b.name}</span>
+                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${b.studentCount}명 (${incSign}명 / ${rateSign})</span>
+                    `;
+                } else if (yoyInfo) {
+                    labelContent.className = 'branch-badge';
+                    const incSign = yoyInfo.inc >= 0 ? `+${yoyInfo.inc}` : `${yoyInfo.inc}`;
+                    const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
+                    const rateColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
+                    labelContent.innerHTML = `
+                        <span>🎓 ${b.name}</span>
+                        <span style="font-size:11px; opacity:0.9; background:rgba(0,0,0,0.3); padding:1px 6px; border-radius:10px;">${b.studentCount}명 <span style="color:${rateColor}; font-weight:600;">(${incSign}명 / ${rateSign})</span></span>
                     `;
                 } else {
                     labelContent.className = 'branch-badge';
@@ -1093,7 +1145,7 @@
                 labelContent.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     isMarkerClickHandled = true;
-                    showBranchOverlayPopup(b, top10Info);
+                    showBranchOverlayPopup(b, yoyInfo);
                 };
 
                 const overlay = new kakao.maps.CustomOverlay({
@@ -1102,7 +1154,7 @@
                     yAnchor: 0.5,
                     xAnchor: 0.5,
                     clickable: true,
-                    zIndex: top10Info ? Z_INDEX.BRANCH + 500 : Z_INDEX.BRANCH
+                    zIndex: isTop10 ? Z_INDEX.BRANCH + 500 : Z_INDEX.BRANCH
                 });
 
                 overlay.setMap(map);
@@ -1253,22 +1305,23 @@
         }
 
         // 🎓 에이닷지점 클릭 시 반경 3km 점선 원 생성 및 반경 3km 내 학생수, 학원수, 학교수 표출
-        function showBranchOverlayPopup(b, top10Info) {
+        function showBranchOverlayPopup(b, yoyInfo) {
             window.clearRadiusOverlay();
 
-            if (!top10Info) {
-                const key = Object.keys(TOP10_GROWTH_MAP).find(k => b.name.includes(k));
-                if (key) top10Info = TOP10_GROWTH_MAP[key];
+            if (!yoyInfo) {
+                yoyInfo = getYoYInfo(b.name);
             }
+
+            const isTop10 = yoyInfo && yoyInfo.rank <= 10;
 
             clickCircle = new kakao.maps.Circle({
                 center: b.pos,
                 radius: 3000,
                 strokeWeight: 2,
-                strokeColor: top10Info ? '#f59e0b' : '#7950f2',
+                strokeColor: isTop10 ? '#f59e0b' : '#7950f2',
                 strokeOpacity: 0.85,
                 strokeStyle: 'dashed',
-                fillColor: top10Info ? '#f59e0b' : '#7950f2',
+                fillColor: isTop10 ? '#f59e0b' : '#7950f2',
                 fillOpacity: 0.14,
                 zIndex: Z_INDEX.RADIUS - 10
             });
@@ -1346,16 +1399,25 @@
                 window.clearRadiusOverlay();
             };
 
-            const top10Banner = top10Info ? `
-                <div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${top10Info.rank}): <b style="color:#ef4444;">+${top10Info.inc}명 (${top10Info.rate}%↑)</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${top10Info.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>
-            ` : '';
+            let yoyBanner = '';
+            if (yoyInfo) {
+                const incSign = yoyInfo.inc >= 0 ? `+${yoyInfo.inc}` : `${yoyInfo.inc}`;
+                const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
+                const incColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
+
+                if (isTop10) {
+                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${yoyInfo.rank}): <b style="color:#ef4444;">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
+                } else {
+                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#ddd;">📈 전년대비 성과 (순위 #${yoyInfo.rank}): <b style="color:${incColor};">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
+                }
+            }
 
             labelContent.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:${top10Info ? '#f59e0b' : '#7950f2'};">${top10Info ? '🔥' : '🎓'} 에이닷 ${b.name} ${top10Info ? `(#${top10Info.rank} 성장지점)` : ''} (반경 3km 분석)</span>
+                    <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${isTop10 ? `(#${yoyInfo.rank} 성장지점)` : ''} (반경 3km 분석)</span>
                 </div>
-                <div class="rs-address">📍 지점 학생수: <b style="color:${top10Info ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
-                ${top10Banner}
+                <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
+                ${yoyBanner}
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
                 <div class="rs-grid" style="margin-top:8px;">
                     <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
