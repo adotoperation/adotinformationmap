@@ -736,138 +736,83 @@
                 })
                 .catch(err => { console.error('Academy CSV Data fetch error:', err); });
  
-            // 3. 지점 데이터 (GID: 211834294)
-            fetch(BRANCH_CSV_URL)
-                .then(res => {
-                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                    return res.text();
-                })
-                .then(data => {
-                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
-                        console.error('Branch data response is HTML (Google Sheet non-public or login redirect)');
-                        return;
-                    }
-                    const rows = data.split('\n').slice(1);
-                    branchDataList = [];
- 
-                    rows.forEach(row => {
-                        if (!row.trim()) return;
-                        const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        if (columns.length < 3) return;
- 
-                        const branchName = (columns[0] || "").replace(/"/g, '').trim();
-                        const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-                        const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-                        const yoyInfo = getYoYInfo(branchName);
-                        const studentCountStr = columns[3] ? columns[3].replace(/"/g, '').replace(/[^0-9]/g, '').trim() : '';
-                        const csvStudentCount = parseInt(studentCountStr, 10) || 0;
-                        const studentCount = (yoyInfo && yoyInfo.count) ? yoyInfo.count : csvStudentCount;
- 
-                        if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
-                            const pos = new kakao.maps.LatLng(lat, lng);
-                            branchDataList.push({
-                                name: branchName,
-                                pos: pos,
-                                studentCount: studentCount
-                            });
-                        }
-                    });
- 
-                    renderBranchMarkers();
-                    updateGlobalSummaryBar();
-                })
-                .catch(err => { console.error('Branch CSV Data fetch error:', err); });
-
-            // 4. 아파트 세대수 데이터 (GID: 642130592)
-            fetch(APARTMENT_CSV_URL)
-                .then(res => {
-                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                    return res.text();
-                })
-                .then(data => {
-                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
-                        console.error('Apartment data response is HTML (Google Sheet non-public or login redirect)');
-                        return;
-                    }
-                    const rows = data.split('\n').slice(1);
-                    apartmentDataList = [];
-
-                    rows.forEach(row => {
-                        if (!row.trim()) return;
-                        const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        if (columns.length < 4) return;
-
-                        const address = (columns[0] || "").replace(/"/g, '').trim();
-                        const count = parseInt(columns[1]?.replace(/"/g, '').trim()) || 0;
-                        const lat = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-                        const lng = parseFloat(columns[3]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-
-                        if (address && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
-                            const pos = new kakao.maps.LatLng(lat, lng);
-                            apartmentDataList.push({
-                                address: address,
-                                count: count,
-                                pos: pos
-                            });
-                        }
-                    });
-
-                    console.log(`🏢 Apartment CSV data successfully parsed: ${apartmentDataList.length} rows`);
-                    renderApartmentMarkers();
-                })
-                .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
-
-            // 5. RDB_YoY 전 지점 데이터 (GID: 452840178)
+            // 3. RDB_YoY (GID 452840178) 먼저 로딩 후 RDB_지점좌표 (GID 211834294) 순차 로딩 (학생수 0명 방지)
             fetch(YOY_CSV_URL)
                 .then(res => {
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     return res.text();
                 })
                 .then(data => {
-                    if (data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) {
-                        console.error('YoY data response is HTML');
-                        return;
+                    if (data && !data.trim().startsWith('<!DOCTYPE html')) {
+                        const rows = data.split('\n').slice(1);
+                        rdbYoyMap = {};
+                        let rankIndex = 1;
+
+                        rows.forEach(row => {
+                            if (!row.trim()) return;
+                            const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                            if (columns.length < 3) return;
+
+                            const name = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                            const yoy = parseInt(columns[1]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                            const count = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                            const inc = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                            const rate = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+
+                            if (name) {
+                                rdbYoyMap[name] = {
+                                    rank: rankIndex++,
+                                    yoy,
+                                    count,
+                                    inc,
+                                    rate
+                                };
+                            }
+                        });
+                        console.log(`📊 RDB_YoY CSV data successfully loaded: ${Object.keys(rdbYoyMap).length} branches`);
                     }
-                    const rows = data.split('\n').slice(1);
-                    rdbYoyMap = {};
-                    let rankIndex = 1;
 
-                    rows.forEach(row => {
-                        if (!row.trim()) return;
-                        const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        if (columns.length < 5) return;
-
-                        const name = (columns[0] || "").replace(/"/g, '').trim();
-                        const yoy = parseInt(columns[1]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-                        const count = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-                        const inc = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-                        const rate = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-
-                        if (name) {
-                            rdbYoyMap[name] = {
-                                rank: rankIndex++,
-                                yoy,
-                                count,
-                                inc,
-                                rate
-                            };
-                        }
-                    });
-
-                    console.log(`📊 RDB_YoY CSV data successfully loaded: ${Object.keys(rdbYoyMap).length} branches`);
-                    
-                    // 지점 학생수 최신 연동 및 마커 재렌더링
-                    branchDataList.forEach(b => {
-                        const yoyInfo = getYoYInfo(b.name);
-                        if (yoyInfo && yoyInfo.count) {
-                            b.studentCount = yoyInfo.count;
-                        }
-                    });
-
-                    renderBranchMarkers();
-                    updateGlobalSummaryBar();
+                    // YoY 데이터 파싱 완료 후 지점 좌표 CSV 로딩
+                    return fetch(BRANCH_CSV_URL);
                 })
-                .catch(err => { console.error('YoY CSV Data fetch error:', err); });
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
+                .then(data => {
+                    if (data && !data.trim().startsWith('<!DOCTYPE html')) {
+                        const rows = data.split('\n').slice(1);
+                        branchDataList = [];
+
+                        rows.forEach(row => {
+                            if (!row.trim()) return;
+                            const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                            if (columns.length < 3) return;
+
+                            const branchName = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                            const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                            const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                            const csvStudentCount = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+
+                            const yoyInfo = getYoYInfo(branchName);
+                            const studentCount = (yoyInfo && typeof yoyInfo.count === 'number') ? yoyInfo.count : csvStudentCount;
+
+                            if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
+                                const pos = new kakao.maps.LatLng(lat, lng);
+                                branchDataList.push({
+                                    name: branchName,
+                                    pos: pos,
+                                    studentCount: studentCount
+                                });
+                            }
+                        });
+
+                        console.log(`🎓 Branch CSV data parsed: ${branchDataList.length} branches`);
+                        renderBranchMarkers();
+                        updateGlobalSummaryBar();
+                    }
+                })
+                .catch(err => { console.error('Branch & YoY CSV fetch error:', err); });
         }
  
         // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
