@@ -749,4 +749,70 @@ html, body, #map {
 .apartment-circle-badge.size-sm .badge-count-num { font-size: 9.5px; }
 .apartment-circle-badge.size-xs .badge-count-num { font-size: 8.5px; }
 
+/* 🔥 Top 10 성장 지점 네온 뱃지 마커 */
+.top10-branch-overlay {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(245, 158, 11, 0.95));
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.6);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: top10Pulse 2s infinite alternate;
+}
+
+.top10-branch-overlay:hover {
+    transform: scale(1.15) translateY(-3px);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.9);
+    z-index: 99999 !important;
+}
+
+@keyframes top10Pulse {
+    0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+    100% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.95); }
+}
+
+/* 🎯 신규지점 유력 후보지 네온 골드 뱃지 마커 */
+.candidate-overlay {
+    background: rgba(15, 23, 42, 0.92);
+    color: #fbbf24;
+    padding: 6px 12px;
+    border-radius: 18px;
+    font-size: 11.5px;
+    font-weight: 800;
+    border: 2px solid #fbbf24;
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.candidate-overlay:hover {
+    transform: scale(1.15) translateY(-3px);
+    background: #fbbf24;
+    color: #0f172a;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.9);
+    z-index: 99999 !important;
+}
+
+.candidate-overlay .cand-tag {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, 0.2);
+    color: #fef08a;
+}
+.candidate-overlay:hover .cand-tag {
+    background: rgba(15, 23, 42, 0.2);
+    color: #0f172a;
+}
+
+
 

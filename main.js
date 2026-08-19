@@ -33,7 +33,73 @@
         let academyOverlays = [];
         let branchOverlays = [];
         let apartmentOverlays = [];
+        let top10BranchOverlays = [];
+        let candidateOverlays = [];
         let trendChart = null;
+
+        const TOP10_GROWTH_BRANCHES = [
+            { rank: 1, name: "김포사우지점", lat: 37.6186, lng: 126.7161, count: 301, inc: 119, rate: "65%", note: "김포한강신도시 인근 및 사우동 주거밀집지" },
+            { rank: 2, name: "부산명지지점", lat: 35.0945, lng: 128.9056, count: 176, inc: 103, rate: "141%", note: "명지국제신도시 학령인구 폭증 지역" },
+            { rank: 3, name: "부산진구지점", lat: 35.1587, lng: 129.0560, count: 210, inc: 89, rate: "74%", note: "도심 재개발 및 신규 대단지 입주 지역" },
+            { rank: 4, name: "수원장안지점", lat: 37.3038, lng: 126.9926, count: 408, inc: 74, rate: "22%", note: "장안구 대단지 아파트 밀집 주거지" },
+            { rank: 5, name: "위례지점", lat: 37.4724, lng: 127.1436, count: 140, inc: 48, rate: "52%", note: "위례신도시 대단지 학령인구 밀집" },
+            { rank: 6, name: "대구침산지점", lat: 35.8885, lng: 128.5898, count: 111, inc: 46, rate: "71%", note: "침산·산격 재개발 신규 아파트 단지" },
+            { rank: 7, name: "인천청라지점", lat: 37.5312, lng: 126.6534, count: 137, inc: 39, rate: "40%", note: "청라국제도시 대단지 학원가 입지" },
+            { rank: 8, name: "세종보람지점", lat: 36.4789, lng: 127.2894, count: 101, inc: 35, rate: "53%", note: "세종 3생활권 행정·주거 복합 지역" },
+            { rank: 9, name: "산본지점", lat: 37.3592, lng: 126.9329, count: 395, inc: 32, rate: "9%", note: "1기 신도시 완성형 학원가 밀집지" },
+            { rank: 10, name: "대전관저지점", lat: 36.2974, lng: 127.3321, count: 81, inc: 21, rate: "35%", note: "관저지구 대단지 아파트 밀집지역" }
+        ];
+
+        const CANDIDATE_LOCATIONS = [
+            // 1기 신도시
+            { name: "분당신도시", category: "1기 신도시", lat: 37.3827, lng: 127.1189, desc: "성남 분당구 - 완성된 인프라 및 명문 학원가 형성 지역" },
+            { name: "일산신도시", category: "1기 신도시", lat: 37.6584, lng: 126.7660, desc: "고양 일산동구/서구 - 대규모 인구 및 안정적 교육 수요" },
+            { name: "평촌신도시", category: "1기 신도시", lat: 37.3943, lng: 126.9568, desc: "안양 동안구 - 경기 남부 최대 평촌 학원가 보유" },
+            { name: "중동신도시", category: "1기 신도시", lat: 37.5030, lng: 126.7660, desc: "부천 원미구 - 수도권 서부 교육·주거 핵심지" },
+
+            // 2기 신도시
+            { name: "화성 동탄신도시", category: "2기 신도시", lat: 37.2002, lng: 127.0976, desc: "전국 최상위 학령인구 비율 및 폭발적 학생 유입" },
+            { name: "파주 운정신도시", category: "2기 신도시", lat: 37.7516, lng: 126.7450, desc: "GTX-A 역세권 및 신규 대단지 유입 지속" },
+            { name: "평택 고덕국제신도시", category: "2기 신도시", lat: 37.0270, lng: 127.0505, desc: "삼성전자 평택캠퍼스 배후 신흥 교육 타운" },
+            { name: "수원 광교신도시", category: "2기 신도시", lat: 37.2911, lng: 127.0490, desc: "수원 최고 선호 학군 및 고소득 교육 수요층" },
+            { name: "인천 검단신도시", category: "2기 신도시", lat: 37.5931, lng: 126.6756, desc: "인천 북부 최대 신도시 및 학령인구 폭증 지역" },
+            { name: "양주 옥정·회천지구", category: "2기 신도시", lat: 37.8284, lng: 127.0911, desc: "경기 북부 대표 신도시 입주 지속 지역" },
+            { name: "아산 탕정·배방지구", category: "2기 신도시", lat: 36.7865, lng: 127.0601, desc: "충청권 2기 대표 신도시 및 삼성 디스플레이 배후" },
+            { name: "대전 도안신도시", category: "2기 신도시", lat: 36.3262, lng: 127.3400, desc: "대전 유성·서구 연결 핵심 신흥 신도시" },
+
+            // 3기 신도시
+            { name: "남양주 왕숙지구", category: "3기 신도시", lat: 37.6650, lng: 127.1650, desc: "수도권 동북부 최대 규모 3기 신도시 (GTX-B 예정)" },
+            { name: "하남 교산지구", category: "3기 신도시", lat: 37.5250, lng: 127.2150, desc: "강남 접근성 우수 3기 신도시 핵심 주거지" },
+            { name: "인천 계양지구", category: "3기 신도시", lat: 37.5580, lng: 126.7650, desc: "인천 계양·부천 연계 신흥 공공주택지구" },
+            { name: "부천 대장지구", category: "3기 신도시", lat: 37.5300, lng: 126.7900, desc: "마곡·계양 연결 첨단 산업 및 주거지" },
+            { name: "고양 창릉지구", category: "3기 신도시", lat: 37.6350, lng: 126.8750, desc: "삼송·원흥 연계 고양 서북부 대규모 신도시" },
+            { name: "광명시흥지구", category: "3기 신도시", lat: 37.4400, lng: 126.8300, desc: "수도권 서남부 거점 대규모 신도시 예정지" },
+            { name: "의왕·군포·안산지구", category: "3기 신도시", lat: 37.3250, lng: 126.9150, desc: "GTX-C 연계 신흥 거점 공공택지지구" },
+
+            // 수도권 주요 택지지구
+            { name: "하남 미사강변도시", category: "수도권 택지", lat: 37.5610, lng: 127.1950, desc: "젊은 층 및 학생 비율이 높은 한강변 주거단지" },
+            { name: "광명 역세권지구", category: "수도권 택지", lat: 37.4170, lng: 126.8850, desc: "KTX 광명역 역세권 대단지 아파트 밀집" },
+            { name: "고양 삼송·원흥지구", category: "수도권 택지", lat: 37.6495, lng: 126.8920, desc: "스타필드 및 대단지 아파트 학령인구" },
+            { name: "고양 지축·향동·덕은", category: "수도권 택지", lat: 37.6320, lng: 126.9120, desc: "서울 은평·마포 연접 신규 주거지" },
+            { name: "남양주 다산신도시", category: "수도권 택지", lat: 37.6155, lng: 127.1550, desc: "다산 진건·지금지구 대단지 아파트 학원가" },
+            { name: "남양주 별내·진접지구", category: "수도권 택지", lat: 37.6450, lng: 127.1180, desc: "4호선·8호선 연장 수혜 주거 지구" },
+            { name: "수원 호매실·당수지구", category: "수도권 택지", lat: 37.2710, lng: 126.9530, desc: "수원 서부권 대규모 신규 택지" },
+            { name: "화성 봉담지구", category: "수도권 택지", lat: 37.2160, lng: 126.9450, desc: "봉담1·2지구 아파트 밀집지역" },
+            { name: "오산 세교지구", category: "수도권 택지", lat: 37.1720, lng: 127.0560, desc: "세교1·2지구 신흥 학령인구 유입 지역" },
+            { name: "인천 송도국제도시", category: "수도권 택지", lat: 37.3850, lng: 126.6500, desc: "인천 최고 교육열 및 자사고·국제학교 입지" },
+            { name: "인천 루원시티·검암지구", category: "수도권 택지", lat: 37.5450, lng: 126.6770, desc: "인천 2호선 및 공항철도 역세권 개발지" },
+
+            // 지방 광역시 및 거점 개발지구
+            { name: "부산 에코델타시티", category: "지방 거점", lat: 35.1320, lng: 128.9250, desc: "명지지구 연계 서부산 수변 첨단 신도시" },
+            { name: "부산 일광·오시리아", category: "지방 거점", lat: 35.2650, lng: 129.2300, desc: "동부산 대표 대단지 신규 주거 타운" },
+            { name: "대구 테크노폴리스", category: "지방 거점", lat: 35.6920, lng: 128.4600, desc: "대구 달성군 학령인구 및 대단지 아파트" },
+            { name: "대구 국가산단지구", category: "지방 거점", lat: 35.6650, lng: 128.4350, desc: "달성군 현풍·구지 신흥 주거 단지" },
+            { name: "대전 유성 상대·학하지구", category: "지방 거점", lat: 36.3450, lng: 127.3250, desc: "대전 유성구 신흥 학원가 형성 후보지" },
+            { name: "대전 죽동2지구", category: "지방 거점", lat: 36.3680, lng: 127.3480, desc: "대전 유성 연구/바이오 배후 신규 택지" },
+            { name: "세종 반곡동·다정동", category: "지방 거점", lat: 36.4950, lng: 127.2600, desc: "세종시 2·4생활권 학령인구 집중지" },
+            { name: "청주 지웰시티·방서지구", category: "지방 거점", lat: 36.6430, lng: 127.4260, desc: "청주 복대동/방서지구 아파트 밀집 학원가" },
+            { name: "청주 오송생명과학단지", category: "지방 거점", lat: 36.6200, lng: 127.3150, desc: "KTX 오송역 배후 바이오 주거 신도시" }
+        ];
 
         let clickCircle = null;
         let clickMarker = null;
@@ -85,6 +151,8 @@
 
         setupUIEvents();
         loadAllGoogleSheetData();
+        renderTop10BranchMarkers();
+        renderCandidateMarkers();
 
         setInterval(() => {
             console.log('🔄 Google Sheets 실시간 최신 데이터 자동 동기화 중...');
@@ -128,15 +196,19 @@
             }
 
             // 🔘 필터 체크박스 이벤트 연결
+            const chkBranch = document.getElementById('chk-branch');
+            const chkTop10 = document.getElementById('chk-top10');
+            const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
-            const chkBranch = document.getElementById('chk-branch');
             const chkAcademy = document.getElementById('chk-academy');
             const chkApartment = document.getElementById('chk-apartment');
 
+            if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
+            if (chkTop10) chkTop10.addEventListener('change', () => renderTop10BranchMarkers());
+            if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
-            if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
             if (chkAcademy) chkAcademy.addEventListener('change', () => renderAcademyMarkers());
             if (chkApartment) chkApartment.addEventListener('change', () => renderApartmentMarkers());
 
@@ -149,6 +221,9 @@
                     const keyword = e.target.value.trim().toLowerCase();
                     if (!keyword) { searchResults.style.display = 'none'; return; }
 
+                    const matchingTop10 = TOP10_GROWTH_BRANCHES.filter(t => t.name.toLowerCase().includes(keyword) || t.note.toLowerCase().includes(keyword));
+                    const matchingCandidates = CANDIDATE_LOCATIONS.filter(c => c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword) || c.desc.toLowerCase().includes(keyword));
+
                     const matchingSchoolKeys = Object.keys(schoolMap).filter(codeKey => {
                         const item = schoolMap[codeKey];
                         return item.name.toLowerCase().includes(keyword) || item.code.toLowerCase().includes(keyword);
@@ -159,20 +234,26 @@
                     const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
 
                     let html = '';
+                    matchingTop10.forEach(t => {
+                        html += `<div class="search-item" data-type="top10" data-name="${t.name}" data-lat="${t.lat}" data-lng="${t.lng}">🔥 [Top 10 성장] #${t.rank} ${t.name} (+${t.inc}명 / ${t.rate})</div>`;
+                    });
+                    matchingCandidates.slice(0, 6).forEach(c => {
+                        html += `<div class="search-item" data-type="candidate" data-name="${c.name}" data-lat="${c.lat}" data-lng="${c.lng}">🎯 [${c.category}] ${c.name} (${c.desc.slice(0, 20)}...)</div>`;
+                    });
                     matchingBranches.forEach(b => {
                         html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">🎓 [에이닷지점] ${b.name} (학생수: ${b.studentCount}명)</div>`;
                     });
-                    matchingSchoolKeys.slice(0, 8).forEach(codeKey => {
+                    matchingSchoolKeys.slice(0, 6).forEach(codeKey => {
                         const item = schoolMap[codeKey];
                         const icon = item.isTop30 ? '[26년 서울대 TOP30]' : (item.isMiddle ? '🏫 [중학교]' : '🏫 [고등학교]');
                         const snuBadge = item.snuAvgCount > 0 ? ` <span style="color:#f59e0b; font-weight:800;">(23년~ 평균 ${item.snuAvgCount}명)</span>` : '';
                         html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
-                    matchingAcademies.slice(0, 5).forEach(addr => {
+                    matchingAcademies.slice(0, 4).forEach(addr => {
                         const item = academyMap[addr];
                         html += `<div class="search-item" data-type="academy" data-addr="${addr}">📚 [학원가] ${addr} (학원수: ${item.count}개)</div>`;
                     });
-                    matchingApts.slice(0, 5).forEach(apt => {
+                    matchingApts.slice(0, 4).forEach(apt => {
                         html += `<div class="search-item" data-type="apartment" data-addr="${apt.address}">🏢 [아파트] ${apt.address} (${apt.count.toLocaleString()}세대)</div>`;
                     });
 
@@ -190,7 +271,21 @@
                     const item = e.target.closest('.search-item');
                     if (item) {
                         const type = item.dataset.type;
-                        if (type === 'branch') {
+                        if (type === 'top10') {
+                            const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
+                            map.setLevel(6);
+                            map.panTo(pos);
+                            const tObj = TOP10_GROWTH_BRANCHES.find(t => t.name === item.dataset.name);
+                            if (tObj) showTop10OverlayPopup(tObj);
+                            searchInput.value = item.dataset.name;
+                        } else if (type === 'candidate') {
+                            const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
+                            map.setLevel(6);
+                            map.panTo(pos);
+                            const cObj = CANDIDATE_LOCATIONS.find(c => c.name === item.dataset.name);
+                            if (cObj) showCandidateOverlayPopup(cObj);
+                            searchInput.value = item.dataset.name;
+                        } else if (type === 'branch') {
                             const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
                             map.setLevel(6);
                             map.panTo(pos);
@@ -974,6 +1069,160 @@
                 overlay.setMap(map);
                 branchOverlays.push(overlay);
             });
+        }
+
+        // 🔥 Top 10 성장 지점 마커 렌더링
+        function renderTop10BranchMarkers() {
+            top10BranchOverlays.forEach(ol => ol.setMap(null));
+            top10BranchOverlays = [];
+
+            const isTop10Checked = document.getElementById('chk-top10')?.checked ?? true;
+            if (!isTop10Checked) return;
+
+            TOP10_GROWTH_BRANCHES.forEach(t => {
+                const pos = new kakao.maps.LatLng(t.lat, t.lng);
+                const labelContent = document.createElement('div');
+                labelContent.className = 'top10-branch-overlay';
+                labelContent.innerHTML = `
+                    <span>🔥 #${t.rank} ${t.name}</span>
+                    <span style="font-size:11px; opacity:0.9; margin-left:4px;">(+${t.inc}명 / ${t.rate})</span>
+                `;
+
+                labelContent.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    isMarkerClickHandled = true;
+                    showTop10OverlayPopup(t);
+                };
+
+                const overlay = new kakao.maps.CustomOverlay({
+                    position: pos,
+                    content: labelContent,
+                    yAnchor: 0.5,
+                    xAnchor: 0.5,
+                    clickable: true,
+                    zIndex: Z_INDEX.BRANCH + 500
+                });
+
+                overlay.setMap(map);
+                top10BranchOverlays.push(overlay);
+            });
+        }
+
+        // 🎯 신규지점 유력 후보지 (1/2/3기 신도시 & 택지지구) 마커 렌더링
+        function renderCandidateMarkers() {
+            candidateOverlays.forEach(ol => ol.setMap(null));
+            candidateOverlays = [];
+
+            const isCandidateChecked = document.getElementById('chk-candidate')?.checked ?? true;
+            if (!isCandidateChecked) return;
+
+            CANDIDATE_LOCATIONS.forEach(c => {
+                const pos = new kakao.maps.LatLng(c.lat, c.lng);
+                const labelContent = document.createElement('div');
+                labelContent.className = 'candidate-overlay';
+                labelContent.innerHTML = `
+                    <span class="cand-tag">${c.category}</span>
+                    <span>🎯 ${c.name}</span>
+                `;
+
+                labelContent.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    isMarkerClickHandled = true;
+                    showCandidateOverlayPopup(c);
+                };
+
+                const overlay = new kakao.maps.CustomOverlay({
+                    position: pos,
+                    content: labelContent,
+                    yAnchor: 0.5,
+                    xAnchor: 0.5,
+                    clickable: true,
+                    zIndex: Z_INDEX.BRANCH + 400
+                });
+
+                overlay.setMap(map);
+                candidateOverlays.push(overlay);
+            });
+        }
+
+        function showTop10OverlayPopup(t) {
+            const pos = new kakao.maps.LatLng(t.lat, t.lng);
+            map.panTo(pos);
+            drawRadius3km(pos);
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                window.clearRadiusOverlay();
+            };
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:#f59e0b;">🔥 [전년대비 성장 Top 10] ${t.rank}위 ${t.name}</span>
+                </div>
+                <div class="rs-address">📍 입지 특징: <b>${t.note}</b></div>
+                <div class="rs-grid" style="margin-top:8px;">
+                    <div class="rs-item"><label>금일 등록 학생수</label><value style="color:#a855f7;">${t.count.toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>전년대비 순증가 인원</label><value style="color:#ef4444;">+${t.inc}명 (${t.rate} 증가)</value></div>
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            radiusLabel = new kakao.maps.CustomOverlay({
+                position: pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS + 1000
+            });
+
+            radiusLabel.setMap(map);
+        }
+
+        function showCandidateOverlayPopup(c) {
+            const pos = new kakao.maps.LatLng(c.lat, c.lng);
+            map.panTo(pos);
+            drawRadius3km(pos);
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                window.clearRadiusOverlay();
+            };
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:#fbbf24;">🎯 [신규지점 유력 후보지] ${c.name}</span>
+                </div>
+                <div class="rs-address">🏷️ 구분: <b style="color:#fbbf24;">${c.category}</b></div>
+                <div class="rs-address" style="margin-top:4px;">💡 입지 및 유입 특징: <b>${c.desc}</b></div>
+                <div class="rs-grid" style="margin-top:8px;">
+                    <div class="rs-item"><label>추천 사유</label><value style="color:#34d399;">Top 10 성장지점 입지(대단지·신도시) 공통점 완벽 부합</value></div>
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            radiusLabel = new kakao.maps.CustomOverlay({
+                position: pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS + 1000
+            });
+
+            radiusLabel.setMap(map);
         }
 
         // 📚 학원가 원 클릭 전용 팝업
