@@ -37,6 +37,19 @@
         let candidateOverlays = [];
         let trendChart = null;
 
+        const TOP10_GROWTH_MAP = {
+            "김포사우": { rank: 1, yoy: 182, count: 301, inc: 119, rate: 65 },
+            "부산명지": { rank: 2, yoy: 73, count: 176, inc: 103, rate: 141 },
+            "부산진구": { rank: 3, yoy: 121, count: 210, inc: 89, rate: 74 },
+            "수원장안": { rank: 4, yoy: 334, count: 408, inc: 74, rate: 22 },
+            "위례": { rank: 5, yoy: 92, count: 140, inc: 48, rate: 52 },
+            "대구침산": { rank: 6, yoy: 65, count: 111, inc: 46, rate: 71 },
+            "인천청라": { rank: 7, yoy: 98, count: 137, inc: 39, rate: 40 },
+            "세종보람": { rank: 8, yoy: 66, count: 101, inc: 35, rate: 53 },
+            "산본": { rank: 9, yoy: 363, count: 395, inc: 32, rate: 9 },
+            "대전관저": { rank: 10, yoy: 60, count: 81, inc: 21, rate: 35 }
+        };
+
         const TOP10_GROWTH_BRANCHES = [
             { rank: 1, name: "김포사우지점", lat: 37.6186, lng: 126.7161, count: 301, inc: 119, rate: "65%", note: "김포한강신도시 인근 및 사우동 주거밀집지" },
             { rank: 2, name: "부산명지지점", lat: 35.0945, lng: 128.9056, count: 176, inc: 103, rate: "141%", note: "명지국제신도시 학령인구 폭증 지역" },
@@ -1058,7 +1071,7 @@
             });
         }
 
-        // 🎓 에이닷지점 마커 렌더링
+        // 🎓 에이닷지점 마커 렌더링 (Top 10 성장 지점 황금색 & 작년대비 증감율 반영)
         function renderBranchMarkers() {
             branchOverlays.forEach(ol => ol.setMap(null));
             branchOverlays = [];
@@ -1067,17 +1080,29 @@
             if (!isBranchChecked) return;
 
             branchDataList.forEach(b => {
+                const key = Object.keys(TOP10_GROWTH_MAP).find(k => b.name.includes(k));
+                const top10Info = key ? TOP10_GROWTH_MAP[key] : null;
+
                 const labelContent = document.createElement('div');
-                labelContent.className = 'branch-badge';
-                labelContent.innerHTML = `
-                    <span>🎓 ${b.name}</span>
-                    <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${b.studentCount}명</span>
-                `;
+
+                if (top10Info) {
+                    labelContent.className = 'top10-branch-overlay';
+                    labelContent.innerHTML = `
+                        <span>🔥 #${top10Info.rank} ${b.name}</span>
+                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${b.studentCount}명 (+${top10Info.inc}명 / ${top10Info.rate}%↑)</span>
+                    `;
+                } else {
+                    labelContent.className = 'branch-badge';
+                    labelContent.innerHTML = `
+                        <span>🎓 ${b.name}</span>
+                        <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${b.studentCount}명</span>
+                    `;
+                }
 
                 labelContent.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     isMarkerClickHandled = true;
-                    showBranchOverlayPopup(b);
+                    showBranchOverlayPopup(b, top10Info);
                 };
 
                 const overlay = new kakao.maps.CustomOverlay({
@@ -1086,7 +1111,7 @@
                     yAnchor: 0.5,
                     xAnchor: 0.5,
                     clickable: true,
-                    zIndex: Z_INDEX.BRANCH
+                    zIndex: top10Info ? Z_INDEX.BRANCH + 500 : Z_INDEX.BRANCH
                 });
 
                 overlay.setMap(map);
@@ -1412,17 +1437,22 @@
         }
 
         // 🎓 에이닷지점 클릭 시 반경 3km 점선 원 생성 및 반경 3km 내 학생수, 학원수, 학교수 표출
-        function showBranchOverlayPopup(b) {
+        function showBranchOverlayPopup(b, top10Info) {
             window.clearRadiusOverlay();
+
+            if (!top10Info) {
+                const key = Object.keys(TOP10_GROWTH_MAP).find(k => b.name.includes(k));
+                if (key) top10Info = TOP10_GROWTH_MAP[key];
+            }
 
             clickCircle = new kakao.maps.Circle({
                 center: b.pos,
                 radius: 3000,
                 strokeWeight: 2,
-                strokeColor: '#7950f2',
+                strokeColor: top10Info ? '#f59e0b' : '#7950f2',
                 strokeOpacity: 0.85,
                 strokeStyle: 'dashed',
-                fillColor: '#7950f2',
+                fillColor: top10Info ? '#f59e0b' : '#7950f2',
                 fillOpacity: 0.14,
                 zIndex: Z_INDEX.RADIUS - 10
             });
@@ -1500,11 +1530,16 @@
                 window.clearRadiusOverlay();
             };
 
+            const top10Banner = top10Info ? `
+                <div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${top10Info.rank}): <b style="color:#ef4444;">+${top10Info.inc}명 (${top10Info.rate}%↑)</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${top10Info.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>
+            ` : '';
+
             labelContent.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:#7950f2;">🎓 에이닷 ${b.name} 지점 (반경 3km 분석)</span>
+                    <span class="rs-title" style="color:${top10Info ? '#f59e0b' : '#7950f2'};">${top10Info ? '🔥' : '🎓'} 에이닷 ${b.name} ${top10Info ? `(#${top10Info.rank} 성장지점)` : ''} (반경 3km 분석)</span>
                 </div>
-                <div class="rs-address">📍 지점 학생수: <b style="color:#7950f2;">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
+                <div class="rs-address">📍 지점 학생수: <b style="color:${top10Info ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
+                ${top10Banner}
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
                 <div class="rs-grid" style="margin-top:8px;">
                     <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
