@@ -135,10 +135,15 @@
             });
         };
 
+        let popupOverlays = [];
+
         window.clearRadiusOverlay = function () {
             if (clickCircle) { clickCircle.setMap(null); clickCircle = null; }
             if (clickMarker) { clickMarker.setMap(null); clickMarker = null; }
             if (radiusLabel) { radiusLabel.setMap(null); radiusLabel = null; }
+
+            popupOverlays.forEach(ol => ol.setMap(null));
+            popupOverlays = [];
 
             if (startMarker) { startMarker.setMap(null); startMarker = null; }
             if (endMarker) { endMarker.setMap(null); endMarker = null; }
@@ -566,6 +571,7 @@
                 });
 
                 radiusLabel.setMap(map);
+                popupOverlays.push(radiusLabel);
             });
         }
 
@@ -1146,9 +1152,23 @@
         }
 
         function showTop10OverlayPopup(t) {
+            window.clearRadiusOverlay();
+
             const pos = new kakao.maps.LatLng(t.lat, t.lng);
             map.panTo(pos);
-            drawRadius3km(pos);
+
+            clickCircle = new kakao.maps.Circle({
+                center: pos,
+                radius: 3000,
+                strokeWeight: 2,
+                strokeColor: '#f59e0b',
+                strokeOpacity: 0.85,
+                strokeStyle: 'dashed',
+                fillColor: '#f59e0b',
+                fillOpacity: 0.12,
+                zIndex: Z_INDEX.RADIUS - 10
+            });
+            clickCircle.setMap(map);
 
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
@@ -1174,7 +1194,7 @@
 
             labelContent.querySelector('.rs-header').appendChild(closeBtn);
 
-            radiusLabel = new kakao.maps.CustomOverlay({
+            const overlay = new kakao.maps.CustomOverlay({
                 position: pos,
                 content: labelContent,
                 yAnchor: 1.25,
@@ -1182,13 +1202,28 @@
                 zIndex: Z_INDEX.RADIUS + 1000
             });
 
-            radiusLabel.setMap(map);
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
         }
 
         function showCandidateOverlayPopup(c) {
+            window.clearRadiusOverlay();
+
             const pos = new kakao.maps.LatLng(c.lat, c.lng);
             map.panTo(pos);
-            drawRadius3km(pos);
+
+            clickCircle = new kakao.maps.Circle({
+                center: pos,
+                radius: 3000,
+                strokeWeight: 2,
+                strokeColor: '#fbbf24',
+                strokeOpacity: 0.85,
+                strokeStyle: 'dashed',
+                fillColor: '#fbbf24',
+                fillOpacity: 0.12,
+                zIndex: Z_INDEX.RADIUS - 10
+            });
+            clickCircle.setMap(map);
 
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
@@ -1214,7 +1249,7 @@
 
             labelContent.querySelector('.rs-header').appendChild(closeBtn);
 
-            radiusLabel = new kakao.maps.CustomOverlay({
+            const overlay = new kakao.maps.CustomOverlay({
                 position: pos,
                 content: labelContent,
                 yAnchor: 1.25,
@@ -1222,12 +1257,13 @@
                 zIndex: Z_INDEX.RADIUS + 1000
             });
 
-            radiusLabel.setMap(map);
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
         }
 
         // 📚 학원가 원 클릭 전용 팝업
         function showAcademyOverlayPopup(item) {
-            if (radiusLabel) radiusLabel.setMap(null);
+            window.clearRadiusOverlay();
 
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
@@ -1237,7 +1273,7 @@
             closeBtn.innerHTML = '✕';
             closeBtn.onclick = (e) => {
                 if (e) { e.preventDefault(); e.stopPropagation(); }
-                if (radiusLabel) radiusLabel.setMap(null);
+                window.clearRadiusOverlay();
             };
 
             labelContent.innerHTML = `
@@ -1252,7 +1288,7 @@
 
             labelContent.querySelector('.rs-header').appendChild(closeBtn);
 
-            radiusLabel = new kakao.maps.CustomOverlay({
+            const overlay = new kakao.maps.CustomOverlay({
                 position: item.pos,
                 content: labelContent,
                 yAnchor: 1.25,
@@ -1260,7 +1296,8 @@
                 zIndex: Z_INDEX.RADIUS
             });
 
-            radiusLabel.setMap(map);
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
         }
 
         // 🎓 에이닷지점 클릭 시 반경 3km 점선 원 생성 및 반경 3km 내 학생수, 학원수, 학교수 표출
@@ -1378,6 +1415,7 @@
             });
 
             radiusLabel.setMap(map);
+            popupOverlays.push(radiusLabel);
         }
 
         function generateAnalysisSummaryText(item) {
@@ -1555,7 +1593,7 @@
 
         // 🏢 아파트 클릭 전용 팝업
         function showApartmentOverlayPopup(apt) {
-            if (radiusLabel) radiusLabel.setMap(null);
+            window.clearRadiusOverlay();
 
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
@@ -1565,7 +1603,7 @@
             closeBtn.innerHTML = '✕';
             closeBtn.onclick = (e) => {
                 if (e) { e.preventDefault(); e.stopPropagation(); }
-                if (radiusLabel) radiusLabel.setMap(null);
+                window.clearRadiusOverlay();
             };
 
             labelContent.innerHTML = `
@@ -1580,7 +1618,7 @@
 
             labelContent.querySelector('.rs-header').appendChild(closeBtn);
 
-            radiusLabel = new kakao.maps.CustomOverlay({
+            const overlay = new kakao.maps.CustomOverlay({
                 position: apt.pos,
                 content: labelContent,
                 yAnchor: 1.25,
@@ -1588,7 +1626,8 @@
                 zIndex: Z_INDEX.RADIUS + 1000
             });
 
-            radiusLabel.setMap(map);
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
         }
     });
 })();
