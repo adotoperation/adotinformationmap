@@ -1100,12 +1100,25 @@
 
         function getYoYInfo(branchName) {
             if (!branchName) return null;
-            const clean = branchName.replace(/지점$/, '').trim();
-            const key = Object.keys(rdbYoyMap).find(k => {
-                const kClean = k.replace(/지점$/, '').trim();
-                return kClean === clean || clean.includes(kClean) || kClean.includes(clean);
+            const clean = branchName.replace(/지점$/, '').replace(/\ufeff/g, '').replace(/"/g, '').trim();
+
+            if (!rdbYoyMap || Object.keys(rdbYoyMap).length === 0) return null;
+
+            if (rdbYoyMap[clean]) return rdbYoyMap[clean];
+            if (rdbYoyMap[clean + '지점']) return rdbYoyMap[clean + '지점'];
+
+            const keys = Object.keys(rdbYoyMap);
+
+            const exactKey = keys.find(k => k.replace(/지점$/, '').replace(/\ufeff/g, '').replace(/"/g, '').trim() === clean);
+            if (exactKey) return rdbYoyMap[exactKey];
+
+            const prefixKey = keys.find(k => {
+                const kClean = k.replace(/지점$/, '').replace(/\ufeff/g, '').replace(/"/g, '').trim();
+                return clean.startsWith(kClean) || kClean.startsWith(clean);
             });
-            return key ? rdbYoyMap[key] : null;
+            if (prefixKey) return rdbYoyMap[prefixKey];
+
+            return null;
         }
 
         // 🎓 에이닷지점 마커 렌더링 (Top 10 성장 지점 황금색 & 전체 RDB_YoY 반영)
