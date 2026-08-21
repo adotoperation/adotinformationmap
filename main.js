@@ -792,7 +792,7 @@
                     if (data && !data.trim().startsWith('<!DOCTYPE html')) {
                         const rows = data.split('\n').slice(1);
                         rdbYoyMap = {};
-                        let rankIndex = 1;
+                        const parsedRows = [];
 
                         rows.forEach(row => {
                             if (!row.trim()) return;
@@ -806,16 +806,24 @@
                             const rate = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
 
                             if (name) {
-                                rdbYoyMap[name] = {
-                                    rank: rankIndex++,
-                                    yoy,
-                                    count,
-                                    inc,
-                                    rate
-                                };
+                                parsedRows.push({ name, yoy, count, inc, rate });
                             }
                         });
-                        console.log(`📊 RDB_YoY CSV data successfully loaded: ${Object.keys(rdbYoyMap).length} branches`);
+
+                        // 🔥 증감(inc) 내림차순, 증감율(rate) 내림차순 정렬하여 최고 성장 상위 10개 지점 순위 매기기
+                        parsedRows.sort((a, b) => b.inc - a.inc || b.rate - a.rate);
+
+                        parsedRows.forEach((item, index) => {
+                            rdbYoyMap[item.name] = {
+                                rank: index + 1,
+                                yoy: item.yoy,
+                                count: item.count,
+                                inc: item.inc,
+                                rate: item.rate
+                            };
+                        });
+
+                        console.log(`📊 RDB_YoY CSV data sorted by growth & loaded: ${Object.keys(rdbYoyMap).length} branches. Top 10 growth branches:`, parsedRows.slice(0, 10).map(x => `${x.name}(+${x.inc}명)`));
                     }
 
                     // YoY 데이터 파싱 완료 후 지점 좌표 CSV 로딩
