@@ -137,7 +137,6 @@ function calculateAndSaveRDBRecommendLocations() {
     const dLat = safeFloat(row[6]);
     const dLng = safeFloat(row[7]);
 
-    if (sido.indexOf('서울') === 0 || addr.includes('서울특별시')) return;
     if (dLat <= 0 || dLng <= 0) return;
 
     const fullDongName = (sido + ' ' + sigungu + ' ' + dongName).trim();

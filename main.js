@@ -279,6 +279,79 @@
                     });
                 }
             });
+
+            updateRecommendAccordionDrawers();
+        }
+
+        window.toggleRecommendAccordion = function(typeNum) {
+            const drawer = document.getElementById(`drawer-type-${typeNum}`);
+            const countSpan = document.getElementById(`count-type-${typeNum}`);
+            if (!drawer) return;
+
+            const isVisible = drawer.style.display !== 'none';
+            [1, 2, 3].forEach(n => {
+                const d = document.getElementById(`drawer-type-${n}`);
+                const c = document.getElementById(`count-type-${n}`);
+                if (d) d.style.display = 'none';
+                if (c) {
+                    c.textContent = c.textContent.replace('▲', '▼');
+                }
+            });
+
+            if (!isVisible) {
+                drawer.style.display = 'block';
+                if (countSpan) {
+                    countSpan.textContent = countSpan.textContent.replace('▼', '▲');
+                }
+            }
+        };
+
+        window.focusRecommendDongByName = function(dongName) {
+            const item = rdbRecommendDataList.find(i => i.dong === dongName);
+            if (item) {
+                showRecommendOverlayPopup(item);
+            }
+        };
+
+        function updateRecommendAccordionDrawers() {
+            const list1 = rdbRecommendDataList.filter(i => i.type.includes('1') || i.type.includes('초희소'));
+            const list2 = rdbRecommendDataList.filter(i => i.type.includes('2') || i.type.includes('세대밀집'));
+            const list3 = rdbRecommendDataList.filter(i => i.type.includes('3') || i.type.includes('메가타겟'));
+
+            const c1 = document.getElementById('count-type-1');
+            const c2 = document.getElementById('count-type-2');
+            const c3 = document.getElementById('count-type-3');
+
+            if (c1) c1.textContent = `${list1.length}개 지역 ▼`;
+            if (c2) c2.textContent = `${list2.length}개 지역 ▼`;
+            if (c3) c3.textContent = `${list3.length}개 지역 ▼`;
+
+            function buildDrawerHtml(list) {
+                if (!list || list.length === 0) {
+                    return '<div style="font-size:11px; color:#94a3b8; text-align:center; padding:8px;">추천 법정동 데이터가 없습니다.</div>';
+                }
+                let html = '';
+                list.forEach(item => {
+                    const nameParts = item.dong.split(' ');
+                    const shortName = nameParts.slice(1, 4).join(' ').replace('행정복지센터', '').replace('주민센터', '').trim();
+                    const safeName = item.dong.replace(/'/g, "\\'");
+                    html += `
+                        <div class="recommend-dong-item" onclick="focusRecommendDongByName('${safeName}')">
+                            <span>🎯 <b>${shortName}</b></span>
+                            <span class="dong-metrics">고객 ${item.potential_customers}명 / 세대 ${(item.apartments/1000).toFixed(0)}k / 학원 ${item.academies}개</span>
+                        </div>
+                    `;
+                });
+                return html;
+            }
+
+            const d1 = document.getElementById('drawer-type-1');
+            const d2 = document.getElementById('drawer-type-2');
+            const d3 = document.getElementById('drawer-type-3');
+
+            if (d1) d1.innerHTML = buildDrawerHtml(list1);
+            if (d2) d2.innerHTML = buildDrawerHtml(list2);
+            if (d3) d3.innerHTML = buildDrawerHtml(list3);
         }
 
         function getRecommendTypeClass(type) {

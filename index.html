@@ -40,26 +40,50 @@
                 </div>
             </div>
 
-            <!-- 🎯 RDB_추천입지 유형별 선정 기준 안내 패널 -->
+            <!-- 🎯 추천입지 유형별 선정 기준 안내 & 법정동 드롭다운 패널 -->
             <div id="new-location-container">
                 <div class="nl-header">
-                    <span class="nl-title">🎯 RDB_추천입지 유형별 선정 기준</span>
+                    <span class="nl-title">🎯 추천입지 유형별 선정 기준</span>
                 </div>
                 <div class="nl-body">
-                    <div class="recommend-type-card type-1">
-                        <div class="type-badge-head">🔥 1. 초희소형</div>
-                        <div class="type-desc">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
+                    <!-- 유형 1: 초희소형 -->
+                    <div class="recommend-type-accordion" id="accordion-type-1">
+                        <div class="recommend-type-card type-1" onclick="toggleRecommendAccordion(1)">
+                            <div class="type-card-header">
+                                <span class="type-badge-head">🔥 1. 초희소형</span>
+                                <span class="type-card-count" id="count-type-1">5개 지역 ▼</span>
+                            </div>
+                            <div class="type-desc">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
+                        </div>
+                        <div class="recommend-dong-drawer" id="drawer-type-1" style="display:none;"></div>
                     </div>
-                    <div class="recommend-type-card type-2">
-                        <div class="type-badge-head">⚡ 2. 세대밀집</div>
-                        <div class="type-desc">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
+
+                    <!-- 유형 2: 세대밀집 -->
+                    <div class="recommend-type-accordion" id="accordion-type-2">
+                        <div class="recommend-type-card type-2" onclick="toggleRecommendAccordion(2)">
+                            <div class="type-card-header">
+                                <span class="type-badge-head">⚡ 2. 세대밀집</span>
+                                <span class="type-card-count" id="count-type-2">10개 지역 ▼</span>
+                            </div>
+                            <div class="type-desc">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
+                        </div>
+                        <div class="recommend-dong-drawer" id="drawer-type-2" style="display:none;"></div>
                     </div>
-                    <div class="recommend-type-card type-3">
-                        <div class="type-badge-head">✨ 3. 메가타겟</div>
-                        <div class="type-desc">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
+
+                    <!-- 유형 3: 메가타겟 -->
+                    <div class="recommend-type-accordion" id="accordion-type-3">
+                        <div class="recommend-type-card type-3" onclick="toggleRecommendAccordion(3)">
+                            <div class="type-card-header">
+                                <span class="type-badge-head">✨ 3. 메가타겟</span>
+                                <span class="type-card-count" id="count-type-3">195개 지역 ▼</span>
+                            </div>
+                            <div class="type-desc">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
+                        </div>
+                        <div class="recommend-dong-drawer" id="drawer-type-3" style="display:none;"></div>
                     </div>
+
                     <div class="recommend-type-note">
-                        * 공통 제외 조건: 서울특별시 제외, 기존 에이닷 지점 반경 3km 이내 제외
+                        * 공통 제외 조건: 기존 에이닷 지점 반경 3km 이내 제외 (서울특별시 포함)
                     </div>
                 </div>
             </div>
