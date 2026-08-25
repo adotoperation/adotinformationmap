@@ -253,7 +253,6 @@
 
             // 🔘 필터 체크박스 이벤트 연결
             const chkBranch = document.getElementById('chk-branch');
-            const chkTargetDong = document.getElementById('chk-target-dong');
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
@@ -262,13 +261,46 @@
             const chkApartment = document.getElementById('chk-apartment');
 
             if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
-            if (chkTargetDong) chkTargetDong.addEventListener('change', () => renderTargetDongMarkers());
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
             if (chkUniversity) chkUniversity.addEventListener('change', () => renderUniversityMarkers());
             if (chkAcademy) chkAcademy.addEventListener('change', () => renderAcademyMarkers());
             if (chkApartment) chkApartment.addEventListener('change', () => renderApartmentMarkers());
+
+            // 🎯 신규진출 유형 & 동적 조건검색 이벤트 연결
+            const btnRunTargetSearch = document.getElementById('btn-run-target-search');
+            if (btnRunTargetSearch) {
+                btnRunTargetSearch.addEventListener('click', (e) => {
+                    if (e) e.stopPropagation();
+                    runTargetDongFilterSearch();
+                });
+            }
+
+            const inputCust = document.getElementById('input-target-customers');
+            const inputAcad = document.getElementById('input-target-academies');
+            const inputApt = document.getElementById('input-target-apartments');
+            const chkExBranch = document.getElementById('chk-exclude-branch');
+            const chkExSeoul = document.getElementById('chk-exclude-seoul');
+
+            [inputCust, inputAcad, inputApt, chkExBranch, chkExSeoul].forEach(el => {
+                if (el) {
+                    el.addEventListener('change', () => runTargetDongFilterSearch());
+                    if (el.tagName === 'INPUT' && el.type === 'number') {
+                        el.addEventListener('keyup', (e) => {
+                            if (e.key === 'Enter') runTargetDongFilterSearch();
+                        });
+                    }
+                }
+            });
+
+            const btnPreset1 = document.getElementById('btn-preset-1');
+            const btnPreset2 = document.getElementById('btn-preset-2');
+            const btnPreset3 = document.getElementById('btn-preset-3');
+
+            if (btnPreset1) btnPreset1.addEventListener('click', () => window.applyTargetPreset(1));
+            if (btnPreset2) btnPreset2.addEventListener('click', () => window.applyTargetPreset(2));
+            if (btnPreset3) btnPreset3.addEventListener('click', () => window.applyTargetPreset(3));
 
             // 🔍 통합 검색창
             const searchInput = document.getElementById('branch-search');
@@ -1981,13 +2013,26 @@
             popupOverlays.push(overlay);
         }
 
+        let allDongsDataset = [];
+
+        async function loadAllDongsDataset() {
+            try {
+                const res = await fetch('all_dongs_data.json');
+                if (res.ok) {
+                    allDongsDataset = await res.json();
+                    console.log('✅ all_dongs_data.json 데이터 동기화 완료:', allDongsDataset.length, '개 법정동');
+                    runTargetDongFilterSearch();
+                }
+            } catch (err) {
+                console.warn('⚠️ all_dongs_data.json 로드 실패, 기본 데이터셋으로 대체합니다.', err);
+                runTargetDongFilterSearch();
+            }
+        }
+
         // 🎯 정밀추천지 (법정동) 마커 렌더링 (화면 뷰포트 영역 실시간 필터링)
         function renderTargetDongMarkers() {
             targetDongOverlays.forEach(ol => ol.setMap(null));
             targetDongOverlays = [];
-
-            const isTargetChecked = document.getElementById('chk-target-dong')?.checked ?? true;
-            if (!isTargetChecked) return;
 
             const bounds = map.getBounds();
 
@@ -1998,7 +2043,8 @@
                     content.className = 'target-dong-badge';
                     const nameParts = d.name.split(' ');
                     const shortName = nameParts.slice(1, 4).join(' ').replace('행정복지센터', '').replace('주민센터', '').trim();
-                    content.innerHTML = `🎯 [추천] ${shortName} <span style="font-weight:400; opacity:0.9;">(${Math.round(d.apt_families_3km/1000)}천세대/학원${d.academies_3km}개)</span>`;
+                    const cust = d.potential_customers || Math.round((d.students_3km || 0) * 0.05);
+                    content.innerHTML = `🎯 [추천] ${shortName} <span style="font-weight:400; opacity:0.9;">(고객${cust}명/학원${d.academies_3km}개)</span>`;
                     content.onclick = (e) => {
                         if (e) e.stopPropagation();
                         showTargetDongOverlayPopup(d);
@@ -2016,6 +2062,101 @@
                 }
             });
         }
+
+        // 🎯 동적 법정동 조건검색 연산 엔진
+        function runTargetDongFilterSearch() {
+            const minCust = parseInt(document.getElementById('input-target-customers')?.value) || 0;
+            const maxAcad = parseInt(document.getElementById('input-target-academies')?.value) || 9999;
+            const minApt = parseInt(document.getElementById('input-target-apartments')?.value) || 0;
+            const excludeBranch = document.getElementById('chk-exclude-branch')?.checked ?? true;
+            const excludeSeoul = document.getElementById('chk-exclude-seoul')?.checked ?? true;
+
+            const dataset = (allDongsDataset && allDongsDataset.length > 0) ? allDongsDataset : TARGET_DONG_LOCATIONS;
+
+            const filtered = dataset.filter(d => {
+                const cust = d.potential_customers !== undefined ? d.potential_customers : Math.round(d.students_3km * 0.05);
+                if (excludeSeoul && d.is_seoul) return false;
+                if (excludeBranch && d.min_branch_dist !== undefined && d.min_branch_dist <= 3000) return false;
+                if (cust < minCust) return false;
+                if (d.academies_3km > maxAcad) return false;
+                if (d.apt_families_3km < minApt) return false;
+                return true;
+            });
+
+            filtered.sort((a, b) => {
+                const custA = a.potential_customers !== undefined ? a.potential_customers : Math.round(a.students_3km * 0.05);
+                const custB = b.potential_customers !== undefined ? b.potential_customers : Math.round(b.students_3km * 0.05);
+                return custB - custA;
+            });
+
+            TARGET_DONG_LOCATIONS = filtered;
+
+            // UI 수치 업데이트
+            const countNum = document.getElementById('target-count-num');
+            if (countNum) countNum.textContent = filtered.length;
+
+            // 결과 리스트 업데이트
+            const resultsList = document.getElementById('target-dong-results-list');
+            if (resultsList) {
+                if (filtered.length === 0) {
+                    resultsList.innerHTML = '<div style="font-size:11px; color:#94a3b8; text-align:center; padding:8px;">조건에 부합하는 법정동이 없습니다.</div>';
+                } else {
+                    let listHtml = '';
+                    filtered.slice(0, 15).forEach(d => {
+                        const nameParts = d.name.split(' ');
+                        const shortName = nameParts.slice(1, 4).join(' ').replace('행정복지센터', '').replace('주민센터', '').trim();
+                        const cust = d.potential_customers !== undefined ? d.potential_customers : Math.round(d.students_3km * 0.05);
+                        listHtml += `
+                            <div class="target-result-item" onclick="focusTargetDongByName('${d.name.replace(/'/g, "\\'")}')">
+                                <span>🎯 <b>${shortName}</b></span>
+                                <span style="font-size:10.5px; color:#a5f3fc;">고객 ${cust}명 / 세대 ${(d.apt_families_3km/1000).toFixed(0)}k / 학원 ${d.academies_3km}개</span>
+                            </div>
+                        `;
+                    });
+                    if (filtered.length > 15) {
+                        listHtml += `<div style="font-size:10.5px; color:#94a3b8; text-align:center; padding:4px;">외 ${filtered.length - 15}개 법정동 지도에 표출 중</div>`;
+                    }
+                    resultsList.innerHTML = listHtml;
+                }
+            }
+
+            renderTargetDongMarkers();
+        }
+
+        window.focusTargetDongByName = function(name) {
+            const found = TARGET_DONG_LOCATIONS.find(d => d.name === name) || allDongsDataset.find(d => d.name === name);
+            if (found) {
+                showTargetDongOverlayPopup(found);
+            }
+        };
+
+        window.applyTargetPreset = function(presetNum) {
+            const btn1 = document.getElementById('btn-preset-1');
+            const btn2 = document.getElementById('btn-preset-2');
+            const btn3 = document.getElementById('btn-preset-3');
+            if (btn1) btn1.classList.remove('active');
+            if (btn2) btn2.classList.remove('active');
+            if (btn3) btn3.classList.remove('active');
+
+            const activeBtn = document.getElementById(`btn-preset-${presetNum}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (presetNum === 1) {
+                document.getElementById('input-target-customers').value = 300;
+                document.getElementById('input-target-academies').value = 50;
+                document.getElementById('input-target-apartments').value = 20000;
+            } else if (presetNum === 2) {
+                document.getElementById('input-target-customers').value = 500;
+                document.getElementById('input-target-academies').value = 100;
+                document.getElementById('input-target-apartments').value = 30000;
+            } else if (presetNum === 3) {
+                document.getElementById('input-target-customers').value = 400;
+                document.getElementById('input-target-academies').value = 80;
+                document.getElementById('input-target-apartments').value = 40000;
+            }
+
+            runTargetDongFilterSearch();
+        };
 
         // 🎯 정밀추천지 상세 분석 팝업 (반경 3km 정밀 지표 표출)
         function showTargetDongOverlayPopup(d) {
@@ -2049,7 +2190,7 @@
             };
 
             const safeAddr = (d.addr || '').replace(/'/g, "\\'");
-            const potentialCust = Math.round(d.students_3km * 0.05);
+            const potentialCust = d.potential_customers !== undefined ? d.potential_customers : Math.round(d.students_3km * 0.05);
 
             labelContent.innerHTML = `
                 <div class="rs-header">
@@ -2058,12 +2199,12 @@
                 <div class="rs-address">📍 지번/도로명: <b>${d.addr || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
                 
                 <div class="rs-header" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.15); padding-top:8px;">
-                    <span class="rs-title" style="color:#ff6b81;">📊 반경 3km 정밀 정량분석 (조건: 학원<100, 세대≥3만, 학생≥1만)</span>
+                    <span class="rs-title" style="color:#ff6b81;">📊 반경 3km 정량 분석 지표</span>
                 </div>
                 <div class="rs-grid" style="margin-top:6px;">
-                    <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71; font-size:13.5px; font-weight:800;">${d.apt_families_3km.toLocaleString()}세대 (≥3만 충족)</value></div>
-                    <div class="rs-item"><label>🏫 반경 3km 총 중·고등학생수</label><value style="color:#ff6b81; font-size:13.5px; font-weight:800;">${d.students_3km.toLocaleString()}명 (≥1만 충족)</value></div>
-                    <div class="rs-item"><label>📚 반경 3km 총 학원수 (희소성)</label><value style="color:#60a5fa; font-size:13.5px; font-weight:800;">${d.academies_3km}개 (<100개 충족)</value></div>
+                    <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71; font-size:13.5px; font-weight:800;">${d.apt_families_3km.toLocaleString()}세대</value></div>
+                    <div class="rs-item"><label>🏫 반경 3km 총 중·고등학생수</label><value style="color:#ff6b81; font-size:13.5px; font-weight:800;">${(d.students_3km || 0).toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>📚 반경 3km 총 학원수 (희소성)</label><value style="color:#60a5fa; font-size:13.5px; font-weight:800;">${d.academies_3km}개</value></div>
                     <div class="rs-item"><label>🎯 잠재 고객수 (총 학생의 5%)</label><value style="color:#f59e0b; font-size:13.5px; font-weight:800;">${potentialCust.toLocaleString()}명</value></div>
                 </div>
             `;
@@ -2081,5 +2222,7 @@
             overlay.setMap(map);
             popupOverlays.push(overlay);
         }
+
+        loadAllDongsDataset();
     });
 })();

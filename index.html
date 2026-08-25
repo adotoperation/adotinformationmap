@@ -30,13 +30,67 @@
                 <div class="filter-guide-text">💡 지도에 표시할 정보를 선택하세요. (체크 시 마커 표시)</div>
                 <div class="filter-grid">
                     <label class="filter-item"><input type="checkbox" id="chk-branch" checked> 🎓 에이닷지점</label>
-                    <label class="filter-item"><input type="checkbox" id="chk-target-dong" checked> 🎯 정밀추천지 (학원≤50/세대≥2만/고객≥300명)</label>
                     <label class="filter-item"><input type="checkbox" id="chk-candidate"> 🎯 기타후보지 (신도시/산업벨트)</label>
                     <label class="filter-item"><input type="checkbox" id="chk-high"> 🏫 고등학교</label>
                     <label class="filter-item"><input type="checkbox" id="chk-middle"> 🏫 중학교</label>
                     <label class="filter-item"><input type="checkbox" id="chk-university"> 🏛️ 4년제 대학교</label>
                     <label class="filter-item"><input type="checkbox" id="chk-academy"> 📚 학원가</label>
                     <label class="filter-item"><input type="checkbox" id="chk-apartment"> 🏢 아파트세대수</label>
+                </div>
+            </div>
+
+            <!-- 🎯 신규진출 유형 & 동적 조건검색 패널 (독립 섹션) -->
+            <div id="new-location-container">
+                <div class="nl-header">
+                    <span class="nl-title">🎯 신규진출 유형 & 맞춤 조건검색 (법정동 추출)</span>
+                </div>
+                <div class="nl-body">
+                    <!-- Preset Quick Buttons -->
+                    <div class="nl-presets">
+                        <button type="button" class="nl-preset-btn active" id="btn-preset-1">🔥 [유형1] 초희소형 (학원≤50, 세대≥2만, 고객≥300)</button>
+                        <button type="button" class="nl-preset-btn" id="btn-preset-2">⚡ [유형2] 메가타겟 (학원≤100, 세대≥3만, 고객≥500)</button>
+                        <button type="button" class="nl-preset-btn" id="btn-preset-3">✨ [유형3] 아파트밀집 (학원≤80, 세대≥4만, 고객≥400)</button>
+                    </div>
+
+                    <!-- Custom Filter Inputs -->
+                    <div class="nl-form-grid">
+                        <div class="nl-form-item">
+                            <label>🎯 잠정 고객수 (5%)</label>
+                            <div class="nl-input-group">
+                                <input type="number" id="input-target-customers" value="300" min="0" step="50">
+                                <span>명 이상</span>
+                            </div>
+                        </div>
+                        <div class="nl-form-item">
+                            <label>📚 반경 3km 학원수</label>
+                            <div class="nl-input-group">
+                                <input type="number" id="input-target-academies" value="50" min="0" step="10">
+                                <span>개 이하</span>
+                            </div>
+                        </div>
+                        <div class="nl-form-item">
+                            <label>🏢 반경 3km 아파트세대</label>
+                            <div class="nl-input-group">
+                                <input type="number" id="input-target-apartments" value="20000" min="0" step="5000">
+                                <span>세대 이상</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checkbox Options -->
+                    <div class="nl-options-grid">
+                        <label><input type="checkbox" id="chk-exclude-branch" checked> 기존지점 3km 제외</label>
+                        <label><input type="checkbox" id="chk-exclude-seoul" checked> 서울특별시 제외</label>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="nl-action-bar">
+                        <button type="button" id="btn-run-target-search">🔍 법정동 조건검색 실행</button>
+                        <span id="target-search-counter">추출: <b id="target-count-num">0</b>개 동</span>
+                    </div>
+
+                    <!-- Filtered Legal Dong Results List -->
+                    <div id="target-dong-results-list"></div>
                 </div>
             </div>
         </div>
