@@ -51,12 +51,7 @@
         let candidateOverlays = [];
         let trendChart = null;
 
-        const TARGET_DONG_LOCATIONS = [
-            { name: "인천 서구 당하동 행정복지센터", addr: "인천광역시 서구 청마로167번길 19 (당하동)", lat: 37.592174, lng: 126.6745618, students_3km: 12591, academies_3km: 47, apt_families_3km: 38605 },
-            { name: "전북 익산시 송학동 행정복지센터", addr: "전북특별자치도 익산시 고현로 11", lat: 35.940283, lng: 126.941603, students_3km: 7524, academies_3km: 50, apt_families_3km: 32068 },
-            { name: "경기 화성시 향남읍 행정복지센터", addr: "경기도 화성시 향남읍 발안로 89", lat: 37.132541, lng: 126.921804, students_3km: 7281, academies_3km: 50, apt_families_3km: 28955 },
-            { name: "경기 안성시 안성1동 행정복지센터", addr: "경기도 안성시 낙원길 95 (영동)", lat: 37.009382, lng: 127.271501, students_3km: 6058, academies_3km: 44, apt_families_3km: 20683 }
-        ];
+        let TARGET_DONG_LOCATIONS = [];
 
 
 
