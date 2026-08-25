@@ -3,6 +3,7 @@ import csv
 import io
 import math
 import sys
+import json
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -127,9 +128,14 @@ for row in rows_dong:
     except:
         continue
 
-# Calculation with 3km Existing Branch Exclusion Rule
+# NEW CRITERIA:
+# 1) Exclude Seoul
+# 2) Exclude Existing Branch in 3km
+# 3) Academies <= 50
+# 4) Apt Families >= 20,000
+# 5) Potential Customers (5% of 3km Students) >= 300  (=> Students >= 6,000)
+
 matched_results = []
-excluded_dongs = []
 LAT_DEG = 0.03   # ~3.3km
 LNG_DEG = 0.04   # ~3.5km
 
@@ -138,44 +144,44 @@ for key, d in dongs.items():
     d_lng = d['lng']
 
     # 0. EXCLUDE IF ANY EXISTING BRANCH IS WITHIN 3KM
-    nearby_branches = []
+    has_branch = False
     for b in branches:
         if abs(b['lat'] - d_lat) <= LAT_DEG and abs(b['lng'] - d_lng) <= LNG_DEG:
-            dist = haversine(d_lat, d_lng, b['lat'], b['lng'])
-            if dist <= 3000:
-                nearby_branches.append((b['name'], dist))
-    
-    if nearby_branches:
-        excluded_dongs.append((d['name'], nearby_branches))
-        continue # Skip dongs that already have an existing branch within 3km!
+            if haversine(d_lat, d_lng, b['lat'], b['lng']) <= 3000:
+                has_branch = True
+                break
+    if has_branch:
+        continue
 
-    # 1. Filter Academies (Must be < 100)
+    # 1. Filter Academies (Must be <= 50)
     academies_3km = 0
     for a in academies:
         if abs(a['lat'] - d_lat) <= LAT_DEG and abs(a['lng'] - d_lng) <= LNG_DEG:
             if haversine(d_lat, d_lng, a['lat'], a['lng']) <= 3000:
                 academies_3km += a['count']
-                if academies_3km >= 100:
+                if academies_3km > 50: # Early exit if > 50
                     break
-    if academies_3km >= 100:
+    if academies_3km > 50:
         continue
 
-    # 2. Filter Apartments (Must be >= 30,000)
+    # 2. Filter Apartments (Must be >= 20,000)
     apt_families_3km = 0
     for ap in apartments:
         if abs(ap['lat'] - d_lat) <= LAT_DEG and abs(ap['lng'] - d_lng) <= LNG_DEG:
             if haversine(d_lat, d_lng, ap['lat'], ap['lng']) <= 3000:
                 apt_families_3km += ap['count']
-    if apt_families_3km < 30000:
+    if apt_families_3km < 20000:
         continue
 
-    # 3. Filter School Students (Must be >= 10,000)
+    # 3. Filter School Students (Potential Customers >= 300 => Students >= 6000)
     students_3km = 0
     for s in schools:
         if abs(s['lat'] - d_lat) <= LAT_DEG and abs(s['lng'] - d_lng) <= LNG_DEG:
             if haversine(d_lat, d_lng, s['lat'], s['lng']) <= 3000:
                 students_3km += s['total']
-    if students_3km < 10000:
+    
+    potential_cust = round(students_3km * 0.05)
+    if potential_cust < 300:
         continue
 
     matched_results.append({
@@ -185,25 +191,24 @@ for key, d in dongs.items():
         'lng': d_lng,
         'students_3km': students_3km,
         'academies_3km': academies_3km,
-        'apt_families_3km': apt_families_3km
+        'apt_families_3km': apt_families_3km,
+        'potential_customers': potential_cust
     })
 
-matched_results.sort(key=lambda x: x['apt_families_3km'], reverse=True)
+matched_results.sort(key=lambda x: x['potential_customers'], reverse=True)
 
 print(f"\n=======================================================")
-print(f"🎯 EXCLUSION APPLIED: MATCHED NEW CANDIDATE DONGS ({len(matched_results)} locations)")
-print(f"Conditions: Exclude Seoul, Exclude Existing Branch in 3km, Academies < 100, Apt >= 30,000, Students >= 10,000")
+print(f"🎯 NEW FILTER CRITERIA MATCHED DONGS ({len(matched_results)} locations)")
+print(f"Conditions: Exclude Seoul, Exclude Branch in 3km, Academies <= 50, Apt >= 20k, Potential Cust >= 300 (Students >= 6k)")
 print(f"=======================================================")
 for idx, r in enumerate(matched_results, 1):
     print(f"{idx}. {r['name']} ({r['addr']})")
-    print(f"   - 반경 3km 학원수: {r['academies_3km']}개 (< 100개 충족)")
-    print(f"   - 반경 3km 아파트 세대수: {r['apt_families_3km']:,}세대 (>= 30,000세대 충족)")
-    print(f"   - 반경 3km 학생수: {r['students_3km']:,}명 (>= 10,000명 충족)")
-    print(f"   - 기존 지점 거리: 3km 이내 기존 지점 없음 (신규 출점 타겟)")
-    print(f"   - 좌표: ({r['lat']}, {r['lng']})")
+    print(f"   - 반경 3km 학원수: {r['academies_3km']}개 (<= 50개 충족)")
+    print(f"   - 반경 3km 아파트 세대수: {r['apt_families_3km']:,}세대 (>= 20,000세대 충족)")
+    print(f"   - 반경 3km 총 학생수: {r['students_3km']:,}명")
+    print(f"   - 반경 3km 잠정 고객수 (5%): {r['potential_customers']:,}명 (>= 300명 충족)")
     print("-------------------------------------------------------")
 
-import json
 with open('target_dongs.json', 'w', encoding='utf-8') as f:
     json.dump(matched_results, f, ensure_ascii=False, indent=2)
 print("Saved newly filtered results to target_dongs.json")

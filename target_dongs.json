@@ -1,191 +1,42 @@
 [
   {
-    "name": "경기 안양시 만안구 석수1동 행정복지센터",
-    "addr": "경기도 안양시 만안구 경수대로 1252 (석수동)",
-    "lat": 37.4198593,
-    "lng": 126.9125897,
-    "students_3km": 12621,
-    "academies_3km": 93,
-    "apt_families_3km": 65787
-  },
-  {
-    "name": "경기 안양시 만안구 석수2동 행정복지센터",
-    "addr": "경기도 안양시 만안구 안양로 496 (석수동)",
-    "lat": 37.4138693,
-    "lng": 126.9093619,
-    "students_3km": 11103,
-    "academies_3km": 93,
-    "apt_families_3km": 65787
-  },
-  {
-    "name": "충남 천안시 동남구 신안동 행정복지센터",
-    "addr": "충청남도 천안시 동남구 신부3길 16-6",
-    "lat": 36.8173807,
-    "lng": 127.1604107,
-    "students_3km": 13476,
-    "academies_3km": 70,
-    "apt_families_3km": 64824
-  },
-  {
-    "name": "인천 서구 마전동 행정복지센터",
-    "addr": "인천광역시 서구 완정로10번길 14(마전동)",
-    "lat": 37.5953476,
-    "lng": 126.6736886,
-    "students_3km": 12960,
-    "academies_3km": 84,
-    "apt_families_3km": 61472
-  },
-  {
-    "name": "충남 천안시 동남구 원성2동 행정복지센터",
-    "addr": "충청남도 천안시 동남구 고재15길 15",
-    "lat": 36.8014202,
-    "lng": 127.1608356,
-    "students_3km": 13559,
-    "academies_3km": 98,
-    "apt_families_3km": 54905
-  },
-  {
-    "name": "인천 연수구 청학동 행정복지센터",
-    "addr": "인천광역시 연수구 비류대로 287",
-    "lat": 37.4290212,
-    "lng": 126.6523499,
-    "students_3km": 15241,
-    "academies_3km": 92,
-    "apt_families_3km": 54878
-  },
-  {
-    "name": "경기 김포시 장기본동 행정복지센터",
-    "addr": "경기도 김포시 김포대로 1433",
-    "lat": 37.6523062,
-    "lng": 126.6717281,
-    "students_3km": 10244,
-    "academies_3km": 97,
-    "apt_families_3km": 52712
-  },
-  {
-    "name": "인천 연수구 옥련1동 행정복지센터",
-    "addr": "인천광역시 연수구 비류대로186번길 14",
-    "lat": 37.427403,
-    "lng": 126.6551012,
-    "students_3km": 19919,
-    "academies_3km": 91,
-    "apt_families_3km": 52518
-  },
-  {
-    "name": "인천 연수구 옥련2동 행정복지센터",
-    "addr": "인천광역시 연수구 옥련로 82",
-    "lat": 37.4262313,
-    "lng": 126.6482934,
-    "students_3km": 15067,
-    "academies_3km": 89,
-    "apt_families_3km": 52518
-  },
-  {
-    "name": "경기 안양시 만안구 충훈동 행정복지센터",
-    "addr": "경기도 안양시 만안구 충훈로 90번길 36",
-    "lat": 37.4061441,
-    "lng": 126.9000851,
-    "students_3km": 12064,
-    "academies_3km": 93,
-    "apt_families_3km": 51131
-  },
-  {
-    "name": "경기 화성시 동탄4동 행정복지센터",
-    "addr": "경기도 화성시 동탄대로시범길 133",
-    "lat": 37.1997759,
-    "lng": 127.1122732,
-    "students_3km": 15837,
-    "academies_3km": 89,
-    "apt_families_3km": 49572
-  },
-  {
-    "name": "인천 연수구 연수2동 행정복지센터",
-    "addr": "인천광역시 연수구 원인재로 158",
-    "lat": 37.4117496,
-    "lng": 126.6818896,
-    "students_3km": 11758,
-    "academies_3km": 85,
-    "apt_families_3km": 49446
-  },
-  {
-    "name": "경기 화성시 병점1동 행정복지센터",
-    "addr": "경기도 화성시 경기도대로1010번길 11",
-    "lat": 37.1706841,
-    "lng": 127.105636,
-    "students_3km": 15409,
-    "academies_3km": 84,
-    "apt_families_3km": 47284
-  },
-  {
-    "name": "대전 동구 효동 행정복지센터",
-    "addr": "대전광역시 동구 대전로542번길 143",
-    "lat": 36.31691,
-    "lng": 127.4424997,
-    "students_3km": 12926,
-    "academies_3km": 85,
-    "apt_families_3km": 45288
-  },
-  {
-    "name": "인천 서구 가좌1동 행정복지센터",
-    "addr": "인천광역시 서구 가정로112번길 10(가좌동)",
-    "lat": 37.4942749,
-    "lng": 126.6725876,
-    "students_3km": 13022,
-    "academies_3km": 92,
-    "apt_families_3km": 41982
-  },
-  {
-    "name": "경기 김포시 운양동 행정복지센터",
-    "addr": "경기 김포시 모담공원로 32",
-    "lat": 37.6514229,
-    "lng": 126.6832703,
-    "students_3km": 10244,
-    "academies_3km": 84,
-    "apt_families_3km": 40048
-  },
-  {
     "name": "인천 서구 당하동 행정복지센터",
     "addr": "인천광역시 서구 청마로167번길 19(당하동)",
     "lat": 37.592174,
     "lng": 126.6745618,
     "students_3km": 12591,
     "academies_3km": 47,
-    "apt_families_3km": 38605
+    "apt_families_3km": 38605,
+    "potential_customers": 630
   },
   {
-    "name": "경기 오산시 신장1동 행정복지센터",
-    "addr": "경기도 오산시 문헌공로 45(금암동)",
-    "lat": 37.1766478,
-    "lng": 127.054566,
-    "students_3km": 14759,
-    "academies_3km": 74,
-    "apt_families_3km": 38054
+    "name": "전북 익산시 송학동 행정복지센터",
+    "addr": "전북특별자치도 익산시 고현로 11",
+    "lat": 35.9384909,
+    "lng": 126.9404205,
+    "students_3km": 7524,
+    "academies_3km": 50,
+    "apt_families_3km": 32068,
+    "potential_customers": 376
   },
   {
-    "name": "대전 동구 판암2동 행정복지센터",
-    "addr": "대전광역시 동구 동부로 37",
-    "lat": 36.3204505,
-    "lng": 127.4573983,
-    "students_3km": 10867,
-    "academies_3km": 69,
-    "apt_families_3km": 35953
+    "name": "경기 화성시 향남읍 행정복지센터",
+    "addr": "경기도 화성시 향남읍 발안로 89",
+    "lat": 37.1321845,
+    "lng": 126.9204283,
+    "students_3km": 7281,
+    "academies_3km": 50,
+    "apt_families_3km": 28955,
+    "potential_customers": 364
   },
   {
-    "name": "경기 광명시 소하2동 행정복지센터",
-    "addr": "경기도 광명시 성채로 52",
-    "lat": 37.4321088,
-    "lng": 126.8801808,
-    "students_3km": 10327,
-    "academies_3km": 70,
-    "apt_families_3km": 34144
-  },
-  {
-    "name": "충남 천안시 동남구 청룡동 행정복지센터",
-    "addr": "충청남도 천안시 동남구 청수14로 99",
-    "lat": 36.7860806,
-    "lng": 127.156732,
-    "students_3km": 10365,
-    "academies_3km": 61,
-    "apt_families_3km": 33250
+    "name": "경기 안성시 안성1동 행정복지센터",
+    "addr": "경기도 안성시 안성시 낙원길 95 (영동)",
+    "lat": 37.0056575,
+    "lng": 127.2742719,
+    "students_3km": 6058,
+    "academies_3km": 44,
+    "apt_families_3km": 20683,
+    "potential_customers": 303
   }
 ]
