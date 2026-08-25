@@ -1833,7 +1833,7 @@
             universityOverlays.forEach(ol => ol.setMap(null));
             universityOverlays = [];
 
-            const isUnivChecked = document.getElementById('chk-university')?.checked ?? true;
+            const isUnivChecked = document.getElementById('chk-university')?.checked ?? false;
             if (!isUnivChecked) return;
 
             const bounds = map.getBounds();
