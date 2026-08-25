@@ -177,8 +177,8 @@ for key, d in dongs.items():
     total_students_3km = middle_students_3km + high_students_3km
     potential_cust = round(total_students_3km * 0.05)
 
-    # 1. 초희소형: 학원수 < 50, 잠정고객수 > 300, 아파트 세대수 >= 20,000
-    is_type1 = (academies_3km < 50 and potential_cust > 300 and apt_families_3km >= 20000)
+    # 1. 초희소형: 학원수 < 50, 잠정고객수 > 300, 아파트 세대수 >= 15,000
+    is_type1 = (academies_3km < 50 and potential_cust > 300 and apt_families_3km >= 15000)
 
     # 2. 세대밀집: 아파트 세대수 >= 50,000, 잠정고객수 >= 400, 학원수 < 100
     is_type2 = (apt_families_3km >= 50000 and potential_cust >= 400 and academies_3km < 100)
