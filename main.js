@@ -40,8 +40,45 @@
         let apartmentOverlays = [];
         let universityOverlays = [];
         let top10BranchOverlays = [];
+        let targetDongOverlays = [];
         let candidateOverlays = [];
         let trendChart = null;
+
+        const TARGET_DONG_LOCATIONS = [
+            { name: "경기 남양주시 다산1동 행정복지센터", addr: "경기도 남양주시 다산중앙로82번안길 85", lat: 37.6256214, lng: 127.1537233, students_3km: 17409, academies_3km: 94, apt_families_3km: 74906 },
+            { name: "인천 연수구 동춘2동 행정복지센터", addr: "인천광역시 연수구 앵고개로 256", lat: 37.4026364, lng: 126.6710433, students_3km: 16738, academies_3km: 95, apt_families_3km: 66922 },
+            { name: "충남 천안시 서북구 부성2동 행정복지센터", addr: "충청남도 천안시 서북구 신두정로 59", lat: 36.8378393, lng: 127.1472856, students_3km: 13352, academies_3km: 79, apt_families_3km: 65163 },
+            { name: "충남 천안시 동남구 신안동 행정복지센터", addr: "충청남도 천안시 동남구 신부13길 13", lat: 36.8173807, lng: 127.1604107, students_3km: 13476, academies_3km: 70, apt_families_3km: 64824 },
+            { name: "인천 서구 마전동 행정복지센터", addr: "인천광역시 서구 완정로10번길 14(마전동)", lat: 37.5953476, lng: 126.6736886, students_3km: 12960, academies_3km: 84, apt_families_3km: 61472 },
+            { name: "충남 천안시 동남구 원성2동 행정복지센터", addr: "충청남도 천안시 동남구 고재15길 15", lat: 36.8014202, lng: 127.1608356, students_3km: 13559, academies_3km: 98, apt_families_3km: 54905 },
+            { name: "인천 연수구 청학동 행정복지센터", addr: "인천광역시 연수구 비류대로 287", lat: 37.4290212, lng: 126.6523499, students_3km: 15241, academies_3km: 92, apt_families_3km: 54878 },
+            { name: "경남 창원시 성산구 용지동 행정복지센터", addr: "경상남도 창원시 성산구 용지로239번길 19-4", lat: 35.23603556, lng: 128.6845091, students_3km: 12312, academies_3km: 83, apt_families_3km: 52762 },
+            { name: "경기 김포시 장기본동 행정복지센터", addr: "경기도 김포시 김포대로 1433", lat: 37.6523062, lng: 126.6717281, students_3km: 10244, academies_3km: 97, apt_families_3km: 52712 },
+            { name: "인천 연수구 옥련1동 행정복지센터", addr: "인천광역시 연수구 비류대로186번길 14", lat: 37.427403, lng: 126.6551012, students_3km: 19919, academies_3km: 91, apt_families_3km: 52518 },
+            { name: "인천 연수구 옥련2동 행정복지센터", addr: "인천광역시 연수구 옥련로 82", lat: 37.4262313, lng: 126.6482934, students_3km: 15067, academies_3km: 89, apt_families_3km: 52518 },
+            { name: "경기 안양시 만안구 충훈동 행정복지센터", addr: "경기도 안양시 만안구 충훈로 90번길 36", lat: 37.4061441, lng: 126.9000851, students_3km: 12064, academies_3km: 93, apt_families_3km: 51131 },
+            { name: "경남 창원시 성산구 중앙동 행정복지센터", addr: "경상남도 창원시 성산구 외동반림로 5", lat: 35.22105424, lng: 128.6737069, students_3km: 11118, academies_3km: 80, apt_families_3km: 50434 },
+            { name: "경기 화성시 동탄4동 행정복지센터", addr: "경기도 화성시 동탄대로시범길 133", lat: 37.1997759, lng: 127.1122732, students_3km: 15837, academies_3km: 89, apt_families_3km: 49572 },
+            { name: "인천 연수구 동춘3동 행정복지센터", addr: "인천광역시 연수구 원인재로 110", lat: 37.4085114, lng: 126.6783217, students_3km: 15901, academies_3km: 83, apt_families_3km: 49446 },
+            { name: "인천 연수구 연수2동 행정복지센터", addr: "인천광역시 연수구 원인재로 158", lat: 37.4117496, lng: 126.6818896, students_3km: 11758, academies_3km: 85, apt_families_3km: 49446 },
+            { name: "경기 파주시 교하동 행정복지센터", addr: "경기도 파주시 교하로 1414-5", lat: 37.7046141, lng: 126.7238047, students_3km: 16963, academies_3km: 95, apt_families_3km: 49054 },
+            { name: "경기 화성시 병점1동 행정복지센터", addr: "경기도 화성시 경기도대로1010번길 11", lat: 37.1706841, lng: 127.105636, students_3km: 15409, academies_3km: 84, apt_families_3km: 47284 },
+            { name: "대전 동구 효동 행정복지센터", addr: "대전광역시 동구 대전로542번길 143", lat: 36.31691, lng: 127.4424997, students_3km: 12926, academies_3km: 85, apt_families_3km: 45288 },
+            { name: "경기 평택시 세교동 행정복지센터", addr: "경기도 평택시 평택로 149(세교동)", lat: 36.9987076, lng: 127.0794062, students_3km: 11888, academies_3km: 72, apt_families_3km: 44742 },
+            { name: "경기 안산시 상록구 해양동 행정복지센터", addr: "경기도 안산시 상록구 해양로 8", lat: 37.2947118, lng: 126.8201063, students_3km: 10512, academies_3km: 97, apt_families_3km: 42970 },
+            { name: "부산 해운대구 좌1동 행정복지센터", addr: "부산광역시 해운대구 양운로 91", lat: 35.1709225, lng: 129.1741845, students_3km: 10494, academies_3km: 86, apt_families_3km: 42451 },
+            { name: "인천 서구 가좌1동 행정복지센터", addr: "인천광역시 서구 가정로112번길 10", lat: 37.4942749, lng: 126.6725876, students_3km: 13022, academies_3km: 92, apt_families_3km: 41982 },
+            { name: "경기 김포시 운양동 행정복지센터", addr: "경기 김포시 모담공원로 32", lat: 37.6514229, lng: 126.6832703, students_3km: 10244, academies_3km: 84, apt_families_3km: 40048 },
+            { name: "경남 창원시 성산구 반송동 행정복지센터", addr: "경상남도 창원시 성산구 원이대로473번길 19-14", lat: 35.23582985, lng: 128.669543, students_3km: 12473, academies_3km: 62, apt_families_3km: 39100 },
+            { name: "인천 서구 당하동 행정복지센터", addr: "인천광역시 서구 청마로167번길 19", lat: 37.592174, lng: 126.6745618, students_3km: 12591, academies_3km: 47, apt_families_3km: 38605 },
+            { name: "경기 오산시 신장1동 행정복지센터", addr: "경기도 오산시 문헌공로 45", lat: 37.1766478, lng: 127.054566, students_3km: 14759, academies_3km: 74, apt_families_3km: 38054 },
+            { name: "경기 안산시 단원구 초지동 행정복지센터", addr: "경기도 안산시 단원구 초지동로 67", lat: 37.3099601, lng: 126.8168208, students_3km: 12103, academies_3km: 94, apt_families_3km: 36928 },
+            { name: "대전 동구 판암2동 행정복지센터", addr: "대전광역시 동구 동부로 37", lat: 36.3204505, lng: 127.4573983, students_3km: 10867, academies_3km: 69, apt_families_3km: 35953 },
+            { name: "경기 화성시 동탄8동 행정복지센터", addr: "경기도 화성시 동탄대로 87", lat: 37.1623463, lng: 127.105295, students_3km: 11616, academies_3km: 58, apt_families_3km: 34819 },
+            { name: "경기 광명시 소하2동 행정복지센터", addr: "경기도 광명시 성채로 52", lat: 37.4321088, lng: 126.8801808, students_3km: 10327, academies_3km: 70, apt_families_3km: 34144 },
+            { name: "충남 천안시 동남구 청룡동 행정복지센터", addr: "충청남도 천안시 동남구 청수14로 99", lat: 36.7860806, lng: 127.156732, students_3km: 10365, academies_3km: 61, apt_families_3km: 33250 },
+            { name: "경기 시흥시 배곧1동 주민센터", addr: "경기도 시흥시 배곧4로 94-41", lat: 37.3717157, lng: 126.7357764, students_3km: 14718, academies_3km: 51, apt_families_3km: 30014 }
+        ];
 
 
 
@@ -183,6 +220,7 @@
         setupUIEvents();
         loadAllGoogleSheetData();
         renderCandidateMarkers();
+        renderTargetDongMarkers();
 
         setInterval(() => {
             console.log('🔄 Google Sheets 실시간 최신 데이터 자동 동기화 중...');
@@ -244,6 +282,7 @@
 
             // 🔘 필터 체크박스 이벤트 연결
             const chkBranch = document.getElementById('chk-branch');
+            const chkTargetDong = document.getElementById('chk-target-dong');
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
@@ -252,6 +291,7 @@
             const chkApartment = document.getElementById('chk-apartment');
 
             if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
+            if (chkTargetDong) chkTargetDong.addEventListener('change', () => renderTargetDongMarkers());
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
@@ -268,6 +308,7 @@
                     const keyword = e.target.value.trim().toLowerCase();
                     if (!keyword) { searchResults.style.display = 'none'; return; }
 
+                    const matchingTargetDongs = TARGET_DONG_LOCATIONS.filter(d => d.name.toLowerCase().includes(keyword) || d.addr.toLowerCase().includes(keyword));
                     const matchingCandidates = CANDIDATE_LOCATIONS.filter(c => c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword) || c.desc.toLowerCase().includes(keyword));
 
                     const matchingSchoolKeys = Object.keys(schoolMap).filter(codeKey => {
@@ -285,6 +326,9 @@
                     const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
 
                     let html = '';
+                    matchingTargetDongs.slice(0, 6).forEach(td => {
+                        html += `<div class="search-item" data-type="targetdong" data-name="${td.name}">🎯 [정밀추천지] ${td.name} (${Math.round(td.apt_families_3km/1000)}천세대 / 학원${td.academies_3km}개)</div>`;
+                    });
                     matchingBranches.forEach(b => {
                         const yoyInfo = getYoYInfo(b.name);
                         const isTop10 = yoyInfo && yoyInfo.rank <= 10;
@@ -326,7 +370,14 @@
                     const item = e.target.closest('.search-item');
                     if (item) {
                         const type = item.dataset.type;
-                        if (type === 'branch') {
+                        if (type === 'targetdong') {
+                            const name = item.dataset.name;
+                            const foundTD = TARGET_DONG_LOCATIONS.find(td => td.name === name);
+                            if (foundTD) {
+                                showTargetDongOverlayPopup(foundTD);
+                                searchInput.value = foundTD.name;
+                            }
+                        } else if (type === 'branch') {
                             const pos = new kakao.maps.LatLng(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
                             map.setLevel(6);
                             map.panTo(pos);
@@ -405,11 +456,13 @@
                 renderSchoolMarkers();
                 renderApartmentMarkers();
                 renderUniversityMarkers();
+                renderTargetDongMarkers();
             });
 
             kakao.maps.event.addListener(map, 'idle', () => {
                 renderApartmentMarkers();
                 renderUniversityMarkers();
+                renderTargetDongMarkers();
             });
 
             container.addEventListener('contextmenu', (e) => {
@@ -1947,6 +2000,107 @@
 
             const overlay = new kakao.maps.CustomOverlay({
                 position: u.pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS + 1000
+            });
+
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
+        }
+
+        // 🎯 정밀추천지 (법정동) 마커 렌더링 (화면 뷰포트 영역 실시간 필터링)
+        function renderTargetDongMarkers() {
+            targetDongOverlays.forEach(ol => ol.setMap(null));
+            targetDongOverlays = [];
+
+            const isTargetChecked = document.getElementById('chk-target-dong')?.checked ?? true;
+            if (!isTargetChecked) return;
+
+            const bounds = map.getBounds();
+
+            TARGET_DONG_LOCATIONS.forEach(d => {
+                const pos = new kakao.maps.LatLng(d.lat, d.lng);
+                if (bounds && bounds.contain(pos)) {
+                    const content = document.createElement('div');
+                    content.className = 'target-dong-badge';
+                    const nameParts = d.name.split(' ');
+                    const shortName = nameParts.slice(1, 4).join(' ').replace('행정복지센터', '').replace('주민센터', '').trim();
+                    content.innerHTML = `🎯 [추천] ${shortName} <span style="font-weight:400; opacity:0.9;">(${Math.round(d.apt_families_3km/1000)}천세대/학원${d.academies_3km}개)</span>`;
+                    content.onclick = (e) => {
+                        if (e) e.stopPropagation();
+                        showTargetDongOverlayPopup(d);
+                    };
+
+                    const overlay = new kakao.maps.CustomOverlay({
+                        position: pos,
+                        content: content,
+                        yAnchor: 1.3,
+                        clickable: true,
+                        zIndex: Z_INDEX.MARKER + 5
+                    });
+                    overlay.setMap(map);
+                    targetDongOverlays.push(overlay);
+                }
+            });
+        }
+
+        // 🎯 정밀추천지 상세 분석 팝업 (반경 3km 정밀 지표 표출)
+        function showTargetDongOverlayPopup(d) {
+            window.clearRadiusOverlay();
+
+            const pos = new kakao.maps.LatLng(d.lat, d.lng);
+            map.panTo(pos);
+
+            clickCircle = new kakao.maps.Circle({
+                center: pos,
+                radius: 3000,
+                strokeWeight: 2.5,
+                strokeColor: '#ff4757',
+                strokeOpacity: 0.9,
+                strokeStyle: 'dashed',
+                fillColor: '#ff4757',
+                fillOpacity: 0.15,
+                zIndex: Z_INDEX.RADIUS - 5
+            });
+            clickCircle.setMap(map);
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                window.clearRadiusOverlay();
+            };
+
+            const safeAddr = (d.addr || '').replace(/'/g, "\\'");
+            const potentialCust = Math.round(d.students_3km * 0.05);
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:#ff6b81;">🎯 [법정동 정밀추천지] ${d.name}</span>
+                </div>
+                <div class="rs-address">📍 지번/도로명: <b>${d.addr || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
+                
+                <div class="rs-header" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.15); padding-top:8px;">
+                    <span class="rs-title" style="color:#ff6b81;">📊 반경 3km 정밀 정량분석 (조건: 학원<100, 세대≥3만, 학생≥1만)</span>
+                </div>
+                <div class="rs-grid" style="margin-top:6px;">
+                    <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71; font-size:13.5px; font-weight:800;">${d.apt_families_3km.toLocaleString()}세대 (≥3만 충족)</value></div>
+                    <div class="rs-item"><label>🏫 반경 3km 총 중·고등학생수</label><value style="color:#ff6b81; font-size:13.5px; font-weight:800;">${d.students_3km.toLocaleString()}명 (≥1만 충족)</value></div>
+                    <div class="rs-item"><label>📚 반경 3km 총 학원수 (희소성)</label><value style="color:#60a5fa; font-size:13.5px; font-weight:800;">${d.academies_3km}개 (<100개 충족)</value></div>
+                    <div class="rs-item"><label>🎯 잠재 고객수 (총 학생의 5%)</label><value style="color:#f59e0b; font-size:13.5px; font-weight:800;">${potentialCust.toLocaleString()}명</value></div>
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            const overlay = new kakao.maps.CustomOverlay({
+                position: pos,
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,

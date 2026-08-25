@@ -846,6 +846,33 @@ html, body, #map {
     z-index: 99999 !important;
 }
 
+/* 🎯 정밀추천지 (법정동) 전용 배지 오버레이 스타일 */
+.target-dong-badge {
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 18px;
+    border: 2px solid #ffffff;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 4px 18px rgba(255, 71, 87, 0.75);
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.target-dong-badge:hover {
+    transform: scale(1.18) translateY(-3px);
+    background: linear-gradient(135deg, #ff6b81, #ff4757);
+    box-shadow: 0 6px 25px rgba(255, 71, 87, 0.95);
+    border-color: #ffffff;
+    z-index: 99999 !important;
+}
+
 .candidate-overlay .cand-tag {
     font-size: 10px;
     padding: 1px 5px;
