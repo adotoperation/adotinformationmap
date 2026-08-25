@@ -155,6 +155,12 @@
         };
         const map = new kakao.maps.Map(container, options);
 
+        kakao.maps.event.addListener(map, 'idle', () => {
+            if (typeof renderUniversityMarkers === 'function') renderUniversityMarkers();
+            if (typeof renderApartmentMarkers === 'function') renderApartmentMarkers();
+            if (typeof renderRecommendMarkers === 'function') renderRecommendMarkers();
+        });
+
         window.copyAddressText = function (text) {
             if (!text) return;
             navigator.clipboard.writeText(text).then(() => {
@@ -187,6 +193,203 @@
 
             closeDetailModal();
         };
+
+        // 🎯 RDB_추천입지 데이터 동기화 & 마커 표출
+        let rdbRecommendDataList = [];
+        let recommendOverlays = [];
+
+        async function loadRecommendSheetData() {
+            try {
+                const res = await fetch('/api/recommend_data');
+                if (res.ok) {
+                    const csvText = await res.text();
+                    if (csvText && !csvText.trim().startsWith('<!DOCTYPE html')) {
+                        parseRecommendCsv(csvText);
+                        console.log(`🎯 RDB_추천입지 CSV data parsed: ${rdbRecommendDataList.length} rows`);
+                        renderRecommendMarkers();
+                        return;
+                    }
+                }
+                fallbackLocalRecommendCsv();
+            } catch (err) {
+                console.warn('⚠️ RDB_추천입지 API fetch error, fallback to local CSV:', err);
+                fallbackLocalRecommendCsv();
+            }
+        }
+
+        async function fallbackLocalRecommendCsv() {
+            try {
+                const res = await fetch('RDB_추천입지.csv');
+                if (res.ok) {
+                    const csvText = await res.text();
+                    if (csvText) {
+                        parseRecommendCsv(csvText);
+                        console.log(`🎯 Local RDB_추천입지.csv parsed: ${rdbRecommendDataList.length} rows`);
+                        renderRecommendMarkers();
+                    }
+                }
+            } catch (err) {
+                console.error('⚠️ Failed to load local RDB_추천입지.csv:', err);
+            }
+        }
+
+        function parseRecommendCsv(csvText) {
+            if (!csvText) return;
+            const rows = csvText.split('\n').slice(1);
+            rdbRecommendDataList = [];
+
+            const dongMap = {};
+            if (window.ALL_DONGS_DATASET) {
+                window.ALL_DONGS_DATASET.forEach(d => { dongMap[d.name] = d; });
+            }
+
+            rows.forEach(row => {
+                if (!row.trim()) return;
+                const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (columns.length < 7) return;
+
+                const type = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                const dongName = (columns[1] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                const midStudents = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+                const highStudents = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+                const potentialCust = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+                const academies = parseInt(columns[5]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+                const apartments = parseInt(columns[6]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+
+                // Match coordinates from ALL_DONGS_DATASET
+                let matchedDong = dongMap[dongName];
+                if (!matchedDong && dongName) {
+                    const cleanName = dongName.replace('행정복지센터', '').replace('주민센터', '').trim();
+                    matchedDong = (window.ALL_DONGS_DATASET || []).find(d => d.name.includes(cleanName));
+                }
+
+                if (matchedDong) {
+                    rdbRecommendDataList.push({
+                        type: type,
+                        dong: dongName,
+                        addr: matchedDong.addr,
+                        lat: matchedDong.lat,
+                        lng: matchedDong.lng,
+                        pos: new kakao.maps.LatLng(matchedDong.lat, matchedDong.lng),
+                        middle_students: midStudents,
+                        high_students: highStudents,
+                        potential_customers: potentialCust,
+                        academies: academies,
+                        apartments: apartments
+                    });
+                }
+            });
+        }
+
+        function getRecommendTypeClass(type) {
+            if (type.includes('1') || type.includes('초희소')) return 'type-1';
+            if (type.includes('2') || type.includes('세대밀집')) return 'type-2';
+            return 'type-3';
+        }
+
+        function renderRecommendMarkers() {
+            recommendOverlays.forEach(ol => ol.setMap(null));
+            recommendOverlays = [];
+
+            const isRecommendChecked = document.getElementById('chk-rdb-recommend')?.checked ?? true;
+            if (!isRecommendChecked) return;
+
+            const bounds = map.getBounds();
+
+            rdbRecommendDataList.forEach(item => {
+                if (!item || !item.pos) return;
+                if (bounds && !bounds.contain(item.pos)) return;
+
+                const typeClass = getRecommendTypeClass(item.type);
+                const nameParts = item.dong.split(' ');
+                const shortName = nameParts.slice(1, 4).join(' ').replace('행정복지센터', '').replace('주민센터', '').trim();
+
+                const labelContent = document.createElement('div');
+                labelContent.className = `recommend-badge ${typeClass}`;
+                labelContent.innerHTML = `🎯 [${item.type.split('.')[1] || item.type}] ${shortName} <span style="font-weight:400; opacity:0.9;">(고객${item.potential_customers}명)</span>`;
+
+                labelContent.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    showRecommendOverlayPopup(item);
+                };
+
+                const overlay = new kakao.maps.CustomOverlay({
+                    position: item.pos,
+                    content: labelContent,
+                    yAnchor: 1.3,
+                    clickable: true,
+                    zIndex: Z_INDEX.MARKER + 10
+                });
+
+                overlay.setMap(map);
+                recommendOverlays.push(overlay);
+            });
+        }
+
+        function showRecommendOverlayPopup(item) {
+            window.clearRadiusOverlay();
+
+            map.panTo(item.pos);
+
+            const strokeColor = item.type.includes('1') ? '#ff4757' : (item.type.includes('2') ? '#f59e0b' : '#6366f1');
+
+            clickCircle = new kakao.maps.Circle({
+                center: item.pos,
+                radius: 3000,
+                strokeWeight: 2.5,
+                strokeColor: strokeColor,
+                strokeOpacity: 0.9,
+                strokeStyle: 'dashed',
+                fillColor: strokeColor,
+                fillOpacity: 0.15,
+                zIndex: Z_INDEX.RADIUS - 5
+            });
+            clickCircle.setMap(map);
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                window.clearRadiusOverlay();
+            };
+
+            const safeAddr = (item.addr || '').replace(/'/g, "\\'");
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:${strokeColor};">🎯 [RDB_추천입지] ${item.type} - ${item.dong}</span>
+                </div>
+                <div class="rs-address">📍 지번/도로명: <b>${item.addr || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
+                
+                <div class="rs-header" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.15); padding-top:8px;">
+                    <span class="rs-title" style="color:${strokeColor};">📊 반경 3km 정밀 정량분석 지표 (RDB_추천입지)</span>
+                </div>
+                <div class="rs-grid" style="margin-top:6px;">
+                    <div class="rs-item"><label>🏫 중학생 수</label><value style="color:#ff9f43; font-size:13px; font-weight:800;">${item.middle_students.toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>🏫 고등학생 수</label><value style="color:#ff7f50; font-size:13px; font-weight:800;">${item.high_students.toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>🎯 잠재 고객수 (중·고등 5%)</label><value style="color:#f59e0b; font-size:13.5px; font-weight:800;">${item.potential_customers.toLocaleString()}명</value></div>
+                    <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#60a5fa; font-size:13.5px; font-weight:800;">${item.academies}개</value></div>
+                    <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71; font-size:13.5px; font-weight:800;">${item.apartments.toLocaleString()}세대</value></div>
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            const overlay = new kakao.maps.CustomOverlay({
+                position: item.pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS + 1000
+            });
+
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
+        }
 
         setupUIEvents();
         loadAllGoogleSheetData();
@@ -253,6 +456,7 @@
 
             // 🔘 필터 체크박스 이벤트 연결
             const chkBranch = document.getElementById('chk-branch');
+            const chkRdbRecommend = document.getElementById('chk-rdb-recommend');
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
@@ -261,6 +465,7 @@
             const chkApartment = document.getElementById('chk-apartment');
 
             if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
+            if (chkRdbRecommend) chkRdbRecommend.addEventListener('change', () => renderRecommendMarkers());
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
@@ -1053,6 +1258,8 @@
                 valPotential.textContent = `${potentialCustomers.toLocaleString()}명`;
                 bar.style.display = 'flex';
             }
+
+            loadRecommendSheetData();
         }
 
         function getPurpleHeatmapLevelClass(totalCount) {

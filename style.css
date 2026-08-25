@@ -873,6 +873,46 @@ html, body, #map {
     z-index: 99999 !important;
 }
 
+/* 🎯 RDB_추천입지 전용 마커 오버레이 스타일 */
+.recommend-badge {
+    padding: 6px 14px;
+    border-radius: 18px;
+    border: 2px solid #ffffff;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.recommend-badge.type-1 {
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: #ffffff;
+    box-shadow: 0 4px 18px rgba(255, 71, 87, 0.75);
+}
+
+.recommend-badge.type-2 {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #ffffff;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.75);
+}
+
+.recommend-badge.type-3 {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #ffffff;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.75);
+}
+
+.recommend-badge:hover {
+    transform: scale(1.18) translateY(-3px);
+    border-color: #ffffff;
+    z-index: 99999 !important;
+}
+
 /* 🎯 신규진출 유형 & 동적 조건검색 패널 */
 #new-location-container {
     margin-top: 14px;
