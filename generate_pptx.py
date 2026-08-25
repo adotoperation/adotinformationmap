@@ -62,29 +62,29 @@ def create_presentation():
     tf1 = card1.text_frame
     tf1.word_wrap = True
     tf1.margin_left = Inches(0.8)
-    tf1.margin_top = Inches(0.9)
+    tf1.margin_top = Inches(0.8)
 
     p1 = tf1.paragraphs[0]
-    p1.text = "🎯 학원 성장의 3대 필수 조건과 데이터 상권 분석"
-    p1.font.size = Pt(32)
+    p1.text = "🎯 추천입지 유형별 맞춤 전략 & 최적 입지 산출 모델"
+    p1.font.size = Pt(30)
     p1.font.bold = True
     p1.font.color.rgb = ACCENT_RED
     p1.font.name = "Malgun Gothic"
 
     p2 = tf1.add_paragraph()
-    p2.text = "콘텐츠 + 우수 강사진 + 스마트 상권 분석 웹앱 (서울대 TOP30 & 4년제 대학)"
-    p2.font.size = Pt(20)
+    p2.text = "콘텐츠 + 우수 강사진 + 상권 분석 웹앱 (학원수 추이 / 아파트 매매가 구매력 / 대학 입결 데이터)"
+    p2.font.size = Pt(18)
     p2.font.bold = True
     p2.font.color.rgb = TEXT_WHITE
     p2.font.name = "Malgun Gothic"
-    p2.space_before = Pt(20)
+    p2.space_before = Pt(18)
 
     p3 = tf1.add_paragraph()
     p3.text = "에이닷 영어학원 지속 성장 & 신규 출점 시뮬레이션 시스템 보고서 | 2026. 08"
-    p3.font.size = Pt(14)
+    p3.font.size = Pt(13.5)
     p3.font.color.rgb = TEXT_MUTED
     p3.font.name = "Malgun Gothic"
-    p3.space_before = Pt(45)
+    p3.space_before = Pt(40)
 
     # ==========================================
     # SLIDE 2: 학원 성장의 3대 필수 조건
@@ -128,56 +128,52 @@ def create_presentation():
         p2.space_before = Pt(16)
 
     # ==========================================
-    # SLIDE 3: 상권 분석의 4대 핵심 데이터 요소
+    # SLIDE 3: 🎯 추천입지 3개 유형별 전략적 진출 (한눈에 파악)
     # ==========================================
     slide3 = prs.slides.add_slide(blank_layout)
     add_bg(slide3)
-    add_header(slide3, "2. 상권 분석을 완벽하게 수행하는 4대 데이터 요소")
+    add_header(slide3, "2. 🎯 추천입지 3개 유형 분류 & 맞춤형 전략 진출 (한눈에 파악)")
 
-    data_elements = [
-        ("🏫 1. 학생수 추이", "2024~2026년 3개년 학교별 총원 및 학년별 유입/유출 추이 정밀 시각화", ACCENT_RED),
-        ("🎯 2. 잠재 고객수", "반경 3km 중·고등학생 총원의 5%를 잠정 고객수로 자동 계산 (유효 타겟)", ACCENT_AMBER),
-        ("🏢 3. 아파트 세대수", "반경 3km 내 대단지 주거 타운 세대수를 집계하여 탄탄한 배후 수요 측정", ACCENT_GREEN),
-        ("📚 4. 학원수 (밀집도)", "지번별 경쟁 학원수 분포 분석으로 독점적 초희소형(50개 미만) 시장 발굴", ACCENT_BLUE)
+    types_data = [
+        ("🔥 1. 초희소형 (블루오션 독점)", "• 학원수 < 50개 / 아파트 > 1.5만 세대\n• 잠정고객 > 300명 (중·고등 6,000명+)\n👉 전략: 경쟁 부재 지역 우선 진출 ➔ 빠르게 시장 점유율 1위 독점", ACCENT_RED),
+        ("⚡ 2. 세대밀집 (안정적 거점)", "• 아파트 > 5.0만 세대 초밀집 타운\n• 학원수 < 100개 / 잠정고객 > 400명\n👉 전략: 풍부한 배후 세대 바탕 ➔ 장기 안정적 고수익 거점 확보", ACCENT_AMBER),
+        ("🖤 3. 메가타겟 (플래그십 거점)", "• 잠정고객 > 700명 (중·고등 1.4만명+)\n• 검빨(Black+Red) 전용 글로우 테마\n👉 전략: 초대형 학령 인구 상권 ➔ 브랜드 대형 플래그십 출점", RGBColor(255, 107, 129))
     ]
 
-    for idx, (d_title, d_desc, d_color) in enumerate(data_elements):
-        row = idx // 2
-        col = idx % 2
-        left_pos = Inches(0.8 + col * 5.95)
-        top_pos = Inches(1.8 + row * 2.5)
-
-        card = slide3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left_pos, top_pos, Inches(5.6), Inches(2.2))
+    for idx, (t_title, t_desc, t_color) in enumerate(types_data):
+        left_pos = Inches(0.8 + idx * 3.95)
+        card = slide3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left_pos, Inches(1.8), Inches(3.7), Inches(4.8))
         card.fill.solid()
         card.fill.fore_color.rgb = CARD_BG
-        card.line.color.rgb = d_color
+        card.line.color.rgb = t_color
         card.line.width = Pt(2)
 
         tf = card.text_frame
         tf.word_wrap = True
         tf.margin_left = Inches(0.3)
-        tf.margin_top = Inches(0.3)
+        tf.margin_right = Inches(0.3)
+        tf.margin_top = Inches(0.4)
 
         p = tf.paragraphs[0]
-        p.text = d_title
-        p.font.size = Pt(18)
+        p.text = t_title
+        p.font.size = Pt(17.5)
         p.font.bold = True
-        p.font.color.rgb = d_color
+        p.font.color.rgb = t_color
         p.font.name = "Malgun Gothic"
 
         p2 = tf.add_paragraph()
-        p2.text = d_desc
+        p2.text = t_desc
         p2.font.size = Pt(13.5)
         p2.font.color.rgb = TEXT_WHITE
         p2.font.name = "Malgun Gothic"
-        p2.space_before = Pt(10)
+        p2.space_before = Pt(16)
 
     # ==========================================
-    # SLIDE 4: 서울대 입결 TOP 30 - 직관적 학구열 지표
+    # SLIDE 4: 서울대 TOP30 & 4년제 대학 (학구열 + 강사 수급)
     # ==========================================
     slide4 = prs.slides.add_slide(blank_layout)
     add_bg(slide4)
-    add_header(slide4, "3. ⭐ 서울대 입결 TOP 30 고등학교 - 직관적 학구열 파악")
+    add_header(slide4, "3. ⭐ 서울대 TOP30 & 🏛️ 4년제 대학 (학구열 + 강사 수급)")
 
     card_l = slide4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
     card_l.fill.solid()
@@ -191,29 +187,28 @@ def create_presentation():
     tf_l.margin_top = Inches(0.4)
 
     p_l1 = tf_l.paragraphs[0]
-    p_l1.text = "⭐ 서울대 TOP 30 시각화의 의의"
-    p_l1.font.size = Pt(20)
+    p_l1.text = "⭐ 서울대 입결 TOP 30 시각화"
+    p_l1.font.size = Pt(19)
     p_l1.font.bold = True
     p_l1.font.color.rgb = ACCENT_AMBER
     p_l1.font.name = "Malgun Gothic"
 
     p_l2 = tf_l.add_paragraph()
     p_l2.text = (
-        "• 고등학교 중 '서울대 합격자수 상위 30개교' 마커 표시\n\n"
-        "• 지역 학구열의 직관적 파악:\n"
-        "  - 지도에서 해당 지역에 TOP 30 고등학교가 위치해 있는지 한눈에 즉시 확인.\n\n"
-        "  - 학구열이 높은 지역일수록 학부모의 교육 투자 성향이 강하고 고난도 영어 코칭(에이닷) 수요가 폭발적임.\n\n"
-        "  - 프리미엄 입지 판정의 단초 역할 수행."
+        "• 2026년 서울대 합격자 상위 30개 고등학교 마커 배치\n\n"
+        "• 직관적 학구열 파악:\n"
+        "  - 지도에서 TOP 30 고교 위치를 한눈에 파악하여 해당 상권의 학구열 수준 판정.\n\n"
+        "  - 학구열이 높은 상권일수록 에이닷 1:1 고난도 코칭 수요가 폭발하며 수강생 LTV 극대화."
     )
-    p_l2.font.size = Pt(13.5)
+    p_l2.font.size = Pt(13)
     p_l2.font.color.rgb = TEXT_WHITE
     p_l2.font.name = "Malgun Gothic"
-    p_l2.space_before = Pt(14)
+    p_l2.space_before = Pt(12)
 
     card_r = slide4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.8), Inches(1.8), Inches(5.7), Inches(4.8))
     card_r.fill.solid()
     card_r.fill.fore_color.rgb = CARD_BG
-    card_r.line.color.rgb = ACCENT_RED
+    card_r.line.color.rgb = ACCENT_BLUE
     card_r.line.width = Pt(2)
 
     tf_r = card_r.text_frame
@@ -222,97 +217,75 @@ def create_presentation():
     tf_r.margin_top = Inches(0.4)
 
     p_r1 = tf_r.paragraphs[0]
-    p_r1.text = "📈 학구열과 에이닷 매출의 상관관계"
-    p_r1.font.size = Pt(20)
+    p_r1.text = "🏛️ 4년제 대학교 2대 핵심 가치"
+    p_r1.font.size = Pt(19)
     p_r1.font.bold = True
-    p_r1.font.color.rgb = ACCENT_RED
+    p_r1.font.color.rgb = ACCENT_BLUE
     p_r1.font.name = "Malgun Gothic"
 
     p_r2 = tf_r.add_paragraph()
     p_r2.text = (
-        "1️⃣ 고학구열 지역의 수강생 LTV (평생가치) 증대:\n"
-        "    내신 및 수능 대세를 이끄는 명문고 배후지로 장기 수강률 확보.\n\n"
-        "2️⃣ 마케팅 효율 및 입소문 확산 가속:\n"
-        "    학부모 커뮤니티가 활성화되어 입소문을 통한 성과 전파가 매우 빠름.\n\n"
-        "3️⃣ 에이닷 브랜드 고급화 시너지:\n"
-        "    명문고 상권 입점으로 지역 내 대표 영어학원으로 포지셔닝."
+        "1️⃣ 지역 전체의 지적 분위기 & 학구열 측정 지표\n\n"
+        "2️⃣ 명문 대학생/대학원생 강사 수급 용이성:\n"
+        "    - 가까운 인근에서 우수 강사를 빠르게 구인.\n"
+        "    - 개원 초기 '강사 구인 리스크'를 제로화하여 지점 운영의 안정성 및 매출 성장 보장."
     )
-    p_r2.font.size = Pt(13.5)
+    p_r2.font.size = Pt(13)
     p_r2.font.color.rgb = TEXT_WHITE
     p_r2.font.name = "Malgun Gothic"
-    p_r2.space_before = Pt(14)
+    p_r2.space_before = Pt(12)
 
     # ==========================================
-    # SLIDE 5: 🏛️ 4년제 대학교 - 학구열 + 강사 수급의 2대 가치
+    # SLIDE 5: 🚀 미래 데이터 고도화 로드맵 (최적 입지 조건 산출)
     # ==========================================
     slide5 = prs.slides.add_slide(blank_layout)
     add_bg(slide5)
-    add_header(slide5, "4. 🏛️ 4년제 대학교의 2대 가치: 학구열 판단 + 강사 수급 용이성")
+    add_header(slide5, "4. 🚀 미래 고도화 로드맵: 에이닷 최적 입지조건 자동 산출")
 
-    card_u1 = slide5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
-    card_u1.fill.solid()
-    card_u1.fill.fore_color.rgb = CARD_BG
-    card_u1.line.color.rgb = ACCENT_BLUE
-    card_u1.line.width = Pt(2)
+    features = [
+        ("📈 3개년 학원수 추이", "학원 시장의 성숙도 및 포화 모멘텀 분석", ACCENT_RED),
+        ("🏢 아파트 매매가 데이터", "지역 가구 소득 수준 및 교육비 구매력(Purchasing Power) 파악", ACCENT_AMBER),
+        ("🎓 4년제 대학 수시/수능 입결", "대학 입결 수준 기반 학구열 및 강사 품질 정밀 평가", ACCENT_BLUE),
+        ("💡 최적 입지조건 자동 산출", "빅데이터 결합으로 '에이닷 입지 AI Score' 산출하여 1순위 추천", ACCENT_GREEN)
+    ]
 
-    tf_u1 = card_u1.text_frame
-    tf_u1.word_wrap = True
-    tf_u1.margin_left = Inches(0.4)
-    tf_u1.margin_top = Inches(0.4)
+    for idx, (f_title, f_desc, f_color) in enumerate(features):
+        row = idx // 2
+        col = idx % 2
+        left_pos = Inches(0.8 + col * 5.95)
+        top_pos = Inches(1.8 + row * 2.5)
 
-    p_u1_1 = tf_u1.paragraphs[0]
-    p_u1_1.text = "🎓 1. 지역 학구열 지표로서의 가치"
-    p_u1_1.font.size = Pt(20)
-    p_u1_1.font.bold = True
-    p_u1_1.font.color.rgb = ACCENT_BLUE
-    p_u1_1.font.name = "Malgun Gothic"
+        card = slide5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left_pos, top_pos, Inches(5.6), Inches(2.2))
+        card.fill.solid()
+        card.fill.fore_color.rgb = CARD_BG
+        card.line.color.rgb = f_color
+        card.line.width = Pt(2)
 
-    p_u1_2 = tf_u1.add_paragraph()
-    p_u1_2.text = (
-        "• 4년제 대학교 입지 지역의 문화적 특징:\n"
-        "  - 지적 분위기와 고학력 인구 비중이 높아 지역 전체의 학구열 수준 파악 가능.\n\n"
-        "  - 학부모들의 대학 입시 관심도가 높아 고급 인강/학원 코칭 수요가 지속적으로 높음."
-    )
-    p_u1_2.font.size = Pt(14)
-    p_u1_2.font.color.rgb = TEXT_WHITE
-    p_u1_2.font.name = "Malgun Gothic"
-    p_u1_2.space_before = Pt(16)
+        tf = card.text_frame
+        tf.word_wrap = True
+        tf.margin_left = Inches(0.3)
+        tf.margin_top = Inches(0.3)
 
-    card_u2 = slide5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.8), Inches(1.8), Inches(5.7), Inches(4.8))
-    card_u2.fill.solid()
-    card_u2.fill.fore_color.rgb = CARD_BG
-    card_u2.line.color.rgb = ACCENT_GREEN
-    card_u2.line.width = Pt(2)
+        p = tf.paragraphs[0]
+        p.text = f_title
+        p.font.size = Pt(18)
+        p.font.bold = True
+        p.font.color.rgb = f_color
+        p.font.name = "Malgun Gothic"
 
-    tf_u2 = card_u2.text_frame
-    tf_u2.word_wrap = True
-    tf_u2.margin_left = Inches(0.4)
-    tf_u2.margin_top = Inches(0.4)
-
-    p_u2_1 = tf_u2.paragraphs[0]
-    p_u2_1.text = "🤝 2. 강사 구인 용이성 (수급 원활도)"
-    p_u2_1.font.size = Pt(20)
-    p_u2_1.font.bold = True
-    p_u2_1.font.color.rgb = ACCENT_GREEN
-    p_u2_1.font.name = "Malgun Gothic"
-
-    p_u2_2 = tf_u2.add_paragraph()
-    p_u2_2.text = (
-        "• 우수한 강사 수급 리스크 원천 차단:\n"
-        "  - 명문 대학생 및 대학원생 파트타임/전임 강사를 가까운 인근에서 수월하게 구인.\n\n"
-        "  - 강사 수급 난항으로 인한 개원 지연 및 휴원 위험을 방지하여 에이닷 네트워크 성장의 병목 해결."
-    )
-    p_u2_2.font.size = Pt(14)
-    p_u2_2.font.color.rgb = TEXT_WHITE
-    p_u2_2.font.name = "Malgun Gothic"
-    p_u2_2.space_before = Pt(16)
+        p2 = tf.add_paragraph()
+        p2.text = f_desc
+        p2.font.size = Pt(13.5)
+        p2.font.color.rgb = TEXT_WHITE
+        p2.font.name = "Malgun Gothic"
+        p2.space_before = Pt(10)
 
     # ==========================================
-    # SLIDE 6: 🎯 RDB 추천입지 모델 & 경영진 최종 결론
+    # SLIDE 6: 경영진 최종 결론 & 비즈니스 제언
     # ==========================================
     slide6 = prs.slides.add_slide(blank_layout)
     add_bg(slide6)
-    add_header(slide6, "5. 🎯 RDB 추천입지 모델 & 경영진 최종 결론")
+    add_header(slide6, "5. 경영진 최종 결론 & 비즈니스 임팩트 제언")
 
     card_fin = slide6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.8), Inches(11.733), Inches(4.8))
     card_fin.fill.solid()
@@ -326,7 +299,7 @@ def create_presentation():
     tf_fin.margin_top = Inches(0.4)
 
     p_f1 = tf_fin.paragraphs[0]
-    p_f1.text = "💡 본 웹앱은 에이닷 성장의 3대 축 중 '상권 분석'의 최첨단 표준 시뮬레이터입니다."
+    p_f1.text = "💡 본 웹앱은 에이닷 성장의 핵심 축인 '상권 분석'의 표준 시뮬레이터입니다."
     p_f1.font.size = Pt(20)
     p_f1.font.bold = True
     p_f1.font.color.rgb = ACCENT_RED
@@ -334,11 +307,11 @@ def create_presentation():
 
     p_f2 = tf_fin.add_paragraph()
     p_f2.text = (
-        "• 콘텐츠와 우수 강사진이 준비되어 있다면, 마지막 성공 열쇠는 '상권 분석'입니다.\n\n"
-        "• 본 웹앱은 수강생/잠재고객/세대수/학원수 분석은 물론, ⭐ 서울대 TOP30과 🏛️ 4년제 대학교 데이터로 '학구열'과 '강사 구인 용이성'까지 직관적으로 판정합니다.\n\n"
-        "• 기존 지점 3km 이격으로 자기잠식을 막고 독점적 🔥 초희소형(학원<50개) 지역을 우선 진출하여 실패 없는 전국 1위 성장을 견인할 것을 제언합니다."
+        "• 추천입지를 3개 유형(🔥초희소형/⚡세대밀집/🖤메가타겟)으로 자동 분류하여 한눈에 파악하고 전략적 진출 가능.\n\n"
+        "• ⭐ 서울대 TOP30 및 🏛️ 4년제 대학 입지로 '학구열'과 '강사 구인 용이성'을 완벽하게 검증.\n\n"
+        "• 향후 3개년 학원수 추이 + 아파트 매매가(구매력) + 대학 수시/수능 입결 빅데이터 고도화로 최적 입지조건을 자동 산출하여 에이닷의 전국 1위 기하급수적 성장을 견인할 것을 제언합니다."
     )
-    p_f2.font.size = Pt(14.5)
+    p_f2.font.size = Pt(14)
     p_f2.font.color.rgb = TEXT_WHITE
     p_f2.font.name = "Malgun Gothic"
     p_f2.space_before = Pt(16)
