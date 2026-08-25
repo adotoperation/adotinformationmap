@@ -258,17 +258,21 @@
                         return item.name.toLowerCase().includes(keyword) || item.code.toLowerCase().includes(keyword);
                     });
 
+                    const cleanKeyword = keyword.replace(/에이닷/g, '').replace(/지점/g, '').trim();
+                    const matchingBranches = branchDataList.filter(b => {
+                        const nameLower = b.name.toLowerCase();
+                        return nameLower.includes(keyword) || (cleanKeyword.length > 0 && nameLower.includes(cleanKeyword));
+                    });
                     const matchingUnivs = universityDataList.filter(u => u.name.toLowerCase().includes(keyword) || u.address.toLowerCase().includes(keyword));
                     const matchingAcademies = Object.keys(academyMap).filter(addr => addr.toLowerCase().includes(keyword));
-                    const matchingBranches = branchDataList.filter(b => b.name.toLowerCase().includes(keyword));
                     const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
 
                     let html = '';
                     matchingBranches.forEach(b => {
-                        const key = Object.keys(TOP10_GROWTH_MAP).find(k => b.name.includes(k));
-                        const top10Info = key ? TOP10_GROWTH_MAP[key] : null;
-                        const icon = top10Info ? `⭐ [Top10 #${top10Info.rank} 지점]` : `🎓 [에이닷지점]`;
-                        const badge = top10Info ? ` <span style="color:#f59e0b; font-weight:bold;">(+${top10Info.inc}명 / +${top10Info.rate}%↑)</span>` : '';
+                        const yoyInfo = getYoYInfo(b.name);
+                        const isTop10 = yoyInfo && yoyInfo.rank <= 10;
+                        const icon = isTop10 ? `⭐ [Top10 #${yoyInfo.rank} 지점]` : `🎓 [에이닷지점]`;
+                        const badge = (yoyInfo && typeof yoyInfo.inc === 'number') ? ` <span style="color:#f59e0b; font-weight:bold;">(+${yoyInfo.inc}명 / ${yoyInfo.rate}%↑)</span>` : '';
                         html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">${icon} ${b.name} (학생수: ${b.studentCount}명${badge})</div>`;
                     });
                     matchingCandidates.slice(0, 6).forEach(c => {
