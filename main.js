@@ -1,15 +1,22 @@
-// 카카오 맵 SDK 로드 - 26/1/1 최신 데이터만 엄격 필터링 & 23학년도 이후 서울대 평균 합격자수(L열) 연동 지도 가동
 (function initAllDataMapApp() {
-    if (typeof kakao === 'undefined' || !kakao.maps) {
-        console.error('Kakao Map SDK is not loaded!');
-        const errNotice = document.getElementById('sdk-error-notice');
-        if (errNotice) errNotice.style.display = 'block';
-        return;
-    }
+    let sdkRetries = 0;
 
-    window.kakaoSdkLoaded = true;
+    function startMapApp() {
+        if (typeof kakao === 'undefined' || !kakao.maps || typeof kakao.maps.load !== 'function') {
+            sdkRetries++;
+            if (sdkRetries < 50) {
+                setTimeout(startMapApp, 100);
+            } else {
+                console.error('Kakao Map SDK is not loaded after 5 seconds!');
+                const errNotice = document.getElementById('sdk-error-notice');
+                if (errNotice) errNotice.style.display = 'block';
+            }
+            return;
+        }
 
-    kakao.maps.load(() => {
+        window.kakaoSdkLoaded = true;
+
+        kakao.maps.load(() => {
         const SCHOOL_CSV_URL = `/api/data`;          // GID 630627369 : RDB_당년학교정보
         const ACADEMY_CSV_URL = `/api/academy_data`; // GID 1376867691 : RDB_학원정보
         const BRANCH_CSV_URL = `/api/branch_data`;    // GID 211834294 : RDB_지점좌표
@@ -2341,9 +2348,14 @@
 
         // 🎯 동적 법정동 조건검색 연산 엔진
         function runTargetDongFilterSearch(autoFit = true) {
-            const minCust = parseInt(document.getElementById('input-target-customers')?.value) || 0;
-            const maxAcad = parseInt(document.getElementById('input-target-academies')?.value) || 9999;
-            const minApt = parseInt(document.getElementById('input-target-apartments')?.value) || 0;
+            const elCust = document.getElementById('input-target-customers');
+            const elAcad = document.getElementById('input-target-academies');
+            const elApt = document.getElementById('input-target-apartments');
+            if (!elCust || !elAcad || !elApt) return;
+
+            const minCust = parseInt(elCust.value) || 0;
+            const maxAcad = parseInt(elAcad.value) || 9999;
+            const minApt = parseInt(elApt.value) || 0;
             const excludeBranch = document.getElementById('chk-exclude-branch')?.checked ?? true;
             const excludeSeoul = document.getElementById('chk-exclude-seoul')?.checked ?? true;
 
@@ -2426,18 +2438,18 @@
             const activeBtn = document.getElementById(`btn-preset-${presetNum}`);
             if (activeBtn) activeBtn.classList.add('active');
 
-            if (presetNum === 1) {
-                document.getElementById('input-target-customers').value = 300;
-                document.getElementById('input-target-academies').value = 50;
-                document.getElementById('input-target-apartments').value = 20000;
-            } else if (presetNum === 2) {
-                document.getElementById('input-target-customers').value = 400;
-                document.getElementById('input-target-academies').value = 100;
-                document.getElementById('input-target-apartments').value = 25000;
-            } else if (presetNum === 3) {
-                document.getElementById('input-target-customers').value = 300;
-                document.getElementById('input-target-academies').value = 100;
-                document.getElementById('input-target-apartments').value = 35000;
+            const elCust = document.getElementById('input-target-customers');
+            const elAcad = document.getElementById('input-target-academies');
+            const elApt = document.getElementById('input-target-apartments');
+
+            if (elCust && elAcad && elApt) {
+                if (presetNum === 1) {
+                    elCust.value = 300; elAcad.value = 50; elApt.value = 20000;
+                } else if (presetNum === 2) {
+                    elCust.value = 400; elAcad.value = 100; elApt.value = 25000;
+                } else if (presetNum === 3) {
+                    elCust.value = 300; elAcad.value = 100; elApt.value = 35000;
+                }
             }
 
             runTargetDongFilterSearch(true);
@@ -2509,5 +2521,8 @@
         }
 
         loadAllDongsDataset();
-    });
+        });
+    }
+
+    startMapApp();
 })();
