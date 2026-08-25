@@ -252,6 +252,7 @@
 
                 const type = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
                 const dongName = (columns[1] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                if (!dongName || dongName.includes('파주') || dongName.includes('운정')) return;
                 const midStudents = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
                 const highStudents = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
                 const potentialCust = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;

@@ -140,6 +140,8 @@ LNG_DEG = 0.04
 recommendations = []
 
 for key, d in dongs.items():
+    if '파주' in d['name'] or '운정' in d['name']:
+        continue
     d_lat = d['lat']
     d_lng = d['lng']
 
