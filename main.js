@@ -314,8 +314,21 @@
         };
 
         window.focusRecommendDongByName = function(dongName) {
-            const item = rdbRecommendDataList.find(i => i.dong === dongName);
+            let item = rdbRecommendDataList.find(i => i.dong === dongName);
+            if (!item) {
+                item = rdbRecommendDataList.find(i => i.dong.includes(dongName) || dongName.includes(i.dong) || (i.addr && i.addr.includes(dongName)));
+            }
+
             if (item) {
+                const isT1 = item.type.includes('1') || item.type.includes('초희소');
+                const isT2 = item.type.includes('2') || item.type.includes('세대밀집');
+                const isT3 = item.type.includes('3') || item.type.includes('메가타겟');
+
+                if (isT1) { const chk = document.getElementById('chk-rec-type-1'); if (chk) chk.checked = true; }
+                if (isT2) { const chk = document.getElementById('chk-rec-type-2'); if (chk) chk.checked = true; }
+                if (isT3) { const chk = document.getElementById('chk-rec-type-3'); if (chk) chk.checked = true; }
+
+                renderRecommendMarkers();
                 showRecommendOverlayPopup(item);
             }
         };
@@ -626,7 +639,16 @@
                     const matchingAcademies = Object.keys(academyMap).filter(addr => addr.toLowerCase().includes(keyword));
                     const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
 
+                    const matchingRecommends = rdbRecommendDataList.filter(rec => 
+                        rec.dong.toLowerCase().includes(keyword) || 
+                        (rec.addr && rec.addr.toLowerCase().includes(keyword))
+                    );
+
                     let html = '';
+                    matchingRecommends.slice(0, 6).forEach(rec => {
+                        const safeDong = rec.dong.replace(/"/g, '&quot;');
+                        html += `<div class="search-item" data-type="recommend" data-dong="${safeDong}">🎯 [${rec.type}] ${rec.dong} (고객 ${rec.potential_customers}명 / 세대 ${(rec.apartments/1000).toFixed(0)}k)</div>`;
+                    });
                     matchingTargetDongs.slice(0, 6).forEach(td => {
                         html += `<div class="search-item" data-type="targetdong" data-name="${td.name}">🎯 [정밀추천지] ${td.name} (${Math.round(td.apt_families_3km/1000)}천세대 / 학원${td.academies_3km}개)</div>`;
                     });
@@ -671,7 +693,11 @@
                     const item = e.target.closest('.search-item');
                     if (item) {
                         const type = item.dataset.type;
-                        if (type === 'targetdong') {
+                        if (type === 'recommend') {
+                            const dong = item.dataset.dong;
+                            focusRecommendDongByName(dong);
+                            searchInput.value = dong;
+                        } else if (type === 'targetdong') {
                             const name = item.dataset.name;
                             const foundTD = TARGET_DONG_LOCATIONS.find(td => td.name === name);
                             if (foundTD) {
