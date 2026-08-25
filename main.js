@@ -281,7 +281,7 @@
                         html += `<div class="search-item" data-type="school" data-code="${item.code}">${icon} ${item.name}${snuBadge} (${item.code}) - 총원 ${item.total2026}명</div>`;
                     });
                     matchingUnivs.slice(0, 6).forEach(u => {
-                        html += `<div class="search-item" data-type="university" data-name="${u.name}" data-addr="${u.address}">🏛️ [대학교] ${u.name} (${u.address.slice(0, 25)}...)</div>`;
+                        html += `<div class="search-item" data-type="university" data-name="${u.name}" data-addr="${u.address}">🏛️ [4년제 대학교] ${u.name} (${u.address.slice(0, 25)}...)</div>`;
                     });
                     matchingAcademies.slice(0, 4).forEach(addr => {
                         const item = academyMap[addr];
@@ -1904,7 +1904,7 @@
 
             labelContent.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:#60a5fa;">🏛️ [대학교] ${u.name}</span>
+                    <span class="rs-title" style="color:#60a5fa;">🏛️ [4년제 대학교] ${u.name}</span>
                 </div>
                 <div class="rs-address">📍 도로명주소: <b>${u.address || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
                 
@@ -1918,7 +1918,7 @@
                     <div class="rs-item"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-weight:800;">${m.potentialCustomers.toLocaleString()}명</value></div>
                     <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${m.totalAcademies3km.toLocaleString()}개 (${m.totalAcademyLocs3km}곳)</value></div>
                     <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${m.totalAptFamilies3km.toLocaleString()}세대 (${m.totalApts3km}곳)</value></div>
-                    ${m.totalUnivs3km > 0 ? `<div class="rs-item"><label>🏛️ 반경 3km 인근 대학교 수</label><value style="color:#60a5fa;">${m.totalUnivs3km}개교</value></div>` : ''}
+                    ${m.totalUnivs3km > 0 ? `<div class="rs-item"><label>🏛️ 반경 3km 인근 4년제 대학교 수</label><value style="color:#60a5fa;">${m.totalUnivs3km}개교</value></div>` : ''}
                 </div>
             `;
 
