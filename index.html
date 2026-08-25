@@ -59,33 +59,39 @@
 
     <!-- 우측 하단 범례 -->
     <div id="legend" class="map-overlay">
-        <div class="legend-title">🏫 학교 학생수 (보라색 스케일)</div>
-        <div class="legend-item"><span class="circle purple-lvl-5"></span> 1,000명 이상 (짙은 보라)</div>
-        <div class="legend-item"><span class="circle purple-lvl-4"></span> 800 ~ 999명</div>
-        <div class="legend-item"><span class="circle purple-lvl-3"></span> 600 ~ 799명</div>
-        <div class="legend-item"><span class="circle purple-lvl-2"></span> 400 ~ 599명</div>
-        <div class="legend-item"><span class="circle purple-lvl-1"></span> 400명 미만 (연보라)</div>
-        
-        <div class="legend-title" style="margin-top:12px;">📚 학원가 수 (원형 스케일)</div>
-        <div class="legend-item"><span class="circle lvl-red"></span> 학원 100개 이상 (빨강)</div>
-        <div class="legend-item"><span class="circle lvl-orange"></span> 학원 80 ~ 99개 (주황)</div>
-        <div class="legend-item"><span class="circle lvl-yellow"></span> 학원 60 ~ 79개 (노랑)</div>
-        <div class="legend-item"><span class="circle lvl-green"></span> 학원 40 ~ 59개 (초록)</div>
-        <div class="legend-item"><span class="circle lvl-blue"></span> 학원 40개 미만 (파랑)</div>
+        <div id="legend-header">
+            <span class="legend-header-title">💡 지도 범례 안내</span>
+            <button id="btn-toggle-legend">▼ 접기</button>
+        </div>
+        <div id="legend-body">
+            <div class="legend-title" style="margin-top:8px;">🏫 학교 학생수 (보라색 스케일)</div>
+            <div class="legend-item"><span class="circle purple-lvl-5"></span> 1,000명 이상 (짙은 보라)</div>
+            <div class="legend-item"><span class="circle purple-lvl-4"></span> 800 ~ 999명</div>
+            <div class="legend-item"><span class="circle purple-lvl-3"></span> 600 ~ 799명</div>
+            <div class="legend-item"><span class="circle purple-lvl-2"></span> 400 ~ 599명</div>
+            <div class="legend-item"><span class="circle purple-lvl-1"></span> 400명 미만 (연보라)</div>
+            
+            <div class="legend-title" style="margin-top:12px;">📚 학원가 수 (원형 스케일)</div>
+            <div class="legend-item"><span class="circle lvl-red"></span> 학원 100개 이상 (빨강)</div>
+            <div class="legend-item"><span class="circle lvl-orange"></span> 학원 80 ~ 99개 (주황)</div>
+            <div class="legend-item"><span class="circle lvl-yellow"></span> 학원 60 ~ 79개 (노랑)</div>
+            <div class="legend-item"><span class="circle lvl-green"></span> 학원 40 ~ 59개 (초록)</div>
+            <div class="legend-item"><span class="circle lvl-blue"></span> 학원 40개 미만 (파랑)</div>
 
-        <div class="legend-title" style="margin-top:12px;">🏢 아파트 세대수 (녹색 스케일)</div>
-        <div class="legend-item"><span class="circle apt-lvl-darkgreen"></span> 10,000세대 이상 (진녹)</div>
-        <div class="legend-item"><span class="circle apt-lvl-green"></span> 8,000 ~ 9,999세대</div>
-        <div class="legend-item"><span class="circle apt-lvl-medgreen"></span> 6,000 ~ 7,999세대</div>
-        <div class="legend-item"><span class="circle apt-lvl-lightgreen"></span> 4,000 ~ 5,999세대</div>
-        <div class="legend-item"><span class="circle apt-lvl-lime"></span> 4,000세대 미만 (연두)</div>
+            <div class="legend-title" style="margin-top:12px;">🏢 아파트 세대수 (녹색 스케일)</div>
+            <div class="legend-item"><span class="circle apt-lvl-darkgreen"></span> 10,000세대 이상 (진녹)</div>
+            <div class="legend-item"><span class="circle apt-lvl-green"></span> 8,000 ~ 9,999세대</div>
+            <div class="legend-item"><span class="circle apt-lvl-medgreen"></span> 6,000 ~ 7,999세대</div>
+            <div class="legend-item"><span class="circle apt-lvl-lightgreen"></span> 4,000 ~ 5,999세대</div>
+            <div class="legend-item"><span class="circle apt-lvl-lime"></span> 4,000세대 미만 (연두)</div>
 
-        <div class="legend-item" style="margin-top:8px;"><span class="branch-legend-icon">🏛️</span> 4년제 대학교 (시안 민트)</div>
-        <div class="legend-item"><span class="branch-legend-icon">🎓</span> 일반 에이닷 지점 (남색)</div>
-        <div class="legend-item"><span class="branch-legend-icon">🔥</span> Top 10 성장 지점 (황금색 & 증감율 표시)</div>
-        <div class="legend-item"><span class="branch-legend-icon">🎯</span> 신규후보지 (신도시 & 5대산업벨트)</div>
-        <div class="legend-note">* 에이닷지점/후보지/4년제 대학교 클릭 시 상세 분석 정보가 표출됩니다.</div>
-        <div class="legend-note">* 클릭 시 두 점 간 직선 거리(km) 계산 (우클릭 시 지우기)</div>
+            <div class="legend-item" style="margin-top:8px;"><span class="branch-legend-icon">🏛️</span> 4년제 대학교 (시안 민트)</div>
+            <div class="legend-item"><span class="branch-legend-icon">🎓</span> 일반 에이닷 지점 (남색)</div>
+            <div class="legend-item"><span class="branch-legend-icon">🔥</span> Top 10 성장 지점 (황금색 & 증감율 표시)</div>
+            <div class="legend-item"><span class="branch-legend-icon">🎯</span> 신규후보지 (신도시 & 5대산업벨트)</div>
+            <div class="legend-note">* 에이닷지점/후보지/4년제 대학교 클릭 시 상세 분석 정보가 표출됩니다.</div>
+            <div class="legend-note">* 클릭 시 두 점 간 직선 거리(km) 계산 (우클릭 시 지우기)</div>
+        </div>
     </div>
 
     <!-- 카카오 맵 로딩 에러 안내 패널 -->

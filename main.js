@@ -225,6 +225,23 @@
                 });
             }
 
+            // 💡 범례창 접기/펼치기 토글 이벤트 연결
+            const legend = document.getElementById('legend');
+            const toggleBtn = document.getElementById('btn-toggle-legend');
+            const legendHeader = document.getElementById('legend-header');
+
+            if (legendHeader && toggleBtn && legend) {
+                legendHeader.addEventListener('click', (e) => {
+                    if (e) e.stopPropagation();
+                    legend.classList.toggle('collapsed');
+                    if (legend.classList.contains('collapsed')) {
+                        toggleBtn.textContent = '▲ 펼치기';
+                    } else {
+                        toggleBtn.textContent = '▼ 접기';
+                    }
+                });
+            }
+
             // 🔘 필터 체크박스 이벤트 연결
             const chkBranch = document.getElementById('chk-branch');
             const chkCandidate = document.getElementById('chk-candidate');
