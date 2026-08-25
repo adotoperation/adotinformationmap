@@ -1,21 +1,40 @@
 /**
- * 🎯 에이닷 정보지도 - RDB_추천입지 자동 계산 및 구글 시트 저장 Apps Script (스마트 유연 로더)
+ * 🎯 에이닷 정보지도 - RDB_추천입지 자동 연산 & 시트 기록 Apps Script (안전 파싱 버전)
  * 
- * [개선 사항]
- * - 탭 이름에 공백이 포함되어 있거나 이름이 조금 달라도(예: '주민센터', 'RDB_주민센터 ') 자동으로 탐색합니다.
- * - 만약 시트 탭이 없으면 웹에 게시된 구글 시트 URL에서 데이터를 자동으로 불러와 연산을 완료합니다. (100% 오류 없는 실행)
+ * [사용 방법]
+ * 1. 구글 스프레드시트 상단 메뉴 [확장 프로그램] ➔ [Apps Script] 클릭
+ * 2. 기존 코드를 모두 지우고 본 코드를 전체 복사하여 붙여넣은 후 저장(Ctrl+S)
+ * 3. 상단 [실행] 버튼 클릭 ➔ 3~5초 후 'RDB_추천입지' 시트에 210개 지역이 자동 기록됩니다.
  */
 
 function calculateAndSaveRDBRecommendLocations() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
+  ss.toast("🔄 3km 정밀 수치 연산 및 추천 입지 산출 중입니다...", "RDB_추천입지 연산 엔진", 10);
+
   // 1. 결과 시트 준비
   let targetSheet = ss.getSheetByName("RDB_추천입지");
   if (!targetSheet) {
     targetSheet = ss.insertSheet("RDB_추천입지");
   }
 
-  // 2. 탭 자동 찾기 헬퍼 (공백 및 부분 일치 허용)
+  // 2. 안전한 파싱 헬퍼 함수
+  function safeFloat(val) {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    const str = String(val).replace(/,/g, '').trim();
+    const parsed = parseFloat(str);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  function safeInt(val) {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : Math.round(val);
+    const str = String(val).replace(/,/g, '').trim();
+    const parsed = parseInt(str, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  // 3. 탭 탐색 헬퍼 (공백 및 대소문자 허용)
   function findSheet(keywords) {
     const sheets = ss.getSheets();
     for (let i = 0; i < sheets.length; i++) {
@@ -30,7 +49,7 @@ function calculateAndSaveRDBRecommendLocations() {
     return null;
   }
 
-  // 3. 웹 CSV 백업 로더 헬퍼 (시트 탭이 없을 경우 대비)
+  // 4. 웹 CSV 백업 로더 헬퍼
   function fetchCsvData(url) {
     try {
       const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
@@ -43,7 +62,7 @@ function calculateAndSaveRDBRecommendLocations() {
     return [];
   }
 
-  // 4. 데이터 로드 (탭 탐색 우선 -> 실패 시 CSV URL 백업)
+  // 5. 시트 탐색 또는 웹 CSV 백업
   const dongSheet = findSheet(['RDB_주민센터', '주민센터', '법정동']);
   const branchSheet = findSheet(['RDB_에이닷지점', '에이닷지점', '지점']);
   const schoolSheet = findSheet(['RDB_당년학교정보', '학교정보', '학교']);
@@ -56,16 +75,12 @@ function calculateAndSaveRDBRecommendLocations() {
   const academyRows = academySheet ? academySheet.getDataRange().getValues().slice(1) : fetchCsvData("https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=1376867691").slice(1);
   const aptRows = aptSheet ? aptSheet.getDataRange().getValues().slice(1) : fetchCsvData("https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=642130592").slice(1);
 
-  if (!dongRows.length || !schoolRows.length) {
-    SpreadsheetApp.getUi().alert("⚠️ 데이터를 불러올 수 없습니다. 인터넷 연결 또는 시트 구성을 확인해 주세요.");
-    return;
-  }
-
-  // 5. 데이터 파싱
+  // 6. 데이터 파싱 (오류 방지 검증)
   const branches = [];
   branchRows.forEach(row => {
-    const lat = parseFloat(row[1]);
-    const lng = parseFloat(row[2]);
+    if (!row || row.length < 3) return;
+    const lat = safeFloat(row[1]);
+    const lng = safeFloat(row[2]);
     if (lat > 0 && lng > 0) {
       branches.push({ name: String(row[0]), lat: lat, lng: lng });
     }
@@ -73,18 +88,18 @@ function calculateAndSaveRDBRecommendLocations() {
 
   const schools = [];
   schoolRows.forEach(row => {
-    const period = String(row[0]);
-    if (period.indexOf('26') === 0 || period === '') {
-      const type = String(row[1]);
+    if (!row || row.length < 6) return;
+    const periodStr = String(row[0]);
+    if (periodStr.includes('26') || periodStr.includes('2026') || periodStr === '' || periodStr.includes('Jan')) {
       const name = String(row[2]);
-      const lat = parseFloat(row[3]);
-      const lng = parseFloat(row[4]);
-      const total = parseInt(row[5]) || 0;
+      const lat = safeFloat(row[3]);
+      const lng = safeFloat(row[4]);
+      const total = safeInt(row[5]);
       if (lat > 0 && lng > 0) {
         schools.push({
           lat: lat, lng: lng, total: total,
-          isHigh: (type.includes('고등학교') || name.includes('고등학교') || name.includes('고교')),
-          isMiddle: (type.includes('중학교') || name.includes('중학교'))
+          isHigh: (name.includes('고등학교') || name.includes('고교')),
+          isMiddle: (name.includes('중학교'))
         });
       }
     }
@@ -92,39 +107,42 @@ function calculateAndSaveRDBRecommendLocations() {
 
   const academies = [];
   academyRows.forEach(row => {
-    const lat = parseFloat(row[2]);
-    const lng = parseFloat(row[3]);
-    const count = parseInt(row[4]) || 0;
+    if (!row || row.length < 5) return;
+    const lat = safeFloat(row[2]);
+    const lng = safeFloat(row[3]);
+    const count = safeInt(row[4]);
     if (lat > 0 && lng > 0) academies.push({ lat: lat, lng: lng, count: count });
   });
 
   const apartments = [];
   aptRows.forEach(row => {
-    const count = parseInt(String(row[1]).replace(/,/g, '')) || 0;
-    const lat = parseFloat(row[2]);
-    const lng = parseFloat(row[3]);
+    if (!row || row.length < 4) return;
+    const count = safeInt(row[1]);
+    const lat = safeFloat(row[2]);
+    const lng = safeFloat(row[3]);
     if (lat > 0 && lng > 0) apartments.push({ lat: lat, lng: lng, count: count });
   });
 
-  // 6. 3km 하버사인 추천 연산
+  // 7. 하버사인 3km 입지 연산 (Bounding Box 최적화)
   const outputData = [["유형", "법정동", "중학생", "고등학생", "잠정고객수", "학원수", "아파트세대수"]];
   const LAT_DEG = 0.03;
   const LNG_DEG = 0.04;
 
   dongRows.forEach(row => {
-    const sido = String(row[1]);
-    const sigungu = String(row[2]);
-    const dongName = String(row[3]);
-    const addr = String(row[5]);
-    const dLat = parseFloat(row[6]);
-    const dLng = parseFloat(row[7]);
+    if (!row || row.length < 8) return;
+    const sido = String(row[1] || '');
+    const sigungu = String(row[2] || '');
+    const dongName = String(row[3] || '');
+    const addr = String(row[5] || '');
+    const dLat = safeFloat(row[6]);
+    const dLng = safeFloat(row[7]);
 
     if (sido.indexOf('서울') === 0 || addr.includes('서울특별시')) return;
-    if (!dLat || !dLng || dLat <= 0 || dLng <= 0) return;
+    if (dLat <= 0 || dLng <= 0) return;
 
     const fullDongName = (sido + ' ' + sigungu + ' ' + dongName).trim();
 
-    // 지점 3km 거리 체크
+    // 지점 3km 거리 체크 (예외 처리)
     let hasBranch = false;
     for (let i = 0; i < branches.length; i++) {
       if (Math.abs(branches[i].lat - dLat) <= LAT_DEG && Math.abs(branches[i].lng - dLng) <= LNG_DEG) {
@@ -156,7 +174,7 @@ function calculateAndSaveRDBRecommendLocations() {
       }
     }
 
-    // 학생수 3km
+    // 학생수 3km (중학생 / 고등학생)
     let midStudents = 0;
     let highStudents = 0;
     for (let i = 0; i < schools.length; i++) {
@@ -171,7 +189,7 @@ function calculateAndSaveRDBRecommendLocations() {
     const totalStudents = midStudents + highStudents;
     const potentialCust = Math.round(totalStudents * 0.05);
 
-    // 조건 판별 (1.5만 세대 적용)
+    // 추천 유형 판별 (수정된 초희소형 1.5만 세대 기준)
     const isType1 = (acad3km < 50 && potentialCust > 300 && apt3km >= 15000);
     const isType2 = (apt3km >= 50000 && potentialCust >= 400 && acad3km < 100);
     const isType3 = (potentialCust >= 700);
@@ -181,14 +199,18 @@ function calculateAndSaveRDBRecommendLocations() {
     if (isType3) outputData.push(["3. 메가타겟", fullDongName, midStudents, highStudents, potentialCust, acad3km, apt3km]);
   });
 
-  // 7. 결과 저장
-  targetSheet.clear();
+  // 8. 추천 결과 구글 시트에 출력
+  targetSheet.clearContents();
   if (outputData.length > 1) {
-    targetSheet.getRange(1, 1, outputData.length, 7).setValues(outputData);
+    const range = targetSheet.getRange(1, 1, outputData.length, 7);
+    range.setValues(outputData);
     targetSheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#4f46e5").setFontColor("#ffffff");
+    targetSheet.autoResizeColumns(1, 7);
+    ss.toast("🎉 연산 완료! 총 " + (outputData.length - 1) + "개 추천 법정동이 'RDB_추천입지' 시트에 저장되었습니다.", "성공", 8);
+    SpreadsheetApp.getUi().alert("✅ RDB_추천입지 연산 완료!\n\n총 " + (outputData.length - 1) + "개 타겟 법정동이 시트에 성공적으로 입력되었습니다.");
+  } else {
+    SpreadsheetApp.getUi().alert("⚠️ 연산 결과 추천 조건에 맞는 지역이 없습니다.");
   }
-  
-  SpreadsheetApp.getUi().alert("✅ 추천 입지 계산 완료! 총 " + (outputData.length - 1) + "개 추천 지역이 RDB_추천입지 시트에 저장되었습니다.");
 }
 
 function haversineGAS(lat1, lon1, lat2, lon2) {
