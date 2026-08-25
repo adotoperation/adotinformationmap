@@ -1882,10 +1882,10 @@
                 center: u.pos,
                 radius: 3000,
                 strokeWeight: 2,
-                strokeColor: '#3b82f6',
+                strokeColor: '#06b6d4',
                 strokeOpacity: 0.85,
                 strokeStyle: 'dashed',
-                fillColor: '#3b82f6',
+                fillColor: '#06b6d4',
                 fillOpacity: 0.12,
                 zIndex: Z_INDEX.RADIUS - 10
             });
@@ -1908,12 +1908,12 @@
 
             labelContent.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:#60a5fa;">🏛️ [4년제 대학교] ${u.name}</span>
+                    <span class="rs-title" style="color:#22d3ee;">🏛️ [4년제 대학교] ${u.name}</span>
                 </div>
                 <div class="rs-address">📍 도로명주소: <b>${u.address || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
                 
                 <div class="rs-header" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.15); padding-top:8px;">
-                    <span class="rs-title" style="color:#60a5fa;">🎯 반경 3km 교육 & 인구 통합 분석</span>
+                    <span class="rs-title" style="color:#22d3ee;">🎯 반경 3km 교육 & 인구 통합 분석</span>
                 </div>
                 <div class="rs-grid" style="margin-top:6px;">
                     <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 학생수</label><value style="color:#ff6b81;">${m.totalSchools3km}개교 (${m.totalSchoolStudents3km.toLocaleString()}명)</value></div>
@@ -1922,7 +1922,7 @@
                     <div class="rs-item"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-weight:800;">${m.potentialCustomers.toLocaleString()}명</value></div>
                     <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${m.totalAcademies3km.toLocaleString()}개 (${m.totalAcademyLocs3km}곳)</value></div>
                     <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${m.totalAptFamilies3km.toLocaleString()}세대 (${m.totalApts3km}곳)</value></div>
-                    ${m.totalUnivs3km > 0 ? `<div class="rs-item"><label>🏛️ 반경 3km 인근 4년제 대학교 수</label><value style="color:#60a5fa;">${m.totalUnivs3km}개교</value></div>` : ''}
+                    ${m.totalUnivs3km > 0 ? `<div class="rs-item"><label>🏛️ 반경 3km 인근 4년제 대학교 수</label><value style="color:#22d3ee;">${m.totalUnivs3km}개교</value></div>` : ''}
                 </div>
             `;
 
