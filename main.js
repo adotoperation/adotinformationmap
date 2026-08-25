@@ -371,14 +371,23 @@
             recommendOverlays.forEach(ol => ol.setMap(null));
             recommendOverlays = [];
 
-            const isRecommendChecked = document.getElementById('chk-rdb-recommend')?.checked ?? true;
-            if (!isRecommendChecked) return;
+            const isType1Checked = document.getElementById('chk-rec-type-1')?.checked ?? false;
+            const isType2Checked = document.getElementById('chk-rec-type-2')?.checked ?? false;
+            const isType3Checked = document.getElementById('chk-rec-type-3')?.checked ?? false;
 
             const bounds = map.getBounds();
 
             rdbRecommendDataList.forEach(item => {
                 if (!item || !item.pos) return;
                 if (bounds && !bounds.contain(item.pos)) return;
+
+                const isT1 = item.type.includes('1') || item.type.includes('초희소');
+                const isT2 = item.type.includes('2') || item.type.includes('세대밀집');
+                const isT3 = item.type.includes('3') || item.type.includes('메가타겟');
+
+                if (isT1 && !isType1Checked) return;
+                if (isT2 && !isType2Checked) return;
+                if (isT3 && !isType3Checked) return;
 
                 const typeClass = getRecommendTypeClass(item.type);
                 const nameParts = item.dong.split(' ');
@@ -536,22 +545,26 @@
 
             // 🔘 필터 체크박스 이벤트 연결
             const chkBranch = document.getElementById('chk-branch');
-            const chkRdbRecommend = document.getElementById('chk-rdb-recommend');
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
             const chkUniversity = document.getElementById('chk-university');
             const chkAcademy = document.getElementById('chk-academy');
             const chkApartment = document.getElementById('chk-apartment');
+            const chkRecType1 = document.getElementById('chk-rec-type-1');
+            const chkRecType2 = document.getElementById('chk-rec-type-2');
+            const chkRecType3 = document.getElementById('chk-rec-type-3');
 
             if (chkBranch) chkBranch.addEventListener('change', () => renderBranchMarkers());
-            if (chkRdbRecommend) chkRdbRecommend.addEventListener('change', () => renderRecommendMarkers());
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
             if (chkUniversity) chkUniversity.addEventListener('change', () => renderUniversityMarkers());
             if (chkAcademy) chkAcademy.addEventListener('change', () => renderAcademyMarkers());
             if (chkApartment) chkApartment.addEventListener('change', () => renderApartmentMarkers());
+            if (chkRecType1) chkRecType1.addEventListener('change', () => renderRecommendMarkers());
+            if (chkRecType2) chkRecType2.addEventListener('change', () => renderRecommendMarkers());
+            if (chkRecType3) chkRecType3.addEventListener('change', () => renderRecommendMarkers());
 
             // 🎯 신규진출 유형 & 동적 조건검색 이벤트 연결
             const btnRunTargetSearch = document.getElementById('btn-run-target-search');

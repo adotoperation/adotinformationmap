@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=18">
 </head>
 
 <body>
@@ -30,7 +30,6 @@
                 <div class="filter-guide-text">💡 지도에 표시할 정보를 선택하세요. (체크 시 마커 표시)</div>
                 <div class="filter-grid">
                     <label class="filter-item"><input type="checkbox" id="chk-branch" checked> 🎓 에이닷지점</label>
-                    <label class="filter-item"><input type="checkbox" id="chk-rdb-recommend" checked> 🎯 RDB_추천입지</label>
                     <label class="filter-item"><input type="checkbox" id="chk-candidate"> 🎯 기타후보지 (신도시/산업벨트)</label>
                     <label class="filter-item"><input type="checkbox" id="chk-high"> 🏫 고등학교</label>
                     <label class="filter-item"><input type="checkbox" id="chk-middle"> 🏫 중학교</label>
@@ -48,36 +47,45 @@
                 <div class="nl-body">
                     <!-- 유형 1: 초희소형 -->
                     <div class="recommend-type-accordion" id="accordion-type-1">
-                        <div class="recommend-type-card type-1" onclick="toggleRecommendAccordion(1)">
+                        <div class="recommend-type-card type-1">
                             <div class="type-card-header">
-                                <span class="type-badge-head">🔥 1. 초희소형</span>
-                                <span class="type-card-count" id="count-type-1">5개 지역 ▼</span>
+                                <label class="type-checkbox-label" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="chk-rec-type-1">
+                                    <span class="type-badge-head">🔥 1. 초희소형</span>
+                                </label>
+                                <span class="type-card-count" id="count-type-1" onclick="toggleRecommendAccordion(1)">5개 지역 ▼</span>
                             </div>
-                            <div class="type-desc">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
+                            <div class="type-desc" onclick="toggleRecommendAccordion(1)">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
                         </div>
                         <div class="recommend-dong-drawer" id="drawer-type-1" style="display:none;"></div>
                     </div>
 
                     <!-- 유형 2: 세대밀집 -->
                     <div class="recommend-type-accordion" id="accordion-type-2">
-                        <div class="recommend-type-card type-2" onclick="toggleRecommendAccordion(2)">
+                        <div class="recommend-type-card type-2">
                             <div class="type-card-header">
-                                <span class="type-badge-head">⚡ 2. 세대밀집</span>
-                                <span class="type-card-count" id="count-type-2">10개 지역 ▼</span>
+                                <label class="type-checkbox-label" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="chk-rec-type-2">
+                                    <span class="type-badge-head">⚡ 2. 세대밀집</span>
+                                </label>
+                                <span class="type-card-count" id="count-type-2" onclick="toggleRecommendAccordion(2)">10개 지역 ▼</span>
                             </div>
-                            <div class="type-desc">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
+                            <div class="type-desc" onclick="toggleRecommendAccordion(2)">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
                         </div>
                         <div class="recommend-dong-drawer" id="drawer-type-2" style="display:none;"></div>
                     </div>
 
                     <!-- 유형 3: 메가타겟 -->
                     <div class="recommend-type-accordion" id="accordion-type-3">
-                        <div class="recommend-type-card type-3" onclick="toggleRecommendAccordion(3)">
+                        <div class="recommend-type-card type-3">
                             <div class="type-card-header">
-                                <span class="type-badge-head">✨ 3. 메가타겟</span>
-                                <span class="type-card-count" id="count-type-3">195개 지역 ▼</span>
+                                <label class="type-checkbox-label" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="chk-rec-type-3">
+                                    <span class="type-badge-head">🖤 3. 메가타겟</span>
+                                </label>
+                                <span class="type-card-count" id="count-type-3" onclick="toggleRecommendAccordion(3)">195개 지역 ▼</span>
                             </div>
-                            <div class="type-desc">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
+                            <div class="type-desc" onclick="toggleRecommendAccordion(3)">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
                         </div>
                         <div class="recommend-dong-drawer" id="drawer-type-3" style="display:none;"></div>
                     </div>
@@ -243,8 +251,8 @@
         }
     </script>
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9ca57e95d045ad1907d5c789a7a2aad8&libraries=clusterer,services&autoload=false" onerror="handleKakaoError()"></script>
-    <script src="dongs_data.js?v=17"></script>
-    <script src="main.js?v=17"></script>
+    <script src="dongs_data.js?v=18"></script>
+    <script src="main.js?v=18"></script>
 </body>
 
 </html>

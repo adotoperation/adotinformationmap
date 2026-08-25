@@ -901,10 +901,26 @@ html, body, #map {
     box-shadow: 0 4px 18px rgba(245, 158, 11, 0.75);
 }
 
+/* 🖤 3. 메가타겟 (검빨 조합: 다크 검정 + 선명 레드 뱃지) */
 .recommend-badge.type-3 {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    color: #ffffff;
-    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.75);
+    background: linear-gradient(135deg, #09090b, #6b0000);
+    color: #ff8595;
+    border: 2px solid #ff4757;
+    box-shadow: 0 4px 18px rgba(255, 71, 87, 0.85);
+}
+
+.type-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.type-checkbox-label input[type="checkbox"] {
+    accent-color: #ff4757;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
 }
 
 .recommend-badge:hover {
@@ -973,7 +989,7 @@ html, body, #map {
 
 .recommend-type-card.type-1 { border-left: 4px solid #ff4757; }
 .recommend-type-card.type-2 { border-left: 4px solid #f59e0b; }
-.recommend-type-card.type-3 { border-left: 4px solid #6366f1; }
+.recommend-type-card.type-3 { border-left: 4px solid #ff4757; background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(120, 0, 0, 0.4)); }
 
 .recommend-dong-drawer {
     max-height: 220px;
