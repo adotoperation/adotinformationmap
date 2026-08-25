@@ -2067,7 +2067,9 @@
             const excludeBranch = document.getElementById('chk-exclude-branch')?.checked ?? true;
             const excludeSeoul = document.getElementById('chk-exclude-seoul')?.checked ?? true;
 
-            const dataset = (allDongsDataset && allDongsDataset.length > 0) ? allDongsDataset : TARGET_DONG_LOCATIONS;
+            const dataset = (window.ALL_DONGS_DATASET && window.ALL_DONGS_DATASET.length > 0) 
+                ? window.ALL_DONGS_DATASET 
+                : ((allDongsDataset && allDongsDataset.length > 0) ? allDongsDataset : TARGET_DONG_LOCATIONS);
 
             const filtered = dataset.filter(d => {
                 const cust = d.potential_customers !== undefined ? d.potential_customers : Math.round(d.students_3km * 0.05);
