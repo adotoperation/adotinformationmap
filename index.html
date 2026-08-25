@@ -40,58 +40,27 @@
                 </div>
             </div>
 
-            <!-- 🎯 신규진출 유형 & 동적 조건검색 패널 (독립 섹션) -->
+            <!-- 🎯 RDB_추천입지 유형별 선정 기준 안내 패널 -->
             <div id="new-location-container">
                 <div class="nl-header">
-                    <span class="nl-title">🎯 신규진출 유형 & 맞춤 조건검색 (법정동 추출)</span>
+                    <span class="nl-title">🎯 RDB_추천입지 유형별 선정 기준</span>
                 </div>
                 <div class="nl-body">
-                    <!-- Preset Quick Buttons -->
-                    <div class="nl-presets">
-                        <button type="button" class="nl-preset-btn active" id="btn-preset-1">🔥 [유형1] 초희소형 (학원≤50, 세대≥2만, 고객≥300)</button>
-                        <button type="button" class="nl-preset-btn" id="btn-preset-2">⚡ [유형2] 메가타겟 (학원≤100, 세대≥2.5만, 고객≥400)</button>
-                        <button type="button" class="nl-preset-btn" id="btn-preset-3">✨ [유형3] 세대밀집 (학원≤100, 세대≥3.5만, 고객≥300)</button>
+                    <div class="recommend-type-card type-1">
+                        <div class="type-badge-head">🔥 1. 초희소형</div>
+                        <div class="type-desc">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
                     </div>
-
-                    <!-- Custom Filter Inputs -->
-                    <div class="nl-form-grid">
-                        <div class="nl-form-item">
-                            <label>🎯 잠정 고객수 (5%)</label>
-                            <div class="nl-input-group">
-                                <input type="number" id="input-target-customers" value="300" min="0" step="50">
-                                <span>명 이상</span>
-                            </div>
-                        </div>
-                        <div class="nl-form-item">
-                            <label>📚 반경 3km 학원수</label>
-                            <div class="nl-input-group">
-                                <input type="number" id="input-target-academies" value="50" min="0" step="10">
-                                <span>개 이하</span>
-                            </div>
-                        </div>
-                        <div class="nl-form-item">
-                            <label>🏢 반경 3km 아파트세대</label>
-                            <div class="nl-input-group">
-                                <input type="number" id="input-target-apartments" value="20000" min="0" step="5000">
-                                <span>세대 이상</span>
-                            </div>
-                        </div>
+                    <div class="recommend-type-card type-2">
+                        <div class="type-badge-head">⚡ 2. 세대밀집</div>
+                        <div class="type-desc">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
                     </div>
-
-                    <!-- Checkbox Options -->
-                    <div class="nl-options-grid">
-                        <label><input type="checkbox" id="chk-exclude-branch" checked> 기존지점 3km 제외</label>
-                        <label><input type="checkbox" id="chk-exclude-seoul" checked> 서울특별시 제외</label>
+                    <div class="recommend-type-card type-3">
+                        <div class="type-badge-head">✨ 3. 메가타겟</div>
+                        <div class="type-desc">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
                     </div>
-
-                    <!-- Action Bar -->
-                    <div class="nl-action-bar">
-                        <button type="button" id="btn-run-target-search">🔍 법정동 조건검색 실행</button>
-                        <span id="target-search-counter">추출: <b id="target-count-num">0</b>개 동</span>
+                    <div class="recommend-type-note">
+                        * 공통 제외 조건: 서울특별시 제외, 기존 에이닷 지점 반경 3km 이내 제외
                     </div>
-
-                    <!-- Filtered Legal Dong Results List -->
-                    <div id="target-dong-results-list"></div>
                 </div>
             </div>
         </div>
