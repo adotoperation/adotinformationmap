@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css?v=18">
+    <link rel="stylesheet" href="style.css?v=20">
 </head>
 
 <body>
@@ -41,10 +41,11 @@
 
             <!-- 🎯 추천입지 유형별 선정 기준 안내 & 법정동 드롭다운 패널 -->
             <div id="new-location-container">
-                <div class="nl-header">
+                <div class="nl-header" onclick="toggleMainRecommendPanel()">
                     <span class="nl-title">🎯 추천입지 유형별 선정 기준</span>
+                    <span class="nl-toggle-btn" id="btn-toggle-main-panel">▼ 펼치기</span>
                 </div>
-                <div class="nl-body">
+                <div class="nl-body" id="main-recommend-panel-body" style="display: none;">
                     <!-- 유형 1: 초희소형 -->
                     <div class="recommend-type-accordion" id="accordion-type-1">
                         <div class="recommend-type-card type-1">
@@ -53,9 +54,12 @@
                                     <input type="checkbox" id="chk-rec-type-1">
                                     <span class="type-badge-head">🔥 1. 초희소형</span>
                                 </label>
-                                <span class="type-card-count" id="count-type-1" onclick="toggleRecommendAccordion(1)">5개 지역 ▼</span>
+                                <div class="header-action-group">
+                                    <span class="condition-toggle-btn" onclick="toggleTypeConditionDesc(event, 1)" id="btn-cond-desc-1">📋 조건보기 ▼</span>
+                                    <span class="type-card-count" id="count-type-1" onclick="toggleRecommendAccordion(1)">5개 지역 ▼</span>
+                                </div>
                             </div>
-                            <div class="type-desc" onclick="toggleRecommendAccordion(1)">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
+                            <div class="type-desc" id="cond-desc-1" style="display: none;">학원수 <b>50개 미만</b> & 아파트 <b>1.5만 세대 이상</b> & 잠정고객수 <b>300명 초과</b></div>
                         </div>
                         <div class="recommend-dong-drawer" id="drawer-type-1" style="display:none;"></div>
                     </div>
@@ -68,9 +72,12 @@
                                     <input type="checkbox" id="chk-rec-type-2">
                                     <span class="type-badge-head">⚡ 2. 세대밀집</span>
                                 </label>
-                                <span class="type-card-count" id="count-type-2" onclick="toggleRecommendAccordion(2)">10개 지역 ▼</span>
+                                <div class="header-action-group">
+                                    <span class="condition-toggle-btn" onclick="toggleTypeConditionDesc(event, 2)" id="btn-cond-desc-2">📋 조건보기 ▼</span>
+                                    <span class="type-card-count" id="count-type-2" onclick="toggleRecommendAccordion(2)">10개 지역 ▼</span>
+                                </div>
                             </div>
-                            <div class="type-desc" onclick="toggleRecommendAccordion(2)">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
+                            <div class="type-desc" id="cond-desc-2" style="display: none;">아파트 <b>5만 세대 이상</b> & 학원수 <b>100개 미만</b> & 잠정고객수 <b>400명 이상</b></div>
                         </div>
                         <div class="recommend-dong-drawer" id="drawer-type-2" style="display:none;"></div>
                     </div>
@@ -83,9 +90,12 @@
                                     <input type="checkbox" id="chk-rec-type-3">
                                     <span class="type-badge-head">🖤 3. 메가타겟</span>
                                 </label>
-                                <span class="type-card-count" id="count-type-3" onclick="toggleRecommendAccordion(3)">195개 지역 ▼</span>
+                                <div class="header-action-group">
+                                    <span class="condition-toggle-btn" onclick="toggleTypeConditionDesc(event, 3)" id="btn-cond-desc-3">📋 조건보기 ▼</span>
+                                    <span class="type-card-count" id="count-type-3" onclick="toggleRecommendAccordion(3)">195개 지역 ▼</span>
+                                </div>
                             </div>
-                            <div class="type-desc" onclick="toggleRecommendAccordion(3)">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
+                            <div class="type-desc" id="cond-desc-3" style="display: none;">반경 3km 잠정고객수 <b>700명 이상</b> (중·고등학생 총 14,000명 이상)</div>
                         </div>
                         <div class="recommend-dong-drawer" id="drawer-type-3" style="display:none;"></div>
                     </div>
@@ -251,8 +261,8 @@
         }
     </script>
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9ca57e95d045ad1907d5c789a7a2aad8&libraries=clusterer,services&autoload=false" onerror="handleKakaoError()"></script>
-    <script src="dongs_data.js?v=19"></script>
-    <script src="main.js?v=19"></script>
+    <script src="dongs_data.js?v=20"></script>
+    <script src="main.js?v=20"></script>
 </body>
 
 </html>

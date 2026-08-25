@@ -290,6 +290,41 @@
             updateRecommendAccordionDrawers();
         }
 
+        window.toggleMainRecommendPanel = function() {
+            const body = document.getElementById('main-recommend-panel-body');
+            const btn = document.getElementById('btn-toggle-main-panel');
+            if (!body) return;
+
+            const isVisible = body.style.display !== 'none';
+            if (isVisible) {
+                body.style.display = 'none';
+                if (btn) btn.textContent = '▼ 펼치기';
+            } else {
+                body.style.display = 'block';
+                if (btn) btn.textContent = '▲ 접기';
+            }
+        };
+
+        window.toggleTypeConditionDesc = function(event, typeNum) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const desc = document.getElementById(`cond-desc-${typeNum}`);
+            const btn = document.getElementById(`btn-cond-desc-${typeNum}`);
+            if (!desc) return;
+
+            const isVisible = desc.style.display !== 'none';
+            if (isVisible) {
+                desc.style.display = 'none';
+                if (btn) btn.textContent = '📋 조건보기 ▼';
+            } else {
+                desc.style.display = 'block';
+                if (btn) btn.textContent = '📋 조건접기 ▲';
+            }
+        };
+
         window.toggleRecommendAccordion = function(typeNum) {
             const drawer = document.getElementById(`drawer-type-${typeNum}`);
             const countSpan = document.getElementById(`count-type-${typeNum}`);
@@ -320,6 +355,13 @@
             }
 
             if (item) {
+                const mainBody = document.getElementById('main-recommend-panel-body');
+                const mainBtn = document.getElementById('btn-toggle-main-panel');
+                if (mainBody && mainBody.style.display === 'none') {
+                    mainBody.style.display = 'block';
+                    if (mainBtn) mainBtn.textContent = '▲ 접기';
+                }
+
                 const isT1 = item.type.includes('1') || item.type.includes('초희소');
                 const isT2 = item.type.includes('2') || item.type.includes('세대밀집');
                 const isT3 = item.type.includes('3') || item.type.includes('메가타겟');
