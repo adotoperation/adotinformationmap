@@ -814,5 +814,33 @@ html, body, #map {
     color: #0f172a;
 }
 
+/* 🏛️ 대학교 전용 배지 오버레이 스타일 */
+.university-badge {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: #ffffff;
+    padding: 5px 12px;
+    border-radius: 16px;
+    border: 2px solid #93c5fd;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.6);
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.university-badge:hover {
+    transform: scale(1.15) translateY(-3px);
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    box-shadow: 0 6px 22px rgba(96, 165, 250, 0.9);
+    border-color: #ffffff;
+    z-index: 99999 !important;
+}
+
+
 
 

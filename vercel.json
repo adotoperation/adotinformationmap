@@ -4,7 +4,8 @@
     { "source": "/api/data", "destination": "/api/data.js" },
     { "source": "/api/academy_data", "destination": "/api/academy_data.js" },
     { "source": "/api/branch_data", "destination": "/api/branch_data.js" },
-    { "source": "/api/apartment_data", "destination": "/api/apartment_data.js" }
+    { "source": "/api/apartment_data", "destination": "/api/apartment_data.js" },
+    { "source": "/api/university_data", "destination": "/api/university_data.js" }
   ]
 }
 
