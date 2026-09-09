@@ -200,7 +200,10 @@
 
             if (!keepBranchPanel) {
                 const branchPanel = document.getElementById('branch-insight-panel');
-                if (branchPanel) branchPanel.style.display = 'none';
+                if (branchPanel) {
+                    branchPanel.style.display = 'none';
+                    branchPanel.dataset.mode = 'none';
+                }
             }
         };
 
@@ -494,22 +497,19 @@
             });
             clickCircle.setMap(map);
 
-            const labelContent = document.createElement('div');
-            labelContent.className = 'radius-summary-label';
+            const panel = document.getElementById('branch-insight-panel');
+            if (!panel) return;
 
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'rs-close-btn';
-            closeBtn.innerHTML = '✕';
-            closeBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                window.clearRadiusOverlay();
-            };
+            panel.dataset.mode = 'recommend';
+            panel.style.borderColor = strokeColor;
+            panel.style.boxShadow = `0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px ${strokeColor}55`;
 
             const safeAddr = (item.addr || '').replace(/'/g, "\\'");
 
-            labelContent.innerHTML = `
+            panel.innerHTML = `
                 <div class="rs-header">
                     <span class="rs-title" style="color:${strokeColor};">🎯 [RDB_추천입지] ${item.type} - ${item.dong}</span>
+                    <button class="rs-close-btn" id="rec-panel-close-btn" title="닫기">✕</button>
                 </div>
                 <div class="rs-address">📍 지번/도로명: <b>${item.addr || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
                 
@@ -525,18 +525,18 @@
                 </div>
             `;
 
-            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+            panel.style.display = 'flex';
 
-            const overlay = new kakao.maps.CustomOverlay({
-                position: item.pos,
-                content: labelContent,
-                yAnchor: 1.25,
-                clickable: true,
-                zIndex: Z_INDEX.RADIUS + 1000
-            });
+            const closeBtn = panel.querySelector('#rec-panel-close-btn');
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    window.clearRadiusOverlay();
+                };
+            }
 
-            overlay.setMap(map);
-            popupOverlays.push(overlay);
+            panel.onclick = (e) => { if (e) e.stopPropagation(); };
+            panel.onwheel = (e) => { if (e) e.stopPropagation(); };
         }
 
         setupUIEvents();
@@ -856,9 +856,10 @@
         function handleDistanceClick(clickedPos) {
             const branchPanel = document.getElementById('branch-insight-panel');
             const isBranchPanelOpen = branchPanel && branchPanel.style.display !== 'none';
+            const panelMode = branchPanel ? branchPanel.dataset.mode : '';
 
             if (!startPoint) {
-                if (isBranchPanelOpen) {
+                if (isBranchPanelOpen && panelMode === 'branch') {
                     if (startMarker) { startMarker.setMap(null); startMarker = null; }
                     if (endMarker) { endMarker.setMap(null); endMarker = null; }
                     if (distancePolyline) { distancePolyline.setMap(null); distancePolyline = null; }
@@ -1078,23 +1079,20 @@
                 const highSchoolsListHtml = renderSchoolSimpleListHtml(highSchools3kmList, 'high');
                 const middleSchoolsListHtml = renderSchoolSimpleListHtml(middleSchools3kmList, 'middle');
 
-                const labelContent = document.createElement('div');
-                labelContent.className = 'radius-summary-label';
+                const panel = document.getElementById('branch-insight-panel');
+                if (!panel) return;
 
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'rs-close-btn';
-                closeBtn.innerHTML = '✕';
-                closeBtn.onclick = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    window.clearRadiusOverlay();
-                };
+                panel.dataset.mode = 'map';
+                panel.style.borderColor = '#ff4757';
+                panel.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(255, 71, 87, 0.35)';
 
-                labelContent.innerHTML = `
+                panel.innerHTML = `
                     <div class="rs-header">
-                        <span class="rs-title">🎯 반경 3km 학교 & 학원가 & 아파트 통합 집계</span>
+                        <span class="rs-title" style="color:#ff4757;">🎯 반경 3km 학교 & 학원가 & 아파트 통합 집계</span>
+                        <button class="rs-close-btn" id="map-panel-close-btn" title="닫기">✕</button>
                     </div>
                     <div class="rs-address">📍 ${addrText}</div>
-                    <div class="rs-grid">
+                    <div class="rs-grid" style="margin-top:8px;">
                         <!-- 1단계: 반경 3km 총 학교 수 / 총 학생수 -->
                         <div class="rs-item rs-accordion-toggle open" id="map-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
                             <label style="cursor: pointer; display: flex; align-items: center;">
@@ -1136,14 +1134,22 @@
                     </div>
                 `;
 
-                labelContent.querySelector('.rs-header').appendChild(closeBtn);
+                panel.style.display = 'flex';
 
-                labelContent.onclick = (e) => { if (e) e.stopPropagation(); };
-                labelContent.onwheel = (e) => { if (e) e.stopPropagation(); };
+                const closeBtn = panel.querySelector('#map-panel-close-btn');
+                if (closeBtn) {
+                    closeBtn.onclick = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                        window.clearRadiusOverlay();
+                    };
+                }
+
+                panel.onclick = (e) => { if (e) e.stopPropagation(); };
+                panel.onwheel = (e) => { if (e) e.stopPropagation(); };
 
                 // 1단계 아코디언 핸들러 (총 학교수 토글)
-                const mapToggle = labelContent.querySelector('#map-toggle-schools');
-                const mapContent = labelContent.querySelector('#map-content-schools');
+                const mapToggle = panel.querySelector('#map-toggle-schools');
+                const mapContent = panel.querySelector('#map-content-schools');
                 if (mapToggle && mapContent) {
                     mapToggle.onclick = (e) => {
                         if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -1159,8 +1165,8 @@
                 }
 
                 // 2단계 아코디언 핸들러 (고등학교 목록 토글)
-                const mapToggleHigh = labelContent.querySelector('#map-toggle-high');
-                const mapContentHigh = labelContent.querySelector('#map-content-high');
+                const mapToggleHigh = panel.querySelector('#map-toggle-high');
+                const mapContentHigh = panel.querySelector('#map-content-high');
                 if (mapToggleHigh && mapContentHigh) {
                     mapToggleHigh.onclick = (e) => {
                         if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -1176,8 +1182,8 @@
                 }
 
                 // 2단계 아코디언 핸들러 (중학교 목록 토글)
-                const mapToggleMid = labelContent.querySelector('#map-toggle-mid');
-                const mapContentMid = labelContent.querySelector('#map-content-mid');
+                const mapToggleMid = panel.querySelector('#map-toggle-mid');
+                const mapContentMid = panel.querySelector('#map-content-mid');
                 if (mapToggleMid && mapContentMid) {
                     mapToggleMid.onclick = (e) => {
                         if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -1191,17 +1197,6 @@
                         }
                     };
                 }
-
-                radiusLabel = new kakao.maps.CustomOverlay({
-                    position: position,
-                    content: labelContent,
-                    yAnchor: 1.25,
-                    clickable: true,
-                    zIndex: Z_INDEX.RADIUS + 1000
-                });
-
-                radiusLabel.setMap(map);
-                popupOverlays.push(radiusLabel);
             });
         }
 
@@ -2481,6 +2476,7 @@
             const panel = document.getElementById('branch-insight-panel');
             if (!panel) return;
 
+            panel.dataset.mode = 'branch';
             panel.style.borderColor = isTop10 ? '#f59e0b' : '#7950f2';
             panel.style.boxShadow = isTop10
                 ? '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.35)'
@@ -2727,6 +2723,7 @@
                 }
             });
         }
+        window.openDetailModalByCode = openDetailModalByCode;
 
         // 🏢 아파트 세대수 마커 렌더링 (화면 뷰포트 영역 실시간 필터링 적용)
         function renderApartmentMarkers() {
@@ -3104,23 +3101,20 @@
             });
             clickCircle.setMap(map);
 
-            const labelContent = document.createElement('div');
-            labelContent.className = 'radius-summary-label';
+            const panel = document.getElementById('branch-insight-panel');
+            if (!panel) return;
 
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'rs-close-btn';
-            closeBtn.innerHTML = '✕';
-            closeBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                window.clearRadiusOverlay();
-            };
+            panel.dataset.mode = 'targetdong';
+            panel.style.borderColor = '#ff6b81';
+            panel.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(255, 107, 129, 0.35)';
 
             const safeAddr = (d.addr || '').replace(/'/g, "\\'");
             const potentialCust = d.potential_customers !== undefined ? d.potential_customers : Math.round(d.students_3km * 0.05);
 
-            labelContent.innerHTML = `
+            panel.innerHTML = `
                 <div class="rs-header">
                     <span class="rs-title" style="color:#ff6b81;">🎯 [법정동 정밀추천지] ${d.name}</span>
+                    <button class="rs-close-btn" id="target-panel-close-btn" title="닫기">✕</button>
                 </div>
                 <div class="rs-address">📍 지번/도로명: <b>${d.addr || '정보 없음'}</b> <button onclick="copyAddressText('${safeAddr}')" style="margin-left:6px; background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px;">📋 복사</button></div>
                 
@@ -3135,18 +3129,18 @@
                 </div>
             `;
 
-            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+            panel.style.display = 'flex';
 
-            const overlay = new kakao.maps.CustomOverlay({
-                position: pos,
-                content: labelContent,
-                yAnchor: 1.25,
-                clickable: true,
-                zIndex: Z_INDEX.RADIUS + 1000
-            });
+            const closeBtn = panel.querySelector('#target-panel-close-btn');
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    window.clearRadiusOverlay();
+                };
+            }
 
-            overlay.setMap(map);
-            popupOverlays.push(overlay);
+            panel.onclick = (e) => { if (e) e.stopPropagation(); };
+            panel.onwheel = (e) => { if (e) e.stopPropagation(); };
         }
 
         loadAllDongsDataset();
