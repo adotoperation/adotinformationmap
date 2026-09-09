@@ -518,6 +518,50 @@ html, body, #map {
     color: #ff4757;
 }
 
+/* 🎓 우측 상단 고정 지점 분석 인사이트 패널 */
+#branch-insight-panel {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    width: 390px;
+    max-width: calc(100vw - 50px);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    background: rgba(15, 23, 42, 0.95);
+    color: #ffffff;
+    padding: 16px 20px;
+    border-radius: 18px;
+    border: 1.5px solid #7950f2;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(121, 80, 242, 0.3);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+    backdrop-filter: blur(16px);
+    animation: slideInRight 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+#branch-insight-panel::-webkit-scrollbar {
+    width: 6px;
+}
+#branch-insight-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 /* 🏫 3km 집계 단계별 아코디언 및 분기별 학교 학생수 추이 스타일 */
 .radius-summary-label {
     max-height: 85vh;

@@ -182,7 +182,7 @@
 
         let popupOverlays = [];
 
-        window.clearRadiusOverlay = function () {
+        window.clearRadiusOverlay = function (keepBranchPanel = false) {
             if (clickCircle) { clickCircle.setMap(null); clickCircle = null; }
             if (clickMarker) { clickMarker.setMap(null); clickMarker = null; }
             if (radiusLabel) { radiusLabel.setMap(null); radiusLabel = null; }
@@ -197,6 +197,11 @@
             startPoint = null;
 
             closeDetailModal();
+
+            if (!keepBranchPanel) {
+                const branchPanel = document.getElementById('branch-insight-panel');
+                if (branchPanel) branchPanel.style.display = 'none';
+            }
         };
 
         // 🎯 RDB_추천입지 데이터 동기화 & 마커 표출
@@ -849,8 +854,19 @@
         }
 
         function handleDistanceClick(clickedPos) {
+            const branchPanel = document.getElementById('branch-insight-panel');
+            const isBranchPanelOpen = branchPanel && branchPanel.style.display !== 'none';
+
             if (!startPoint) {
-                window.clearRadiusOverlay();
+                if (isBranchPanelOpen) {
+                    if (startMarker) { startMarker.setMap(null); startMarker = null; }
+                    if (endMarker) { endMarker.setMap(null); endMarker = null; }
+                    if (distancePolyline) { distancePolyline.setMap(null); distancePolyline = null; }
+                    if (distanceBadgeOverlay) { distanceBadgeOverlay.setMap(null); distanceBadgeOverlay = null; }
+                } else {
+                    window.clearRadiusOverlay();
+                    drawRadius3km(clickedPos);
+                }
                 startPoint = clickedPos;
 
                 startMarker = new kakao.maps.Marker({
@@ -858,8 +874,6 @@
                     map: map,
                     zIndex: Z_INDEX.RADIUS
                 });
-
-                drawRadius3km(startPoint);
 
                 const badgeDiv = document.createElement('div');
                 badgeDiv.className = 'distance-summary-badge';
@@ -2214,36 +2228,18 @@
             // 잠정 고객수 계산 (3km 총 학생수의 5%를 반올림 처리)
             const potentialCustomers = Math.round(totalSchoolStudents3km * 0.05);
 
-            const labelContent = document.createElement('div');
-            labelContent.className = 'radius-summary-label';
+            const panel = document.getElementById('branch-insight-panel');
+            if (!panel) return;
 
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'rs-close-btn';
-            closeBtn.innerHTML = '✕';
-            closeBtn.onclick = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                window.clearRadiusOverlay();
-            };
+            panel.style.borderColor = isTop10 ? '#f59e0b' : '#7950f2';
+            panel.style.boxShadow = isTop10
+                ? '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.35)'
+                : '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(121, 80, 242, 0.3)';
 
-            let yoyBanner = '';
-            if (yoyInfo) {
-                const incSign = yoyInfo.inc >= 0 ? `+${yoyInfo.inc}` : `${yoyInfo.inc}`;
-                const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
-                const incColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
-
-                if (isTop10) {
-                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${yoyInfo.rank}): <b style="color:#ef4444;">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
-                } else {
-                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#ddd;">📈 전년대비 성과 (순위 #${yoyInfo.rank}): <b style="color:${incColor};">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
-                }
-            }
-
-            const highSchoolTableHtml = renderSchoolTrendTable(b.name, 'high');
-            const middleSchoolTableHtml = renderSchoolTrendTable(b.name, 'middle');
-
-            labelContent.innerHTML = `
+            panel.innerHTML = `
                 <div class="rs-header">
                     <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${isTop10 ? `(#${yoyInfo.rank} 성장지점)` : ''} (반경 3km 분석)</span>
+                    <button class="rs-close-btn" id="branch-panel-close-btn" title="닫기">✕</button>
                 </div>
                 <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
                 ${yoyBanner}
@@ -2292,15 +2288,23 @@
                 </div>
             `;
 
-            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+            panel.style.display = 'flex';
+
+            const closeBtn = panel.querySelector('#branch-panel-close-btn');
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    window.clearRadiusOverlay();
+                };
+            }
 
             // 이벤트 전파 방지 (지도 클릭 및 줌 간섭 차단)
-            labelContent.onclick = (e) => { if (e) e.stopPropagation(); };
-            labelContent.onwheel = (e) => { if (e) e.stopPropagation(); };
+            panel.onclick = (e) => { if (e) e.stopPropagation(); };
+            panel.onwheel = (e) => { if (e) e.stopPropagation(); };
 
             // 1단계 & 2단계 아코디언 인터랙션 핸들러 바인딩
-            const toggleSchools = labelContent.querySelector('#rs-toggle-schools');
-            const contentSchools = labelContent.querySelector('#rs-content-schools');
+            const toggleSchools = panel.querySelector('#rs-toggle-schools');
+            const contentSchools = panel.querySelector('#rs-content-schools');
             if (toggleSchools && contentSchools) {
                 toggleSchools.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2315,8 +2319,8 @@
                 };
             }
 
-            const toggleHigh = labelContent.querySelector('#rs-toggle-high');
-            const contentHigh = labelContent.querySelector('#rs-content-high');
+            const toggleHigh = panel.querySelector('#rs-toggle-high');
+            const contentHigh = panel.querySelector('#rs-content-high');
             if (toggleHigh && contentHigh) {
                 toggleHigh.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2331,8 +2335,8 @@
                 };
             }
 
-            const toggleMid = labelContent.querySelector('#rs-toggle-mid');
-            const contentMid = labelContent.querySelector('#rs-content-mid');
+            const toggleMid = panel.querySelector('#rs-toggle-mid');
+            const contentMid = panel.querySelector('#rs-content-mid');
             if (toggleMid && contentMid) {
                 toggleMid.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2346,17 +2350,6 @@
                     }
                 };
             }
-
-            radiusLabel = new kakao.maps.CustomOverlay({
-                position: b.pos,
-                content: labelContent,
-                yAnchor: 1.25,
-                clickable: true,
-                zIndex: Z_INDEX.RADIUS + 1000
-            });
-
-            radiusLabel.setMap(map);
-            popupOverlays.push(radiusLabel);
         }
 
         function generateAnalysisSummaryText(item) {
