@@ -2228,6 +2228,23 @@
             // 잠정 고객수 계산 (3km 총 학생수의 5%를 반올림 처리)
             const potentialCustomers = Math.round(totalSchoolStudents3km * 0.05);
 
+            let yoyBanner = '';
+            if (yoyInfo) {
+                const incSign = yoyInfo.inc >= 0 ? `+${yoyInfo.inc}` : `${yoyInfo.inc}`;
+                const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
+                const incColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
+
+                if (isTop10) {
+                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${yoyInfo.rank}): <b style="color:#ef4444;">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
+                } else {
+                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#ddd;">📈 전년대비 성과 (순위 #${yoyInfo.rank}): <b style="color:${incColor};">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
+                }
+            }
+
+            const highSchoolTableHtml = renderSchoolTrendTable(b.name, 'high');
+            const middleSchoolTableHtml = renderSchoolTrendTable(b.name, 'middle');
+            const rankTitle = (isTop10 && yoyInfo) ? `(#${yoyInfo.rank} 성장지점)` : '';
+
             const panel = document.getElementById('branch-insight-panel');
             if (!panel) return;
 
@@ -2238,7 +2255,7 @@
 
             panel.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${isTop10 ? `(#${yoyInfo.rank} 성장지점)` : ''} (반경 3km 분석)</span>
+                    <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${rankTitle} (반경 3km 분석)</span>
                     <button class="rs-close-btn" id="branch-panel-close-btn" title="닫기">✕</button>
                 </div>
                 <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>

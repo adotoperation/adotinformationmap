@@ -480,9 +480,20 @@ html, body, #map {
 .rs-close-btn {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.rs-close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
 }
 
 .rs-address {
