@@ -938,6 +938,31 @@
             }
         }
 
+        function renderSchoolSimpleListHtml(schoolList, schoolType) {
+            if (!schoolList || schoolList.length === 0) {
+                return `
+                    <div class="rs-school-list-panel">
+                        <div class="rs-school-empty-msg">반경 3km 내 ${schoolType === 'high' ? '고등학교' : '중학교'}가 없습니다.</div>
+                    </div>
+                `;
+            }
+            const isMiddle = schoolType === 'middle';
+            const borderColor = isMiddle ? 'rgba(255, 159, 67, 0.35)' : 'rgba(255, 127, 80, 0.35)';
+            const countColorClass = isMiddle ? 'middle' : '';
+            const hoverClass = isMiddle ? 'middle-school' : '';
+
+            return `
+                <div class="rs-school-list-panel" style="border-color: ${borderColor};">
+                    ${schoolList.map(sc => `
+                        <div class="rs-school-list-item ${hoverClass}" onclick="if (event) event.stopPropagation(); openDetailModalByCode('${sc.code}');" title="클릭하여 ${sc.name} 상세 정보 보기">
+                            <span class="rs-school-item-name">🏫 ${sc.name}</span>
+                            <span class="rs-school-item-count ${countColorClass}">${sc.count.toLocaleString()}명</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         function drawRadius3km(position) {
             if (clickCircle) clickCircle.setMap(null);
             if (clickMarker) clickMarker.setMap(null);
@@ -974,24 +999,40 @@
             let totalApts3km = 0;
             let totalAptFamilies3km = 0;
 
+            let highSchools3kmList = [];
+            let middleSchools3kmList = [];
+
             Object.keys(schoolMap).forEach(code => {
                 const item = schoolMap[code];
                 if (item && item.pos) {
                     const dist = getDistance(position, item.pos);
                     if (dist <= 3000) {
-                        totalSchoolStudents3km += (item.total2026 || 0);
+                        const sCount = item.total2026 || 0;
+                        totalSchoolStudents3km += sCount;
                         totalSchools3km++;
 
+                        const scObj = {
+                            code: item.code,
+                            name: item.name,
+                            count: sCount,
+                            dist: Math.round(dist)
+                        };
+
                         if (item.isMiddle) {
-                            totalMiddleSchoolStudents3km += (item.total2026 || 0);
+                            totalMiddleSchoolStudents3km += sCount;
                             totalMiddleSchools3km++;
+                            middleSchools3kmList.push(scObj);
                         } else {
-                            totalHighSchoolStudents3km += (item.total2026 || 0);
+                            totalHighSchoolStudents3km += sCount;
                             totalHighSchools3km++;
+                            highSchools3kmList.push(scObj);
                         }
                     }
                 }
             });
+
+            highSchools3kmList.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'));
+            middleSchools3kmList.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'));
 
             Object.keys(academyMap).forEach(addr => {
                 const item = academyMap[addr];
@@ -1028,6 +1069,15 @@
                     (result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name)
                     : "선택 위치";
 
+                let branchRatioText = "0.00%";
+                if (totalSchoolStudents3km > 0 && totalBranchStudents3km > 0) {
+                    const ratio = (totalBranchStudents3km / totalSchoolStudents3km) * 100;
+                    branchRatioText = ratio.toFixed(2) + "%";
+                }
+
+                const highSchoolsListHtml = renderSchoolSimpleListHtml(highSchools3kmList, 'high');
+                const middleSchoolsListHtml = renderSchoolSimpleListHtml(middleSchools3kmList, 'middle');
+
                 const labelContent = document.createElement('div');
                 labelContent.className = 'radius-summary-label';
 
@@ -1045,6 +1095,7 @@
                     </div>
                     <div class="rs-address">📍 ${addrText}</div>
                     <div class="rs-grid">
+                        <!-- 1단계: 반경 3km 총 학교 수 / 총 학생수 -->
                         <div class="rs-item rs-accordion-toggle open" id="map-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
                             <label style="cursor: pointer; display: flex; align-items: center;">
                                 <span class="rs-arrow-icon">▶</span>
@@ -1053,13 +1104,35 @@
                             <value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value>
                         </div>
                         <div class="rs-accordion-content open" id="map-content-schools">
-                            <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
-                            <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
+                            <!-- 2단계: 고등학교 수 / 학생수 (접고 펼치기) -->
+                            <div class="rs-item rs-accordion-toggle" id="map-toggle-high" style="padding-left: 20px;" title="클릭하여 고등학교별 학생수 목록 접기/펼치기">
+                                <label style="cursor: pointer; display: flex; align-items: center;">
+                                    <span class="rs-arrow-icon">▶</span>
+                                    <span>└ 고등학교 수 / 학생수</span>
+                                </label>
+                                <value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value>
+                            </div>
+                            <div class="rs-accordion-content" id="map-content-high">
+                                ${highSchoolsListHtml}
+                            </div>
+
+                            <!-- 2단계: 중학교 수 / 학생수 (접고 펼치기) -->
+                            <div class="rs-item rs-accordion-toggle" id="map-toggle-mid" style="padding-left: 20px;" title="클릭하여 중학교별 학생수 목록 접기/펼치기">
+                                <label style="cursor: pointer; display: flex; align-items: center;">
+                                    <span class="rs-arrow-icon">▶</span>
+                                    <span>└ 중학교 수 / 학생수</span>
+                                </label>
+                                <value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value>
+                            </div>
+                            <div class="rs-accordion-content" id="map-content-mid">
+                                ${middleSchoolsListHtml}
+                            </div>
+
                             <div class="rs-item" style="padding-left: 20px;"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-size:13.5px;">${Math.round(totalSchoolStudents3km * 0.05).toLocaleString()}명</value></div>
                         </div>
                         <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
                         <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
-                        ${totalBranchStudents3km > 0 ? `<div class="rs-item"><label>🎓 반경 3km 에이닷지점 학생수</label><value style="color:#7950f2;">${totalBranchStudents3km.toLocaleString()}명</value></div>` : ''}
+                        ${totalBranchStudents3km > 0 ? `<div class="rs-item"><label>🎓 반경 3km 에이닷지점 학생수</label><value style="color:#7950f2;">${totalBranchStudents3km.toLocaleString()}명 <span style="font-size:11.5px; font-weight:normal; color:#a29bfe; margin-left:4px;">(점유율: ${branchRatioText})</span></value></div>` : ''}
                     </div>
                 `;
 
@@ -1068,6 +1141,7 @@
                 labelContent.onclick = (e) => { if (e) e.stopPropagation(); };
                 labelContent.onwheel = (e) => { if (e) e.stopPropagation(); };
 
+                // 1단계 아코디언 핸들러 (총 학교수 토글)
                 const mapToggle = labelContent.querySelector('#map-toggle-schools');
                 const mapContent = labelContent.querySelector('#map-content-schools');
                 if (mapToggle && mapContent) {
@@ -1080,6 +1154,40 @@
                         } else {
                             mapContent.classList.add('open');
                             mapToggle.classList.add('open');
+                        }
+                    };
+                }
+
+                // 2단계 아코디언 핸들러 (고등학교 목록 토글)
+                const mapToggleHigh = labelContent.querySelector('#map-toggle-high');
+                const mapContentHigh = labelContent.querySelector('#map-content-high');
+                if (mapToggleHigh && mapContentHigh) {
+                    mapToggleHigh.onclick = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                        const isOpen = mapContentHigh.classList.contains('open');
+                        if (isOpen) {
+                            mapContentHigh.classList.remove('open');
+                            mapToggleHigh.classList.remove('open');
+                        } else {
+                            mapContentHigh.classList.add('open');
+                            mapToggleHigh.classList.add('open');
+                        }
+                    };
+                }
+
+                // 2단계 아코디언 핸들러 (중학교 목록 토글)
+                const mapToggleMid = labelContent.querySelector('#map-toggle-mid');
+                const mapContentMid = labelContent.querySelector('#map-content-mid');
+                if (mapToggleMid && mapContentMid) {
+                    mapToggleMid.onclick = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                        const isOpen = mapContentMid.classList.contains('open');
+                        if (isOpen) {
+                            mapContentMid.classList.remove('open');
+                            mapToggleMid.classList.remove('open');
+                        } else {
+                            mapContentMid.classList.add('open');
+                            mapToggleMid.classList.add('open');
                         }
                     };
                 }
@@ -1970,25 +2078,42 @@
             let totalAcademyLocs3km = 0;
             let totalApts3km = 0;
             let totalAptFamilies3km = 0;
+            let totalBranchStudents3km = 0;
+
+            let highSchools3kmList = [];
+            let middleSchools3kmList = [];
 
             Object.keys(schoolMap).forEach(code => {
                 const item = schoolMap[code];
                 if (item && item.pos) {
                     const dist = getDistance(position, item.pos);
                     if (dist <= 3000) {
-                        totalSchoolStudents3km += (item.total2026 || 0);
+                        const sCount = item.total2026 || 0;
+                        totalSchoolStudents3km += sCount;
                         totalSchools3km++;
 
+                        const scObj = {
+                            code: item.code,
+                            name: item.name,
+                            count: sCount,
+                            dist: Math.round(dist)
+                        };
+
                         if (item.isMiddle) {
-                            totalMiddleSchoolStudents3km += (item.total2026 || 0);
+                            totalMiddleSchoolStudents3km += sCount;
                             totalMiddleSchools3km++;
+                            middleSchools3kmList.push(scObj);
                         } else {
-                            totalHighSchoolStudents3km += (item.total2026 || 0);
+                            totalHighSchoolStudents3km += sCount;
                             totalHighSchools3km++;
+                            highSchools3kmList.push(scObj);
                         }
                     }
                 }
             });
+
+            highSchools3kmList.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'));
+            middleSchools3kmList.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'));
 
             Object.keys(academyMap).forEach(addr => {
                 const item = academyMap[addr];
@@ -1997,6 +2122,15 @@
                     if (dist <= 3000) {
                         totalAcademies3km += (item.count || 0);
                         totalAcademyLocs3km++;
+                    }
+                }
+            });
+
+            branchDataList.forEach(b => {
+                if (b && b.pos) {
+                    const dist = getDistance(position, b.pos);
+                    if (dist <= 3000) {
+                        totalBranchStudents3km += (b.studentCount || 0);
                     }
                 }
             });
@@ -2023,6 +2157,12 @@
 
             const potentialCustomers = Math.round(totalSchoolStudents3km * 0.05);
 
+            let branchRatioText = "0.00%";
+            if (totalSchoolStudents3km > 0 && totalBranchStudents3km > 0) {
+                const ratio = (totalBranchStudents3km / totalSchoolStudents3km) * 100;
+                branchRatioText = ratio.toFixed(2) + "%";
+            }
+
             return {
                 totalSchools3km,
                 totalSchoolStudents3km,
@@ -2035,6 +2175,10 @@
                 totalApts3km,
                 totalAptFamilies3km,
                 totalUnivs3km,
+                totalBranchStudents3km,
+                branchRatioText,
+                highSchools3kmList,
+                middleSchools3kmList,
                 potentialCustomers
             };
         }
@@ -2060,6 +2204,9 @@
 
             const m = calculate3kmMetrics(pos);
 
+            const highSchoolsListHtml = renderSchoolSimpleListHtml(m.highSchools3kmList, 'high');
+            const middleSchoolsListHtml = renderSchoolSimpleListHtml(m.middleSchools3kmList, 'middle');
+
             const labelContent = document.createElement('div');
             labelContent.className = 'radius-summary-label';
 
@@ -2082,16 +2229,102 @@
                     <span class="rs-title" style="color:#60a5fa;">🎯 반경 3km 학교 & 학원가 & 아파트 통합 집계</span>
                 </div>
                 <div class="rs-grid" style="margin-top:6px;">
-                    <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 학생수</label><value style="color:#ff6b81;">${m.totalSchools3km}개교 (${m.totalSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 16px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:12.5px;">${m.totalHighSchools3km}개교 (${m.totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 16px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:12.5px;">${m.totalMiddleSchools3km}개교 (${m.totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-weight:800;">${m.potentialCustomers.toLocaleString()}명</value></div>
+                    <!-- 1단계: 반경 3km 총 학교 수 / 총 학생수 -->
+                    <div class="rs-item rs-accordion-toggle open" id="cand-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
+                        <label style="cursor: pointer; display: flex; align-items: center;">
+                            <span class="rs-arrow-icon">▶</span>
+                            <span>🏫 반경 3km 총 학교 수 / 학생수</span>
+                        </label>
+                        <value style="color:#ff6b81;">${m.totalSchools3km}개교 (${m.totalSchoolStudents3km.toLocaleString()}명)</value>
+                    </div>
+                    <div class="rs-accordion-content open" id="cand-content-schools">
+                        <!-- 2단계: 고등학교 수 / 학생수 (접고 펼치기) -->
+                        <div class="rs-item rs-accordion-toggle" id="cand-toggle-high" style="padding-left: 20px;" title="클릭하여 고등학교별 학생수 목록 접기/펼치기">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <span class="rs-arrow-icon">▶</span>
+                                <span>└ 고등학교 수 / 학생수</span>
+                            </label>
+                            <value style="color:#ff7f50; font-size:12.5px;">${m.totalHighSchools3km}개교 (${m.totalHighSchoolStudents3km.toLocaleString()}명)</value>
+                        </div>
+                        <div class="rs-accordion-content" id="cand-content-high">
+                            ${highSchoolsListHtml}
+                        </div>
+
+                        <!-- 2단계: 중학교 수 / 학생수 (접고 펼치기) -->
+                        <div class="rs-item rs-accordion-toggle" id="cand-toggle-mid" style="padding-left: 20px;" title="클릭하여 중학교별 학생수 목록 접기/펼치기">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <span class="rs-arrow-icon">▶</span>
+                                <span>└ 중학교 수 / 학생수</span>
+                            </label>
+                            <value style="color:#ff9f43; font-size:12.5px;">${m.totalMiddleSchools3km}개교 (${m.totalMiddleSchoolStudents3km.toLocaleString()}명)</value>
+                        </div>
+                        <div class="rs-accordion-content" id="cand-content-mid">
+                            ${middleSchoolsListHtml}
+                        </div>
+
+                        <div class="rs-item" style="padding-left: 20px;"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-weight:800;">${m.potentialCustomers.toLocaleString()}명</value></div>
+                    </div>
                     <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${m.totalAcademies3km.toLocaleString()}개 (${m.totalAcademyLocs3km}곳)</value></div>
                     <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${m.totalAptFamilies3km.toLocaleString()}세대 (${m.totalApts3km}곳)</value></div>
+                    ${m.totalBranchStudents3km > 0 ? `<div class="rs-item"><label>🎓 반경 3km 에이닷지점 학생수</label><value style="color:#7950f2;">${m.totalBranchStudents3km.toLocaleString()}명 <span style="font-size:11.5px; font-weight:normal; color:#a29bfe; margin-left:4px;">(점유율: ${m.branchRatioText})</span></value></div>` : ''}
                 </div>
             `;
 
             labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            labelContent.onclick = (e) => { if (e) e.stopPropagation(); };
+            labelContent.onwheel = (e) => { if (e) e.stopPropagation(); };
+
+            // 1단계 아코디언 핸들러
+            const candToggle = labelContent.querySelector('#cand-toggle-schools');
+            const candContent = labelContent.querySelector('#cand-content-schools');
+            if (candToggle && candContent) {
+                candToggle.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const isOpen = candContent.classList.contains('open');
+                    if (isOpen) {
+                        candContent.classList.remove('open');
+                        candToggle.classList.remove('open');
+                    } else {
+                        candContent.classList.add('open');
+                        candToggle.classList.add('open');
+                    }
+                };
+            }
+
+            // 2단계 고등학교 아코디언 핸들러
+            const candToggleHigh = labelContent.querySelector('#cand-toggle-high');
+            const candContentHigh = labelContent.querySelector('#cand-content-high');
+            if (candToggleHigh && candContentHigh) {
+                candToggleHigh.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const isOpen = candContentHigh.classList.contains('open');
+                    if (isOpen) {
+                        candContentHigh.classList.remove('open');
+                        candToggleHigh.classList.remove('open');
+                    } else {
+                        candContentHigh.classList.add('open');
+                        candToggleHigh.classList.add('open');
+                    }
+                };
+            }
+
+            // 2단계 중학교 아코디언 핸들러
+            const candToggleMid = labelContent.querySelector('#cand-toggle-mid');
+            const candContentMid = labelContent.querySelector('#cand-content-mid');
+            if (candToggleMid && candContentMid) {
+                candToggleMid.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const isOpen = candContentMid.classList.contains('open');
+                    if (isOpen) {
+                        candContentMid.classList.remove('open');
+                        candToggleMid.classList.remove('open');
+                    } else {
+                        candContentMid.classList.add('open');
+                        candToggleMid.classList.add('open');
+                    }
+                };
+            }
 
             const overlay = new kakao.maps.CustomOverlay({
                 position: pos,

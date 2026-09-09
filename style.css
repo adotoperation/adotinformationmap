@@ -722,6 +722,71 @@ html, body, #map {
     font-weight: 700;
 }
 
+/* 🏫 반경 3km 내 개별 학교 목록 패널 (지도 클릭 오버레이용) */
+.rs-school-list-panel {
+    background: rgba(10, 14, 26, 0.92);
+    border: 1px solid rgba(255, 127, 80, 0.35);
+    border-radius: 10px;
+    padding: 6px 8px;
+    margin: 4px 0 6px 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.rs-school-list-panel::-webkit-scrollbar {
+    width: 5px;
+}
+.rs-school-list-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+}
+.rs-school-list-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.rs-school-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 9px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.rs-school-list-item:hover {
+    background: rgba(255, 127, 80, 0.22);
+    transform: translateX(2px);
+}
+.rs-school-list-item.middle-school:hover {
+    background: rgba(255, 159, 67, 0.22);
+}
+.rs-school-item-name {
+    color: #e2e8f0;
+    font-weight: 600;
+}
+.rs-school-item-count {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    color: #ff7f50;
+    font-size: 12.5px;
+}
+.rs-school-item-count.middle {
+    color: #ff9f43;
+}
+.rs-school-empty-msg {
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
 /* 📏 직선 거리 측정 오버레이 배지 스타일 */
 .distance-summary-badge {
     background: rgba(20, 24, 38, 0.95);
