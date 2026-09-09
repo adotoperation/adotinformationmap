@@ -809,11 +809,14 @@
             }
 
             kakao.maps.event.addListener(map, 'click', (mouseEvent) => {
-                const detailModal = document.getElementById('detail-modal');
-                if (detailModal && detailModal.style.display === 'flex') return;
-
                 if (isMarkerClickHandled) {
                     isMarkerClickHandled = false;
+                    return;
+                }
+
+                const detailModal = document.getElementById('detail-modal');
+                if (detailModal && detailModal.style.display === 'flex') {
+                    closeDetailModal();
                     return;
                 }
 
@@ -2626,6 +2629,9 @@
             const item = schoolMap[schoolCode];
             if (!item) return;
 
+            // 💡 지점 분석 정보창(#branch-insight-panel) 또는 기존 3km 반경 원/오버레이가 열려 있다면 자동으로 닫기
+            window.clearRadiusOverlay();
+
             const modal = document.getElementById('detail-modal');
             document.getElementById('modal-address-name').textContent = item.name;
             document.getElementById('modal-school-code').textContent = `학교코드: ${item.code || 'N/A'}`;
@@ -2672,13 +2678,15 @@
 
             document.getElementById('analysis-summary-text').innerHTML = generateAnalysisSummaryText(item);
 
-            renderTrendChart([v24, v25, v26]);
             modal.style.display = 'flex';
+            renderTrendChart([v24, v25, v26]);
         }
 
         function closeDetailModal() {
-            document.getElementById('detail-modal').style.display = 'none';
+            const modal = document.getElementById('detail-modal');
+            if (modal) modal.style.display = 'none';
         }
+        window.closeDetailModal = closeDetailModal;
 
         function renderTrendChart(dataArray) {
             const ctx = document.getElementById('trendChart').getContext('2d');
