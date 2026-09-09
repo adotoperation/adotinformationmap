@@ -1708,13 +1708,15 @@
                     const count = c.schools.length;
                     const heatClass = getPurpleHeatmapLevelClass(total);
                     const snuHtml = c.totalSnu > 0 ? `<span class="snu-tag"><img src="snu_logo.png" class="snu-icon-img" alt="SNU" /> ${c.totalSnu}명</span>` : '';
+                    const schoolNameTopHtml = count === 1 ? `<span class="school-name-top">${c.schools[0].name}</span>` : '';
 
                     const labelContent = document.createElement('div');
                     labelContent.className = `circle-badge ${heatClass}`;
                     labelContent.innerHTML = `
+                        ${schoolNameTopHtml}
                         ${snuHtml}
                         <span class="badge-count-num">${total.toLocaleString()}명</span>
-                        <span class="badge-diff-sub">(${count}개교)</span>
+                        ${count > 1 ? `<span class="badge-diff-sub">(${count}개교)</span>` : ''}
                     `;
 
                     labelContent.onclick = (e) => {
@@ -1758,9 +1760,9 @@
                     const labelContent = document.createElement('div');
                     labelContent.className = `circle-badge ${heatClass}`;
                     labelContent.innerHTML = `
+                        <span class="school-name-top">${item.name}</span>
                         ${snuHtml}
                         <span class="badge-count-num">${total.toLocaleString()}명</span>
-                        <span class="badge-diff-sub">(🏫)</span>
                     `;
 
                     labelContent.onclick = (e) => {

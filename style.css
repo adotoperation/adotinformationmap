@@ -254,6 +254,51 @@ html, body, #map {
     z-index: 99999 !important;
 }
 
+/* 🏫 학교 오버레이 원 상단 학교명 라벨 */
+.school-name-top {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+    letter-spacing: -0.3px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    line-height: 1.25;
+    z-index: 5;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.school-name-top::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: rgba(15, 23, 42, 0.92) transparent transparent transparent;
+}
+
+.circle-badge:hover .school-name-top {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: #f59e0b;
+    color: #fef08a;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75), 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.circle-badge:hover .school-name-top::after {
+    border-top-color: rgba(15, 23, 42, 0.98);
+}
+
 /* 🏛️ 서울대 합격자 마크 (학교 마커 우측 상단 뱃지) */
 .snu-tag {
     position: absolute;
@@ -324,15 +369,15 @@ html, body, #map {
 .circle-badge.size-sm { width: 44px; height: 44px; }
 .circle-badge.size-xs { width: 36px; height: 36px; border-width: 1.5px; }
 
-.badge-count-num { font-size: 12px; line-height: 1.1; }
-.circle-badge.size-xl .badge-count-num { font-size: 15px; }
-.circle-badge.size-lg .badge-count-num { font-size: 13.5px; }
-.circle-badge.size-md .badge-count-num { font-size: 12px; }
-.circle-badge.size-sm .badge-count-num { font-size: 11px; }
+.badge-count-num { font-size: 13px; font-weight: 800; line-height: 1; letter-spacing: -0.2px; }
+.circle-badge.size-xl .badge-count-num { font-size: 16px; }
+.circle-badge.size-lg .badge-count-num { font-size: 14.5px; }
+.circle-badge.size-md .badge-count-num { font-size: 13px; }
+.circle-badge.size-sm .badge-count-num { font-size: 11.5px; }
 .circle-badge.size-xs .badge-count-num { font-size: 10px; }
 
-.badge-diff-sub { font-size: 9px; opacity: 0.9; font-weight: 700; line-height: 1; margin-top: 1px; }
-.circle-badge.size-xl .badge-diff-sub { font-size: 10.5px; }
+.badge-diff-sub { font-size: 9px; opacity: 0.9; font-weight: 700; line-height: 1; margin-top: 2px; }
+.circle-badge.size-xl .badge-diff-sub { font-size: 11px; }
 .circle-badge.size-lg .badge-diff-sub { font-size: 10px; }
 
 /* 📚 학원가 순수 동그라미 원 배지 디자인 */
