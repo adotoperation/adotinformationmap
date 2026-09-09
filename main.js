@@ -23,6 +23,7 @@
         const APARTMENT_CSV_URL = `/api/apartment_data`; // GID 642130592 : RDB_아파트세대수
         const YOY_CSV_URL = `/api/yoy_data`;         // GID 452840178 : RDB_YoY (전 지점 최신 학생수 & 증감율)
         const UNIVERSITY_CSV_URL = `/api/university_data`; // GID 541959206 : RDB_대학주소 (전국 대학 정보)
+        const BRANCH_SCHOOL_CSV_URL = `/api/branch_school_data`; // GID 1365329021 : RDB_수강생학교 (분기별 지점 학교 학생수)
 
         const Z_INDEX = {
             SCHOOL: 2200,
@@ -39,6 +40,8 @@
         let apartmentDataList = [];
         let universityDataList = [];
         let rdbYoyMap = {};
+        let branchSchoolMap = {};
+        let branchSchoolQuarters = [];
 
         let schoolOverlays = [];
         let clusterOverlays = [];
@@ -1028,10 +1031,18 @@
                     </div>
                     <div class="rs-address">📍 ${addrText}</div>
                     <div class="rs-grid">
-                        <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
-                        <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
-                        <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
-                        <div class="rs-item" style="padding-left: 20px;"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-size:13.5px;">${Math.round(totalSchoolStudents3km * 0.05).toLocaleString()}명</value></div>
+                        <div class="rs-item rs-accordion-toggle open" id="map-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <span class="rs-arrow-icon">▶</span>
+                                <span>🏫 반경 3km 총 학교 수 / 학생수</span>
+                            </label>
+                            <value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value>
+                        </div>
+                        <div class="rs-accordion-content open" id="map-content-schools">
+                            <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
+                            <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
+                            <div class="rs-item" style="padding-left: 20px;"><label>🎯 잠재 고객수 (총 학생수의 5%)</label><value style="color:#f43f5e; font-size:13.5px;">${Math.round(totalSchoolStudents3km * 0.05).toLocaleString()}명</value></div>
+                        </div>
                         <div class="rs-item"><label>📚 반경 3km 총 학원수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
                         <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
                         ${totalBranchStudents3km > 0 ? `<div class="rs-item"><label>🎓 반경 3km 에이닷지점 학생수</label><value style="color:#7950f2;">${totalBranchStudents3km.toLocaleString()}명</value></div>` : ''}
@@ -1039,6 +1050,25 @@
                 `;
 
                 labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+                labelContent.onclick = (e) => { if (e) e.stopPropagation(); };
+                labelContent.onwheel = (e) => { if (e) e.stopPropagation(); };
+
+                const mapToggle = labelContent.querySelector('#map-toggle-schools');
+                const mapContent = labelContent.querySelector('#map-content-schools');
+                if (mapToggle && mapContent) {
+                    mapToggle.onclick = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                        const isOpen = mapContent.classList.contains('open');
+                        if (isOpen) {
+                            mapContent.classList.remove('open');
+                            mapToggle.classList.remove('open');
+                        } else {
+                            mapContent.classList.add('open');
+                            mapToggle.classList.add('open');
+                        }
+                    };
+                }
 
                 radiusLabel = new kakao.maps.CustomOverlay({
                     position: position,
@@ -1367,6 +1397,192 @@
                     renderUniversityMarkers();
                 })
                 .catch(err => { console.error('University CSV Data fetch error:', err); });
+
+            // 6. 지점별 수강생 학교 분기별 데이터 (GID: 1365329021)
+            fetch(BRANCH_SCHOOL_CSV_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
+                .then(data => {
+                    parseBranchSchoolCsv(data);
+                })
+                .catch(err => {
+                    console.warn('Branch school API fetch warning, fallback to direct Google Sheet CSV:', err);
+                    const fallbackUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=1365329021";
+                    fetch(fallbackUrl)
+                        .then(res => res.text())
+                        .then(data => parseBranchSchoolCsv(data))
+                        .catch(e => console.error('Failed to load Branch School CSV:', e));
+                });
+        }
+
+        // 6. 지점별 수강생 학교 분기별 데이터 파싱 및 4분기 추이 연산
+        function parseBranchSchoolCsv(csvText) {
+            if (!csvText || csvText.trim().startsWith('<!DOCTYPE html') || csvText.includes('<html')) {
+                console.error('Branch school data response is HTML (Google Sheet non-public or login redirect)');
+                return;
+            }
+            const rows = csvText.split('\n').slice(1);
+            const periodSet = new Set();
+            const rawEntries = [];
+
+            rows.forEach(row => {
+                if (!row.trim()) return;
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length < 4) return;
+                const period = cols[0]?.replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                const branch = cols[1]?.replace(/"/g, '').trim();
+                const school = cols[2]?.replace(/"/g, '').trim();
+                const count = parseInt(cols[3]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+
+                if (period && branch && school) {
+                    periodSet.add(period);
+                    rawEntries.push({ period, branch, school, count });
+                }
+            });
+
+            // 날짜 기준 시간순 정렬 (YYYY. MM. DD 파싱)
+            const sortedPeriods = Array.from(periodSet).sort((a, b) => {
+                const parseDate = (s) => {
+                    const parts = s.split('.').map(p => parseInt(p.trim(), 10)).filter(n => !isNaN(n));
+                    return (parts[0] || 0) * 10000 + (parts[1] || 0) * 100 + (parts[2] || 0);
+                };
+                return parseDate(a) - parseDate(b);
+            });
+
+            // 최신 4개 분기 자동 추출
+            branchSchoolQuarters = sortedPeriods.slice(-4);
+            branchSchoolMap = {};
+
+            rawEntries.forEach(entry => {
+                if (!branchSchoolQuarters.includes(entry.period)) return;
+
+                if (!branchSchoolMap[entry.branch]) {
+                    branchSchoolMap[entry.branch] = {};
+                }
+
+                const bMap = branchSchoolMap[entry.branch];
+                if (!bMap[entry.school]) {
+                    const sc = entry.school;
+                    const isMiddle = sc.endsWith('중') || sc.includes('중학교') || sc.includes('중학');
+                    const isHigh = sc.endsWith('고') || sc.includes('고등학교') || sc.includes('고등') || sc.includes('고교');
+                    bMap[entry.school] = {
+                        name: sc,
+                        type: isHigh ? 'high' : (isMiddle ? 'middle' : 'other'),
+                        counts: {}
+                    };
+                    branchSchoolQuarters.forEach(q => { bMap[entry.school].counts[q] = 0; });
+                }
+
+                bMap[entry.school].counts[entry.period] = entry.count;
+            });
+
+            console.log(`🏫 Branch School CSV loaded: ${Object.keys(branchSchoolMap).length} branches, quarters:`, branchSchoolQuarters);
+        }
+
+        // 분기 표기 포맷팅 (예: "2026. 9. 30" -> "'26.3Q")
+        function formatQuarterLabel(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('.').map(p => parseInt(p.trim(), 10)).filter(n => !isNaN(n));
+            if (parts.length >= 2) {
+                const yy = String(parts[0]).slice(-2);
+                const mm = parts[1];
+                let q = '';
+                if (mm <= 3) q = '1Q';
+                else if (mm <= 6) q = '2Q';
+                else if (mm <= 9) q = '3Q';
+                else q = '4Q';
+                return `'${yy}.${q}`;
+            }
+            return dateStr;
+        }
+
+        // 학교별 최근 4분기 수강생 추이 테이블 렌더링
+        function renderSchoolTrendTable(branchName, schoolType) {
+            const branchInfo = branchSchoolMap[branchName];
+            if (!branchInfo) {
+                return `<div style="padding:10px; text-align:center; color:#94a3b8; font-size:11px;">해당 지점의 수강생 학교 데이터가 없습니다.</div>`;
+            }
+
+            const quarters = branchSchoolQuarters;
+            if (!quarters || quarters.length === 0) {
+                return `<div style="padding:10px; text-align:center; color:#94a3b8; font-size:11px;">분기 데이터가 없습니다.</div>`;
+            }
+
+            const latestQ = quarters[quarters.length - 1];
+            const prevQ = quarters.length > 1 ? quarters[quarters.length - 2] : null;
+
+            // 타입 필터링: 'high' 또는 'middle'
+            const schools = Object.values(branchInfo).filter(sc => sc.type === schoolType);
+            if (schools.length === 0) {
+                return `<div style="padding:10px; text-align:center; color:#94a3b8; font-size:11px;">해당 지점의 ${schoolType === 'high' ? '고등학교' : '중학교'} 수강생 데이터가 없습니다.</div>`;
+            }
+
+            // 최신 분기 학생수 내림차순 정렬 (동점 시 가나다순)
+            schools.sort((a, b) => (b.counts[latestQ] || 0) - (a.counts[latestQ] || 0) || a.name.localeCompare(b.name, 'ko'));
+
+            // 분기별 합계
+            const totals = {};
+            quarters.forEach(q => {
+                totals[q] = schools.reduce((sum, sc) => sum + (sc.counts[q] || 0), 0);
+            });
+
+            const totalDiff = prevQ ? (totals[latestQ] - totals[prevQ]) : 0;
+            const totalDiffSign = totalDiff > 0 ? `+${totalDiff}` : `${totalDiff}`;
+            const totalBadgeClass = totalDiff > 0 ? 'up' : (totalDiff < 0 ? 'down' : 'flat');
+            const totalBadgeIcon = totalDiff > 0 ? '▲' : (totalDiff < 0 ? '▼' : '―');
+
+            let rowsHtml = '';
+            schools.forEach(sc => {
+                const latestCount = sc.counts[latestQ] || 0;
+                const prevCount = prevQ ? (sc.counts[prevQ] || 0) : latestCount;
+                const diff = latestCount - prevCount;
+                const diffSign = diff > 0 ? `+${diff}` : `${diff}`;
+                const badgeClass = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+                const badgeIcon = diff > 0 ? '▲' : (diff < 0 ? '▼' : '―');
+
+                rowsHtml += `
+                    <tr>
+                        <td>${sc.name}</td>
+                        ${quarters.map(q => {
+                            const c = sc.counts[q] || 0;
+                            return `<td>${c > 0 ? c + '명' : '<span style="color:#64748b;">-</span>'}</td>`;
+                        }).join('')}
+                        <td><span class="rs-trend-badge ${badgeClass}">${badgeIcon} ${diffSign}</span></td>
+                    </tr>
+                `;
+            });
+
+            const totalRowHtml = `
+                <tr class="total-row">
+                    <td>합계 (${schools.length}개교)</td>
+                    ${quarters.map(q => `<td>${totals[q]}명</td>`).join('')}
+                    <td><span class="rs-trend-badge ${totalBadgeClass}">${totalBadgeIcon} ${totalDiffSign}</span></td>
+                </tr>
+            `;
+
+            return `
+                <div class="rs-school-trend-panel">
+                    <div class="rs-trend-summary-bar">
+                        <span>${schoolType === 'high' ? '🎓 고등학교별' : '🏫 중학교별'} 분기 학생수 추이</span>
+                        <span>총 ${schools.length}개교: <b>${totals[latestQ]}명</b> (<span class="rs-trend-badge ${totalBadgeClass}">${totalBadgeIcon} ${totalDiffSign}명</span>)</span>
+                    </div>
+                    <table class="rs-trend-table">
+                        <thead>
+                            <tr>
+                                <th>학교명</th>
+                                ${quarters.map(q => `<th title="${q}">${formatQuarterLabel(q)}</th>`).join('')}
+                                <th>전분기比</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                            ${totalRowHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
  
         // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
@@ -2020,6 +2236,9 @@
                 }
             }
 
+            const highSchoolTableHtml = renderSchoolTrendTable(b.name, 'high');
+            const middleSchoolTableHtml = renderSchoolTrendTable(b.name, 'middle');
+
             labelContent.innerHTML = `
                 <div class="rs-header">
                     <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${isTop10 ? `(#${yoyInfo.rank} 성장지점)` : ''} (반경 3km 분석)</span>
@@ -2028,15 +2247,103 @@
                 ${yoyBanner}
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
                 <div class="rs-grid" style="margin-top:8px;">
-                    <div class="rs-item"><label>🏫 반경 3km 총 학교 수 / 총 학생수</label><value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 20px;"><label>└ 고등학교 수 / 학생수</label><value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value></div>
-                    <div class="rs-item" style="padding-left: 20px;"><label>└ 중학교 수 / 학생수</label><value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value></div>
+                    <!-- 1단계: 반경 3km 총 학교 수 / 총 학생수 (접고 펼치기) -->
+                    <div class="rs-item rs-accordion-toggle open" id="rs-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
+                        <label style="cursor: pointer; display: flex; align-items: center;">
+                            <span class="rs-arrow-icon">▶</span>
+                            <span>🏫 반경 3km 총 학교 수 / 총 학생수</span>
+                        </label>
+                        <value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value>
+                    </div>
+
+                    <!-- 1단계 하위: 고등학교 / 중학교 컨테이너 -->
+                    <div class="rs-accordion-content open" id="rs-content-schools">
+                        <!-- 2단계: 고등학교 수 / 학생수 (접고 펼치기) -->
+                        <div class="rs-item rs-accordion-toggle" id="rs-toggle-high" style="padding-left: 20px;" title="클릭하여 ${b.name} 지점의 고등학교별 4분기 학생수 추이 접기/펼치기">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <span class="rs-arrow-icon">▶</span>
+                                <span>└ 고등학교 수 / 학생수</span>
+                            </label>
+                            <value style="color:#ff7f50; font-size:13.5px;">${totalHighSchools3km}개교 (${totalHighSchoolStudents3km.toLocaleString()}명)</value>
+                        </div>
+                        <!-- 2단계 하위: 고등학교 분기별 추이 테이블 -->
+                        <div class="rs-accordion-content" id="rs-content-high">
+                            ${highSchoolTableHtml}
+                        </div>
+
+                        <!-- 2단계: 중학교 수 / 학생수 (접고 펼치기) -->
+                        <div class="rs-item rs-accordion-toggle" id="rs-toggle-mid" style="padding-left: 20px;" title="클릭하여 ${b.name} 지점의 중학교별 4분기 학생수 추이 접기/펼치기">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <span class="rs-arrow-icon">▶</span>
+                                <span>└ 중학교 수 / 학생수</span>
+                            </label>
+                            <value style="color:#ff9f43; font-size:13.5px;">${totalMiddleSchools3km}개교 (${totalMiddleSchoolStudents3km.toLocaleString()}명)</value>
+                        </div>
+                        <!-- 2단계 하위: 중학교 분기별 추이 테이블 -->
+                        <div class="rs-accordion-content" id="rs-content-mid">
+                            ${middleSchoolTableHtml}
+                        </div>
+                    </div>
+
                     <div class="rs-item"><label>📚 반경 3km 총 학원 수</label><value style="color:#1dd1a1;">${totalAcademies3km.toLocaleString()}개 (${totalAcademyLocs3km}곳)</value></div>
                     <div class="rs-item"><label>🏢 반경 3km 아파트 세대수</label><value style="color:#2ecc71;">${totalAptFamilies3km.toLocaleString()}세대 (${totalApts3km}곳)</value></div>
                 </div>
             `;
 
             labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            // 이벤트 전파 방지 (지도 클릭 및 줌 간섭 차단)
+            labelContent.onclick = (e) => { if (e) e.stopPropagation(); };
+            labelContent.onwheel = (e) => { if (e) e.stopPropagation(); };
+
+            // 1단계 & 2단계 아코디언 인터랙션 핸들러 바인딩
+            const toggleSchools = labelContent.querySelector('#rs-toggle-schools');
+            const contentSchools = labelContent.querySelector('#rs-content-schools');
+            if (toggleSchools && contentSchools) {
+                toggleSchools.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const isOpen = contentSchools.classList.contains('open');
+                    if (isOpen) {
+                        contentSchools.classList.remove('open');
+                        toggleSchools.classList.remove('open');
+                    } else {
+                        contentSchools.classList.add('open');
+                        toggleSchools.classList.add('open');
+                    }
+                };
+            }
+
+            const toggleHigh = labelContent.querySelector('#rs-toggle-high');
+            const contentHigh = labelContent.querySelector('#rs-content-high');
+            if (toggleHigh && contentHigh) {
+                toggleHigh.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const isOpen = contentHigh.classList.contains('open');
+                    if (isOpen) {
+                        contentHigh.classList.remove('open');
+                        toggleHigh.classList.remove('open');
+                    } else {
+                        contentHigh.classList.add('open');
+                        toggleHigh.classList.add('open');
+                    }
+                };
+            }
+
+            const toggleMid = labelContent.querySelector('#rs-toggle-mid');
+            const contentMid = labelContent.querySelector('#rs-content-mid');
+            if (toggleMid && contentMid) {
+                toggleMid.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const isOpen = contentMid.classList.contains('open');
+                    if (isOpen) {
+                        contentMid.classList.remove('open');
+                        toggleMid.classList.remove('open');
+                    } else {
+                        contentMid.classList.add('open');
+                        toggleMid.classList.add('open');
+                    }
+                };
+            }
 
             radiusLabel = new kakao.maps.CustomOverlay({
                 position: b.pos,

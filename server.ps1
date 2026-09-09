@@ -18,6 +18,12 @@ $googleApartmentCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_
 # GID 541959206 : RDB_대학주소 (대학 정보)
 $googleUniversityCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=541959206"
 
+# GID 452840178 : RDB_YoY (전 지점 학생수 & 증감율)
+$googleYoyCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=452840178"
+
+# GID 1365329021 : RDB_수강생학교 (분기별 지점 학교 학생수)
+$googleBranchSchoolCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=1365329021"
+
 while ($listener.IsListening) {
     $context = $listener.GetContext()
     $req = $context.Request
@@ -104,6 +110,42 @@ while ($listener.IsListening) {
             $webClient = New-Object System.Net.WebClient
             $webClient.Encoding = [System.Text.Encoding]::UTF8
             $csvText = $webClient.DownloadString($googleUniversityCsvUrl)
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($csvText)
+            $res.ContentLength64 = $bytes.Length
+            $res.OutputStream.Write($bytes, 0, $bytes.Length)
+        } catch {
+            $res.StatusCode = 500
+        } finally {
+            $res.Close()
+        }
+        continue
+    }
+
+    # YoY 데이터 (/api/yoy_data)
+    if ($localPath.StartsWith("api/yoy_data")) {
+        $res.ContentType = "text/csv; charset=utf-8"
+        try {
+            $webClient = New-Object System.Net.WebClient
+            $webClient.Encoding = [System.Text.Encoding]::UTF8
+            $csvText = $webClient.DownloadString($googleYoyCsvUrl)
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($csvText)
+            $res.ContentLength64 = $bytes.Length
+            $res.OutputStream.Write($bytes, 0, $bytes.Length)
+        } catch {
+            $res.StatusCode = 500
+        } finally {
+            $res.Close()
+        }
+        continue
+    }
+
+    # 지점별 수강생 학교 데이터 (/api/branch_school_data)
+    if ($localPath.StartsWith("api/branch_school_data")) {
+        $res.ContentType = "text/csv; charset=utf-8"
+        try {
+            $webClient = New-Object System.Net.WebClient
+            $webClient.Encoding = [System.Text.Encoding]::UTF8
+            $csvText = $webClient.DownloadString($googleBranchSchoolCsvUrl)
             $bytes = [System.Text.Encoding]::UTF8.GetBytes($csvText)
             $res.ContentLength64 = $bytes.Length
             $res.OutputStream.Write($bytes, 0, $bytes.Length)
