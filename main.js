@@ -29,9 +29,10 @@
             SCHOOL: 2200,
             UNIVERSITY: 2300,
             ACADEMY: 2500,
-            BRANCH: 3500,
-            LINE: 8000,
-            RADIUS: 9999
+            MARKER: 5000,
+            BRANCH: 12000,
+            LINE: 15000,
+            RADIUS: 20000
         };
 
         let schoolMap = {};
@@ -852,8 +853,19 @@
         }
 
         function getDistance(p1, p2) {
-            const poly = new kakao.maps.Polyline({ path: [p1, p2] });
-            return poly.getLength();
+            if (!p1 || !p2) return 999999;
+            const lat1 = typeof p1.getLat === 'function' ? p1.getLat() : (p1.lat ?? p1.Ma ?? 0);
+            const lng1 = typeof p1.getLng === 'function' ? p1.getLng() : (p1.lng ?? p1.La ?? 0);
+            const lat2 = typeof p2.getLat === 'function' ? p2.getLat() : (p2.lat ?? p2.Ma ?? 0);
+            const lng2 = typeof p2.getLng === 'function' ? p2.getLng() : (p2.lng ?? p2.La ?? 0);
+            if (!lat1 || !lng1 || !lat2 || !lng2) return 999999;
+
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
         function handleDistanceClick(clickedPos) {
@@ -968,6 +980,7 @@
         }
 
         function drawRadius3km(position) {
+            closeDetailModal();
             if (clickCircle) clickCircle.setMap(null);
             if (clickMarker) clickMarker.setMap(null);
             if (radiusLabel) radiusLabel.setMap(null);
@@ -1302,7 +1315,7 @@
 
                     computeTop30SnuSchools();
                     renderSchoolMarkers();
-                    updateGlobalSummaryBar();
+                    setTimeout(() => updateGlobalSummaryBar(), 50);
                 })
                 .catch(err => { console.error('School CSV Data fetch error:', err); });
  
@@ -1393,91 +1406,120 @@
                 })
                 .catch(err => { console.error('Apartment CSV Data fetch error:', err); });
  
-            // 3. RDB_YoY (GID 452840178) 먼저 로딩 후 RDB_지점좌표 (GID 211834294) 순차 로딩 (학생수 0명 방지)
-            fetch(YOY_CSV_URL)
+            // 3. RDB_YoY (GID 452840178) 및 RDB_지점좌표 (GID 211834294) 병렬 로딩 & 완벽 폴백
+            const YOY_FALLBACK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=452840178";
+            const BRANCH_FALLBACK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=211834294";
+
+            function parseYoyCsvData(data) {
+                if (!data || data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) return;
+                const rows = data.split('\n').slice(1);
+                rdbYoyMap = {};
+                const parsedRows = [];
+
+                rows.forEach(row => {
+                    if (!row.trim()) return;
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if (columns.length < 3) return;
+
+                    const name = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                    const yoy = parseInt(columns[1]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                    const count = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                    const inc = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+                    const rate = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
+
+                    if (name) {
+                        parsedRows.push({ name, yoy, count, inc, rate });
+                    }
+                });
+
+                parsedRows.sort((a, b) => b.inc - a.inc || b.rate - a.rate);
+
+                parsedRows.forEach((item, index) => {
+                    rdbYoyMap[item.name] = {
+                        rank: index + 1,
+                        yoy: item.yoy,
+                        count: item.count,
+                        inc: item.inc,
+                        rate: item.rate
+                    };
+                });
+
+                console.log(`📊 RDB_YoY CSV data sorted & loaded: ${Object.keys(rdbYoyMap).length} branches.`);
+            }
+
+            function parseBranchCsvData(data) {
+                if (!data || data.trim().startsWith('<!DOCTYPE html') || data.includes('<html')) return;
+                const rows = data.split('\n').slice(1);
+                branchDataList = [];
+
+                rows.forEach(row => {
+                    if (!row.trim()) return;
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if (columns.length < 3) return;
+
+                    const branchName = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                    const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                    const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                    const csvStudentCount = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+
+                    const yoyInfo = getYoYInfo(branchName);
+                    const studentCount = (yoyInfo && typeof yoyInfo.count === 'number') ? yoyInfo.count : csvStudentCount;
+
+                    if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
+                        const pos = new kakao.maps.LatLng(lat, lng);
+                        branchDataList.push({
+                            name: branchName,
+                            pos: pos,
+                            studentCount: studentCount
+                        });
+                    }
+                });
+
+                console.log(`🎓 Branch CSV data parsed: ${branchDataList.length} branches`);
+            }
+
+            function syncBranchStudentCounts() {
+                branchDataList.forEach(b => {
+                    const yoyInfo = getYoYInfo(b.name);
+                    if (yoyInfo && typeof yoyInfo.count === 'number') {
+                        b.studentCount = yoyInfo.count;
+                    }
+                });
+            }
+
+            const fetchYoyTask = fetch(YOY_CSV_URL)
                 .then(res => {
-                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     return res.text();
                 })
-                .then(data => {
-                    if (data && !data.trim().startsWith('<!DOCTYPE html')) {
-                        const rows = data.split('\n').slice(1);
-                        rdbYoyMap = {};
-                        const parsedRows = [];
+                .then(data => parseYoyCsvData(data))
+                .catch(err => {
+                    console.warn('YoY primary fetch warning, fallback to direct Google Sheet:', err);
+                    return fetch(YOY_FALLBACK_URL)
+                        .then(res => res.text())
+                        .then(data => parseYoyCsvData(data))
+                        .catch(e => console.error('YoY fallback fetch error:', e));
+                });
 
-                        rows.forEach(row => {
-                            if (!row.trim()) return;
-                            const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                            if (columns.length < 3) return;
-
-                            const name = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
-                            const yoy = parseInt(columns[1]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-                            const count = parseInt(columns[2]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-                            const inc = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-                            const rate = parseInt(columns[4]?.replace(/"/g, '').replace(/[^0-9-]/g, '').trim(), 10) || 0;
-
-                            if (name) {
-                                parsedRows.push({ name, yoy, count, inc, rate });
-                            }
-                        });
-
-                        // 🔥 증감(inc) 내림차순, 증감율(rate) 내림차순 정렬하여 최고 성장 상위 10개 지점 순위 매기기
-                        parsedRows.sort((a, b) => b.inc - a.inc || b.rate - a.rate);
-
-                        parsedRows.forEach((item, index) => {
-                            rdbYoyMap[item.name] = {
-                                rank: index + 1,
-                                yoy: item.yoy,
-                                count: item.count,
-                                inc: item.inc,
-                                rate: item.rate
-                            };
-                        });
-
-                        console.log(`📊 RDB_YoY CSV data sorted by growth & loaded: ${Object.keys(rdbYoyMap).length} branches. Top 10 growth branches:`, parsedRows.slice(0, 10).map(x => `${x.name}(+${x.inc}명)`));
-                    }
-
-                    // YoY 데이터 파싱 완료 후 지점 좌표 CSV 로딩
-                    return fetch(BRANCH_CSV_URL);
-                })
+            const fetchBranchTask = fetch(BRANCH_CSV_URL)
                 .then(res => {
-                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     return res.text();
                 })
-                .then(data => {
-                    if (data && !data.trim().startsWith('<!DOCTYPE html')) {
-                        const rows = data.split('\n').slice(1);
-                        branchDataList = [];
+                .then(data => parseBranchCsvData(data))
+                .catch(err => {
+                    console.warn('Branch primary fetch warning, fallback to direct Google Sheet:', err);
+                    return fetch(BRANCH_FALLBACK_URL)
+                        .then(res => res.text())
+                        .then(data => parseBranchCsvData(data))
+                        .catch(e => console.error('Branch fallback fetch error:', e));
+                });
 
-                        rows.forEach(row => {
-                            if (!row.trim()) return;
-                            const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                            if (columns.length < 3) return;
-
-                            const branchName = (columns[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
-                            const lat = parseFloat(columns[1]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-                            const lng = parseFloat(columns[2]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
-                            const csvStudentCount = parseInt(columns[3]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
-
-                            const yoyInfo = getYoYInfo(branchName);
-                            const studentCount = (yoyInfo && typeof yoyInfo.count === 'number') ? yoyInfo.count : csvStudentCount;
-
-                            if (branchName && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0) {
-                                const pos = new kakao.maps.LatLng(lat, lng);
-                                branchDataList.push({
-                                    name: branchName,
-                                    pos: pos,
-                                    studentCount: studentCount
-                                });
-                            }
-                        });
-
-                        console.log(`🎓 Branch CSV data parsed: ${branchDataList.length} branches`);
-                        renderBranchMarkers();
-                        updateGlobalSummaryBar();
-                    }
-                })
-                .catch(err => { console.error('Branch & YoY CSV fetch error:', err); });
+            Promise.allSettled([fetchYoyTask, fetchBranchTask]).then(() => {
+                syncBranchStudentCounts();
+                renderBranchMarkers();
+                setTimeout(() => updateGlobalSummaryBar(), 50);
+            });
 
             // 5. 대학주소 데이터 (GID: 541959206)
             fetch(UNIVERSITY_CSV_URL)
@@ -1714,13 +1756,22 @@
  
             const totalBranchStudents = branchDataList.reduce((sum, b) => sum + (b.studentCount || 0), 0);
             
-            // 각 지점의 3km 반경 내 학교 학생수 합산의 총합 구하기
+            // 각 지점의 3km 반경 내 학교 학생수 합산의 총합 구하기 (Bounding Box 고속화)
             let totalTargetSchoolStudents = 0;
             branchDataList.forEach(b => {
+                if (!b || !b.pos) return;
                 let branch3kmStudents = 0;
+                const bLat = typeof b.pos.getLat === 'function' ? b.pos.getLat() : (b.pos.lat ?? b.pos.Ma ?? 0);
+                const bLng = typeof b.pos.getLng === 'function' ? b.pos.getLng() : (b.pos.lng ?? b.pos.La ?? 0);
+
                 schoolKeys.forEach(key => {
                     const school = schoolMap[key];
                     if (school && school.pos) {
+                        const sLat = typeof school.pos.getLat === 'function' ? school.pos.getLat() : (school.pos.lat ?? school.pos.Ma ?? 0);
+                        const sLng = typeof school.pos.getLng === 'function' ? school.pos.getLng() : (school.pos.lng ?? school.pos.La ?? 0);
+                        // 3km 반경 사전 필터링 (위도 약 0.035도, 경도 약 0.045도 초과 시 즉시 skip)
+                        if (Math.abs(sLat - bLat) > 0.035 || Math.abs(sLng - bLng) > 0.045) return;
+
                         const dist = getDistance(b.pos, school.pos);
                         if (dist <= 3000) {
                             branch3kmStudents += (school.total2026 || 0);
@@ -1980,6 +2031,7 @@
             branchDataList.forEach(b => {
                 const yoyInfo = getYoYInfo(b.name);
                 const isTop10 = yoyInfo && yoyInfo.rank <= 10;
+                const studentNum = (b.studentCount || 0).toLocaleString();
 
                 const labelContent = document.createElement('div');
 
@@ -1989,7 +2041,7 @@
                     const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
                     labelContent.innerHTML = `
                         <span>🔥 #${yoyInfo.rank} ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${b.studentCount}명 (${incSign}명 / ${rateSign})</span>
+                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${studentNum}명 (${incSign}명 / ${rateSign})</span>
                     `;
                 } else if (yoyInfo) {
                     labelContent.className = 'branch-badge';
@@ -1998,13 +2050,13 @@
                     const rateColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
                     labelContent.innerHTML = `
                         <span>🎓 ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.9; background:rgba(0,0,0,0.3); padding:1px 6px; border-radius:10px;">${b.studentCount}명 <span style="color:${rateColor}; font-weight:600;">(${incSign}명 / ${rateSign})</span></span>
+                        <span style="font-size:11px; opacity:0.9; background:rgba(0,0,0,0.3); padding:1px 6px; border-radius:10px;">${studentNum}명 <span style="color:${rateColor}; font-weight:600;">(${incSign}명 / ${rateSign})</span></span>
                     `;
                 } else {
                     labelContent.className = 'branch-badge';
                     labelContent.innerHTML = `
                         <span>🎓 ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${b.studentCount}명</span>
+                        <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${studentNum}명</span>
                     `;
                 }
 
@@ -2026,6 +2078,7 @@
                 overlay.setMap(map);
                 branchOverlays.push(overlay);
             });
+            console.log(`🎓 Successfully rendered ${branchOverlays.length} branch markers on map`);
         }
 
         // 🎯 신규지점 유력 후보지 (1/2/3기 신도시 & 택지지구) 마커 렌더링
@@ -2378,6 +2431,7 @@
         // 🎓 에이닷지점 클릭 시 반경 3km 점선 원 생성 및 반경 3km 내 학생수, 학원수, 학교수 표출
         function showBranchOverlayPopup(b, yoyInfo) {
             window.clearRadiusOverlay();
+            closeDetailModal();
 
             if (!yoyInfo) {
                 yoyInfo = getYoYInfo(b.name);
@@ -2452,7 +2506,7 @@
             // 점유율 계산 (소수점 둘째 자리까지 표시)
             let ratioText = "0%";
             if (totalSchoolStudents3km > 0) {
-                const ratio = (b.studentCount / totalSchoolStudents3km) * 100;
+                const ratio = ((b.studentCount || 0) / totalSchoolStudents3km) * 100;
                 ratioText = ratio.toFixed(2) + "%";
             }
 
@@ -2466,9 +2520,9 @@
                 const incColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
 
                 if (isTop10) {
-                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${yoyInfo.rank}): <b style="color:#ef4444;">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
+                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#f59e0b; font-weight:bold;">🔥 전년대비 성과 Top 10 (순위 #${yoyInfo.rank}): <b style="color:#ef4444;">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy || 0}명 ➔ 금일 ${b.studentCount || 0}명]</span></div>`;
                 } else {
-                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#ddd;">📈 전년대비 성과 (순위 #${yoyInfo.rank}): <b style="color:${incColor};">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy}명 ➔ 금일 ${b.studentCount}명]</span></div>`;
+                    yoyBanner = `<div class="rs-address" style="margin-top:4px; color:#ddd;">📈 전년대비 성과 (순위 #${yoyInfo.rank}): <b style="color:${incColor};">${incSign}명 (${rateSign})</b> <span style="font-size:11px; font-weight:normal; color:#aaa;">[작년 ${yoyInfo.yoy || 0}명 ➔ 금일 ${b.studentCount || 0}명]</span></div>`;
                 }
             }
 
@@ -2490,9 +2544,9 @@
                     <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${rankTitle} (반경 3km 분석)</span>
                     <button class="rs-close-btn" id="branch-panel-close-btn" title="닫기">✕</button>
                 </div>
-                <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${b.studentCount.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
+                <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${(b.studentCount || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
                 ${yoyBanner}
-                <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${potentialCustomers.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
+                <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${(potentialCustomers || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
                 <div class="rs-grid" style="margin-top:8px;">
                     <!-- 1단계: 반경 3km 총 학교 수 / 총 학생수 (접고 펼치기) -->
                     <div class="rs-item rs-accordion-toggle open" id="rs-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
@@ -2500,7 +2554,7 @@
                             <span class="rs-arrow-icon">▶</span>
                             <span>🏫 반경 3km 총 학교 수 / 총 학생수</span>
                         </label>
-                        <value style="color:#ff6b81;">${totalSchools3km}개교 (${totalSchoolStudents3km.toLocaleString()}명)</value>
+                        <value style="color:#ff6b81;">${totalSchools3km}개교 (${(totalSchoolStudents3km || 0).toLocaleString()}명)</value>
                     </div>
 
                     <!-- 1단계 하위: 고등학교 / 중학교 컨테이너 -->
