@@ -18,7 +18,8 @@
     { "source": "/api/university_data", "destination": "/api/university_data.js" },
     { "source": "/api/yoy_data", "destination": "/api/yoy_data.js" },
     { "source": "/api/branch_school_data", "destination": "/api/branch_school_data.js" },
-    { "source": "/api/recommend_data", "destination": "/api/recommend_data.js" }
+    { "source": "/api/recommend_data", "destination": "/api/recommend_data.js" },
+    { "source": "/api/student_residence_data", "destination": "/api/student_residence_data.js" }
   ]
 }
 

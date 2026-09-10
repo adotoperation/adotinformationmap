@@ -1145,6 +1145,75 @@ html, body, #map {
 .apartment-circle-badge.size-sm .badge-count-num { font-size: 9.5px; }
 .apartment-circle-badge.size-xs .badge-count-num { font-size: 8.5px; }
 
+/* 📍 학생 소재지(퇴원 포함) 원형 마커 스타일 및 색상 범례 */
+.circle.sr-lvl-5, .student-residence-circle-badge.sr-lvl-5 { background: linear-gradient(135deg, #be123c, #e11d48); border-color: #ffffff; color: #ffffff; box-shadow: 0 0 20px rgba(225, 29, 72, 0.85); }
+.circle.sr-lvl-4, .student-residence-circle-badge.sr-lvl-4 { background: linear-gradient(135deg, #e11d48, #f43f5e); border-color: #ffffff; color: #ffffff; box-shadow: 0 0 16px rgba(244, 63, 94, 0.75); }
+.circle.sr-lvl-3, .student-residence-circle-badge.sr-lvl-3 { background: linear-gradient(135deg, #f43f5e, #fb7185); border-color: #ffffff; color: #ffffff; box-shadow: 0 0 12px rgba(251, 113, 133, 0.65); }
+.circle.sr-lvl-2, .student-residence-circle-badge.sr-lvl-2 { background: linear-gradient(135deg, #fb7185, #fda4af); border-color: #ffffff; color: #ffffff; box-shadow: 0 0 8px rgba(253, 164, 175, 0.55); }
+.circle.sr-lvl-1, .student-residence-circle-badge.sr-lvl-1 { background: linear-gradient(135deg, rgba(244, 63, 94, 0.9), rgba(251, 113, 133, 0.9)); border-color: #ffffff; color: #ffffff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+
+.student-residence-circle-badge {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    user-select: none;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+    box-sizing: border-box;
+    padding: 3px;
+}
+
+.student-residence-circle-badge:hover {
+    transform: scale(1.22) !important;
+    z-index: 99999 !important;
+    box-shadow: 0 0 24px rgba(244, 63, 94, 0.95) !important;
+    border-color: #ffffff !important;
+}
+
+.student-residence-circle-badge .sr-badge-branch {
+    font-size: 8.5px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    opacity: 0.95;
+    max-width: 92%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-residence-circle-badge .sr-badge-count {
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.05;
+    margin-top: 1.5px;
+    letter-spacing: -0.3px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.student-residence-circle-badge.sr-lvl-5 .sr-badge-branch { font-size: 11.5px; }
+.student-residence-circle-badge.sr-lvl-5 .sr-badge-count { font-size: 15px; margin-top: 2.5px; }
+
+.student-residence-circle-badge.sr-lvl-4 .sr-badge-branch { font-size: 10.5px; }
+.student-residence-circle-badge.sr-lvl-4 .sr-badge-count { font-size: 13.5px; margin-top: 2px; }
+
+.student-residence-circle-badge.sr-lvl-3 .sr-badge-branch { font-size: 9.5px; }
+.student-residence-circle-badge.sr-lvl-3 .sr-badge-count { font-size: 12px; margin-top: 2px; }
+
+.student-residence-circle-badge.sr-lvl-2 .sr-badge-branch { font-size: 8.5px; }
+.student-residence-circle-badge.sr-lvl-2 .sr-badge-count { font-size: 10.5px; }
+
+.student-residence-circle-badge.sr-lvl-1 .sr-badge-branch { font-size: 8px; }
+.student-residence-circle-badge.sr-lvl-1 .sr-badge-count { font-size: 9.5px; }
+
 /* 🔥 Top 10 성장 지점 네온 뱃지 마커 */
 .top10-branch-overlay {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(245, 158, 11, 0.95));

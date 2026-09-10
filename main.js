@@ -24,10 +24,12 @@
         const YOY_CSV_URL = `/api/yoy_data`;         // GID 452840178 : RDB_YoY (전 지점 최신 학생수 & 증감율)
         const UNIVERSITY_CSV_URL = `/api/university_data`; // GID 541959206 : RDB_대학주소 (전국 대학 정보)
         const BRANCH_SCHOOL_CSV_URL = `/api/branch_school_data`; // GID 1365329021 : RDB_수강생학교 (분기별 지점 학교 학생수)
+        const STUDENT_RESIDENCE_CSV_URL = `/api/student_residence_data`; // GID 1561417046 : RDB_재원생주소 (학생 소재지 주소 및 인원수)
 
         const Z_INDEX = {
             SCHOOL: 2200,
             UNIVERSITY: 2300,
+            STUDENT_RESIDENCE: 2400,
             ACADEMY: 2500,
             MARKER: 5000,
             BRANCH: 12000,
@@ -40,6 +42,7 @@
         let branchDataList = [];
         let apartmentDataList = [];
         let universityDataList = [];
+        let studentResidenceDataList = [];
         let rdbYoyMap = {};
         let branchSchoolMap = {};
         let branchSchoolQuarters = [];
@@ -50,6 +53,7 @@
         let branchOverlays = [];
         let apartmentOverlays = [];
         let universityOverlays = [];
+        let studentResidenceOverlays = [];
         let top10BranchOverlays = [];
         let targetDongOverlays = [];
         let candidateOverlays = [];
@@ -608,6 +612,7 @@
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
+            const chkStudentResidence = document.getElementById('chk-student-residence');
             const chkUniversity = document.getElementById('chk-university');
             const chkAcademy = document.getElementById('chk-academy');
             const chkApartment = document.getElementById('chk-apartment');
@@ -619,6 +624,7 @@
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
+            if (chkStudentResidence) chkStudentResidence.addEventListener('change', () => renderStudentResidenceMarkers());
             if (chkUniversity) chkUniversity.addEventListener('change', () => renderUniversityMarkers());
             if (chkAcademy) chkAcademy.addEventListener('change', () => renderAcademyMarkers());
             if (chkApartment) chkApartment.addEventListener('change', () => renderApartmentMarkers());
@@ -685,6 +691,11 @@
                     const matchingUnivs = universityDataList.filter(u => u.name.toLowerCase().includes(keyword) || u.address.toLowerCase().includes(keyword));
                     const matchingAcademies = Object.keys(academyMap).filter(addr => addr.toLowerCase().includes(keyword));
                     const matchingApts = apartmentDataList.filter(apt => apt.address.toLowerCase().includes(keyword));
+                    const matchingStudentResidences = studentResidenceDataList.filter(sr =>
+                        sr.address.toLowerCase().includes(keyword) ||
+                        sr.branchName.toLowerCase().includes(keyword) ||
+                        (cleanKeyword.length > 0 && sr.branchName.toLowerCase().includes(cleanKeyword))
+                    );
 
                     const matchingRecommends = rdbRecommendDataList.filter(rec => 
                         rec.dong.toLowerCase().includes(keyword) || 
@@ -724,6 +735,10 @@
                     });
                     matchingApts.slice(0, 4).forEach(apt => {
                         html += `<div class="search-item" data-type="apartment" data-addr="${apt.address}">🏢 [아파트] ${apt.address} (${apt.count.toLocaleString()}세대)</div>`;
+                    });
+                    matchingStudentResidences.slice(0, 5).forEach(sr => {
+                        const branchText = sr.branchName.endsWith('지점') ? sr.branchName : (sr.branchName + '지점');
+                        html += `<div class="search-item" data-type="student-residence" data-addr="${sr.address}" data-branch="${sr.branchName}" data-lat="${sr.pos.getLat()}" data-lng="${sr.pos.getLng()}">📍 [학생소재지] ${branchText} ${sr.count}명 (${sr.address.slice(0, 22)}...)</div>`;
                     });
 
                     if (html) {
@@ -801,6 +816,20 @@
                                 showApartmentOverlayPopup(data);
                             }
                             searchInput.value = addr;
+                        } else if (type === 'student-residence') {
+                            const lat = parseFloat(item.dataset.lat);
+                            const lng = parseFloat(item.dataset.lng);
+                            const pos = new kakao.maps.LatLng(lat, lng);
+                            map.setLevel(4);
+                            map.panTo(pos);
+                            const chk = document.getElementById('chk-student-residence');
+                            if (chk && !chk.checked) {
+                                chk.checked = true;
+                                renderStudentResidenceMarkers();
+                            }
+                            const srObj = studentResidenceDataList.find(sr => sr.address === item.dataset.addr && sr.branchName === item.dataset.branch);
+                            if (srObj) showStudentResidenceOverlayPopup(srObj);
+                            searchInput.value = item.dataset.addr;
                         }
                         searchResults.style.display = 'none';
                     }
@@ -833,12 +862,14 @@
                 renderSchoolMarkers();
                 renderApartmentMarkers();
                 renderUniversityMarkers();
+                renderStudentResidenceMarkers();
                 renderTargetDongMarkers();
             });
 
             kakao.maps.event.addListener(map, 'idle', () => {
                 renderApartmentMarkers();
                 renderUniversityMarkers();
+                renderStudentResidenceMarkers();
                 renderTargetDongMarkers();
             });
 
@@ -1577,6 +1608,89 @@
                         .then(data => parseBranchSchoolCsv(data))
                         .catch(e => console.error('Failed to load Branch School CSV:', e));
                 });
+
+            // 7. 학생 소재지 데이터 (RDB_재원생주소, GID: 1561417046)
+            fetch(STUDENT_RESIDENCE_CSV_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.text();
+                })
+                .then(data => {
+                    parseStudentResidenceCsv(data);
+                })
+                .catch(err => {
+                    console.warn('Student residence API fetch warning, fallback to direct Google Sheet CSV:', err);
+                    const fallbackUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5c-_UFAXHCib1iGRSnviv0PFCVKRtapJHMVbcV6sbFLVIkWQIy103SjP8B-HRhGDsRwxCvvx4IRhW/pub?output=csv&gid=1561417046";
+                    fetch(fallbackUrl)
+                        .then(res => res.text())
+                        .then(data => parseStudentResidenceCsv(data))
+                        .catch(e => console.error('Failed to load Student Residence CSV:', e));
+                });
+        }
+
+        // 7. 학생 소재지 데이터 파싱 (동일 주소/좌표 미세 오프셋 분산 처리)
+        function parseStudentResidenceCsv(csvText) {
+            if (!csvText || csvText.trim().startsWith('<!DOCTYPE html') || csvText.includes('<html')) {
+                console.error('Student residence data response is HTML (Google Sheet non-public or login redirect)');
+                return;
+            }
+            const rows = csvText.split('\n').slice(1);
+            const rawList = [];
+            const coordCounts = {};
+
+            rows.forEach(row => {
+                if (!row.trim()) return;
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length < 5) return;
+
+                const branchName = (cols[0] || "").replace(/"/g, '').replace(/\ufeff/g, '').trim();
+                const address = (cols[1] || "").replace(/"/g, '').trim();
+                const count = parseInt(cols[2]?.replace(/"/g, '').replace(/[^0-9]/g, '').trim(), 10) || 0;
+                const lat = parseFloat(cols[3]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+                const lng = parseFloat(cols[4]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
+
+                if (branchName && address && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0 && count > 0) {
+                    const coordKey = `${lat.toFixed(5)}_${lng.toFixed(5)}`;
+                    coordCounts[coordKey] = (coordCounts[coordKey] || 0) + 1;
+                    rawList.push({
+                        branchName,
+                        address,
+                        count,
+                        lat,
+                        lng,
+                        coordKey
+                    });
+                }
+            });
+
+            const coordCurrentIndex = {};
+            studentResidenceDataList = rawList.map(item => {
+                const totalAtCoord = coordCounts[item.coordKey] || 1;
+                const currIdx = coordCurrentIndex[item.coordKey] || 0;
+                coordCurrentIndex[item.coordKey] = currIdx + 1;
+
+                let finalLat = item.lat;
+                let finalLng = item.lng;
+
+                if (totalAtCoord > 1 && currIdx > 0) {
+                    const angle = (currIdx / totalAtCoord) * 2 * Math.PI;
+                    const offsetDist = 0.00018; // 약 18미터 원형 오프셋
+                    finalLat = item.lat + Math.sin(angle) * offsetDist;
+                    finalLng = item.lng + (Math.cos(angle) * offsetDist) / Math.cos(item.lat * Math.PI / 180);
+                }
+
+                return {
+                    branchName: item.branchName,
+                    address: item.address,
+                    count: item.count,
+                    rawLat: item.lat,
+                    rawLng: item.lng,
+                    pos: new kakao.maps.LatLng(finalLat, finalLng)
+                };
+            });
+
+            console.log(`📍 Student Residence CSV data parsed: ${studentResidenceDataList.length} rows`);
+            renderStudentResidenceMarkers();
         }
 
         // 6. 지점별 수강생 학교 분기별 데이터 파싱 및 4분기 추이 연산
@@ -2870,6 +2984,137 @@
 
             const overlay = new kakao.maps.CustomOverlay({
                 position: apt.pos,
+                content: labelContent,
+                yAnchor: 1.25,
+                clickable: true,
+                zIndex: Z_INDEX.RADIUS + 1000
+            });
+
+            overlay.setMap(map);
+            popupOverlays.push(overlay);
+        }
+
+        // 📍 학생 소재지(퇴원 포함) 마커 렌더링 (화면 뷰포트 영역 실시간 필터링 적용)
+        function renderStudentResidenceMarkers() {
+            studentResidenceOverlays.forEach(ol => ol.setMap(null));
+            studentResidenceOverlays = [];
+
+            const isStudentResidenceChecked = document.getElementById('chk-student-residence')?.checked ?? false;
+            if (!isStudentResidenceChecked) return;
+
+            const bounds = map.getBounds();
+            const zoomLevel = map.getLevel();
+
+            studentResidenceDataList.forEach(item => {
+                if (!item || !item.pos) return;
+                // 화면 영역(bounds) 내에 있는 학생 소재지 마커만 렌더링하여 렉 없이 즉각 표출
+                if (bounds && !bounds.contain(item.pos)) return;
+
+                // 전국 원거리 줌아웃(Lv 9 이상) 시 렉 방지 및 지도 가독성을 위해 2명 이상만 표출 (줌인 시 전체 100% 표출)
+                if (zoomLevel >= 9 && item.count < 2) return;
+
+                const circleClass = getStudentResidenceCircleClass(item.count);
+                const circleSize = getStudentResidenceCircleSize(item.count);
+                const branchText = item.branchName.endsWith('지점') ? item.branchName : (item.branchName + '지점');
+
+                const labelContent = document.createElement('div');
+                labelContent.className = `student-residence-circle-badge ${circleClass}`;
+                labelContent.style.width = `${circleSize}px`;
+                labelContent.style.height = `${circleSize}px`;
+                labelContent.title = `${branchText} ${item.count}명 (${item.address})`;
+
+                labelContent.innerHTML = `
+                    <span class="sr-badge-branch">${branchText}</span>
+                    <span class="sr-badge-count">${item.count}명</span>
+                `;
+
+                labelContent.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    isMarkerClickHandled = true;
+                    showStudentResidenceOverlayPopup(item);
+                };
+
+                const overlay = new kakao.maps.CustomOverlay({
+                    position: item.pos,
+                    content: labelContent,
+                    yAnchor: 0.5,
+                    xAnchor: 0.5,
+                    clickable: true,
+                    zIndex: Z_INDEX.STUDENT_RESIDENCE + item.count
+                });
+
+                overlay.setMap(map);
+                studentResidenceOverlays.push(overlay);
+            });
+            console.log(`📍 Rendered ${studentResidenceOverlays.length} student residence markers in current map bounds.`);
+        }
+
+        // 📍 학생 소재지 색상 스케일 매핑 (5단계 로즈 핑크)
+        function getStudentResidenceCircleClass(count) {
+            if (count >= 30) return 'sr-lvl-5';
+            if (count >= 15) return 'sr-lvl-4';
+            if (count >= 7) return 'sr-lvl-3';
+            if (count >= 3) return 'sr-lvl-2';
+            return 'sr-lvl-1';
+        }
+
+        // 📍 학생수 규모 대비 원 크기(px) 스케일 계산
+        function getStudentResidenceCircleSize(count) {
+            if (count >= 30) return Math.min(88, 74 + Math.round(Math.sqrt((count - 30) / 49) * 14)); // 74px ~ 88px
+            if (count >= 15) return 66;
+            if (count >= 7) return 58;
+            if (count >= 3) return 50;
+            return 44;
+        }
+
+        // 📍 학생 소재지 클릭 전용 팝업
+        function showStudentResidenceOverlayPopup(item) {
+            window.clearRadiusOverlay();
+
+            // 소속 지점과의 직선거리 계산
+            const cleanTarget = item.branchName.replace(/지점/g, '').trim();
+            const foundBranch = branchDataList.find(b => {
+                const bClean = b.name.replace(/지점/g, '').trim();
+                return bClean === cleanTarget || bClean.includes(cleanTarget) || cleanTarget.includes(bClean);
+            });
+
+            let distanceHtml = '';
+            if (foundBranch && foundBranch.pos) {
+                const distKm = (getDistance(item.pos, foundBranch.pos) / 1000).toFixed(1);
+                distanceHtml = `
+                    <div class="rs-item"><label>소속 지점과의 직선거리</label><value style="color:#38bdf8; font-weight:800;">${distKm} km (${foundBranch.name})</value></div>
+                `;
+            }
+
+            const labelContent = document.createElement('div');
+            labelContent.className = 'radius-summary-label';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'rs-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                window.clearRadiusOverlay();
+            };
+
+            const branchText = item.branchName.endsWith('지점') ? item.branchName : (item.branchName + '지점');
+
+            labelContent.innerHTML = `
+                <div class="rs-header">
+                    <span class="rs-title" style="color:#f43f5e;">📍 학생 소재지 상세 정보 (퇴원 포함)</span>
+                </div>
+                <div class="rs-address">🏠 ${item.address}</div>
+                <div class="rs-grid">
+                    <div class="rs-item"><label>소속 지점</label><value style="color:#ffffff; font-weight:800;">${branchText}</value></div>
+                    <div class="rs-item"><label>소재 학생수 (퇴원 포함)</label><value style="color:#f43f5e; font-size:15px; font-weight:900;">${item.count.toLocaleString()}명</value></div>
+                    ${distanceHtml}
+                </div>
+            `;
+
+            labelContent.querySelector('.rs-header').appendChild(closeBtn);
+
+            const overlay = new kakao.maps.CustomOverlay({
+                position: item.pos,
                 content: labelContent,
                 yAnchor: 1.25,
                 clickable: true,
