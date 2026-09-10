@@ -3057,7 +3057,6 @@
                 labelContent.title = `${branchText} ${item.count}명 (${item.address})`;
 
                 labelContent.innerHTML = `
-                    <span class="sr-badge-branch">${branchText}</span>
                     <span class="sr-badge-count">${item.count}명</span>
                 `;
 
@@ -3091,13 +3090,13 @@
             return 'sr-lvl-1';
         }
 
-        // 📍 학생수 규모 대비 원 크기(px) 스케일 계산
+        // 📍 학생수 규모 대비 원 크기(px) 스케일 계산 (소형화: 21px ~ 42px)
         function getStudentResidenceCircleSize(count) {
-            if (count >= 30) return Math.min(88, 74 + Math.round(Math.sqrt((count - 30) / 49) * 14)); // 74px ~ 88px
-            if (count >= 15) return 66;
-            if (count >= 7) return 58;
-            if (count >= 3) return 50;
-            return 44;
+            if (count >= 30) return Math.min(42, 35 + Math.round(Math.sqrt((count - 30) / 49) * 7)); // 35px ~ 42px
+            if (count >= 15) return 31;
+            if (count >= 7) return 27;
+            if (count >= 3) return 24;
+            return 21;
         }
 
         // 📍 학생 소재지 클릭 전용 팝업

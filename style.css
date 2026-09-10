@@ -1155,64 +1155,41 @@ html, body, #map {
 .student-residence-circle-badge {
     position: absolute;
     border-radius: 50%;
-    border: 2px solid #ffffff;
+    border: 1.5px solid #ffffff;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
     font-family: 'Outfit', 'Noto Sans KR', sans-serif;
     user-select: none;
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
     box-sizing: border-box;
-    padding: 3px;
+    padding: 0;
 }
 
 .student-residence-circle-badge:hover {
-    transform: scale(1.22) !important;
+    transform: scale(1.25) !important;
     z-index: 99999 !important;
-    box-shadow: 0 0 24px rgba(244, 63, 94, 0.95) !important;
+    box-shadow: 0 0 16px rgba(244, 63, 94, 0.95) !important;
     border-color: #ffffff !important;
 }
 
-.student-residence-circle-badge .sr-badge-branch {
-    font-size: 8.5px;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.4px;
-    white-space: nowrap;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    opacity: 0.95;
-    max-width: 92%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .student-residence-circle-badge .sr-badge-count {
-    font-size: 11px;
-    font-weight: 900;
-    line-height: 1.05;
-    margin-top: 1.5px;
-    letter-spacing: -0.3px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.4px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
 }
 
-.student-residence-circle-badge.sr-lvl-5 .sr-badge-branch { font-size: 11.5px; }
-.student-residence-circle-badge.sr-lvl-5 .sr-badge-count { font-size: 15px; margin-top: 2.5px; }
-
-.student-residence-circle-badge.sr-lvl-4 .sr-badge-branch { font-size: 10.5px; }
-.student-residence-circle-badge.sr-lvl-4 .sr-badge-count { font-size: 13.5px; margin-top: 2px; }
-
-.student-residence-circle-badge.sr-lvl-3 .sr-badge-branch { font-size: 9.5px; }
-.student-residence-circle-badge.sr-lvl-3 .sr-badge-count { font-size: 12px; margin-top: 2px; }
-
-.student-residence-circle-badge.sr-lvl-2 .sr-badge-branch { font-size: 8.5px; }
-.student-residence-circle-badge.sr-lvl-2 .sr-badge-count { font-size: 10.5px; }
-
-.student-residence-circle-badge.sr-lvl-1 .sr-badge-branch { font-size: 8px; }
-.student-residence-circle-badge.sr-lvl-1 .sr-badge-count { font-size: 9.5px; }
+.student-residence-circle-badge.sr-lvl-5 .sr-badge-count { font-size: 12.5px; font-weight: 900; }
+.student-residence-circle-badge.sr-lvl-4 .sr-badge-count { font-size: 11px; font-weight: 900; }
+.student-residence-circle-badge.sr-lvl-3 .sr-badge-count { font-size: 10px; font-weight: 800; }
+.student-residence-circle-badge.sr-lvl-2 .sr-badge-count { font-size: 9px; font-weight: 800; }
+.student-residence-circle-badge.sr-lvl-1 .sr-badge-count { font-size: 8.5px; font-weight: 800; }
 
 /* 🔥 Top 10 성장 지점 네온 뱃지 마커 */
 .top10-branch-overlay {
