@@ -42,7 +42,9 @@
         let branchDataList = [];
         let apartmentDataList = [];
         let universityDataList = [];
+        let rawStudentResidenceList = [];
         let studentResidenceDataList = [];
+        let activeBranchForStudentResidence = null;
         let rdbYoyMap = {};
         let branchSchoolMap = {};
         let branchSchoolQuarters = [];
@@ -209,6 +211,9 @@
                     branchPanel.style.display = 'none';
                     branchPanel.dataset.mode = 'none';
                 }
+                studentResidenceOverlays.forEach(ol => ol.setMap(null));
+                studentResidenceOverlays = [];
+                activeBranchForStudentResidence = null;
             }
         };
 
@@ -612,7 +617,6 @@
             const chkCandidate = document.getElementById('chk-candidate');
             const chkHigh = document.getElementById('chk-high');
             const chkMiddle = document.getElementById('chk-middle');
-            const chkStudentResidence = document.getElementById('chk-student-residence');
             const chkUniversity = document.getElementById('chk-university');
             const chkAcademy = document.getElementById('chk-academy');
             const chkApartment = document.getElementById('chk-apartment');
@@ -624,7 +628,6 @@
             if (chkCandidate) chkCandidate.addEventListener('change', () => renderCandidateMarkers());
             if (chkHigh) chkHigh.addEventListener('change', () => renderSchoolMarkers());
             if (chkMiddle) chkMiddle.addEventListener('change', () => renderSchoolMarkers());
-            if (chkStudentResidence) chkStudentResidence.addEventListener('change', () => renderStudentResidenceMarkers());
             if (chkUniversity) chkUniversity.addEventListener('change', () => renderUniversityMarkers());
             if (chkAcademy) chkAcademy.addEventListener('change', () => renderAcademyMarkers());
             if (chkApartment) chkApartment.addEventListener('change', () => renderApartmentMarkers());
@@ -822,13 +825,15 @@
                             const pos = new kakao.maps.LatLng(lat, lng);
                             map.setLevel(4);
                             map.panTo(pos);
-                            const chk = document.getElementById('chk-student-residence');
-                            if (chk && !chk.checked) {
-                                chk.checked = true;
-                                renderStudentResidenceMarkers();
-                            }
                             const srObj = studentResidenceDataList.find(sr => sr.address === item.dataset.addr && sr.branchName === item.dataset.branch);
-                            if (srObj) showStudentResidenceOverlayPopup(srObj);
+                            if (srObj) {
+                                const parentBranch = branchDataList.find(b => cleanBranchName(b.name) === cleanBranchName(srObj.branchName));
+                                if (parentBranch) {
+                                    activeBranchForStudentResidence = parentBranch;
+                                    renderStudentResidenceMarkers();
+                                }
+                                showStudentResidenceOverlayPopup(srObj);
+                            }
                             searchInput.value = item.dataset.addr;
                         }
                         searchResults.style.display = 'none';
@@ -1549,6 +1554,7 @@
             Promise.allSettled([fetchYoyTask, fetchBranchTask]).then(() => {
                 syncBranchStudentCounts();
                 renderBranchMarkers();
+                filterStudentResidencesByOperatingBranches();
                 setTimeout(() => updateGlobalSummaryBar(), 50);
             });
 
@@ -1628,15 +1634,19 @@
                 });
         }
 
-        // 7. 학생 소재지 데이터 파싱 (동일 주소/좌표 미세 오프셋 분산 처리)
+        function cleanBranchName(name) {
+            if (!name) return '';
+            return name.toString().replace(/지점/g, '').replace(/에이닷/g, '').trim();
+        }
+
+        // 7. 학생 소재지 데이터 파싱 (운영 중인 지점만 필터링 및 동일 주소/좌표 미세 오프셋 분산 처리)
         function parseStudentResidenceCsv(csvText) {
             if (!csvText || csvText.trim().startsWith('<!DOCTYPE html') || csvText.includes('<html')) {
                 console.error('Student residence data response is HTML (Google Sheet non-public or login redirect)');
                 return;
             }
             const rows = csvText.split('\n').slice(1);
-            const rawList = [];
-            const coordCounts = {};
+            rawStudentResidenceList = [];
 
             rows.forEach(row => {
                 if (!row.trim()) return;
@@ -1650,21 +1660,37 @@
                 const lng = parseFloat(cols[4]?.replace(/"/g, '').replace(/[^0-9.-]/g, '').trim());
 
                 if (branchName && address && !isNaN(lat) && !isNaN(lng) && lat > 0 && lng > 0 && count > 0) {
-                    const coordKey = `${lat.toFixed(5)}_${lng.toFixed(5)}`;
-                    coordCounts[coordKey] = (coordCounts[coordKey] || 0) + 1;
-                    rawList.push({
+                    rawStudentResidenceList.push({
                         branchName,
+                        cleanBranch: cleanBranchName(branchName),
                         address,
                         count,
                         lat,
-                        lng,
-                        coordKey
+                        lng
                     });
                 }
             });
 
+            console.log(`📍 Student Residence CSV raw rows loaded: ${rawStudentResidenceList.length}`);
+            filterStudentResidencesByOperatingBranches();
+        }
+
+        function filterStudentResidencesByOperatingBranches() {
+            if (!rawStudentResidenceList || rawStudentResidenceList.length === 0) return;
+            if (!branchDataList || branchDataList.length === 0) return;
+
+            const operatingBranchNames = new Set(branchDataList.map(b => cleanBranchName(b.name)));
+            const filteredRaw = rawStudentResidenceList.filter(item => operatingBranchNames.has(item.cleanBranch));
+
+            const coordCounts = {};
+            filteredRaw.forEach(item => {
+                const coordKey = `${item.lat.toFixed(5)}_${item.lng.toFixed(5)}`;
+                item.coordKey = coordKey;
+                coordCounts[coordKey] = (coordCounts[coordKey] || 0) + 1;
+            });
+
             const coordCurrentIndex = {};
-            studentResidenceDataList = rawList.map(item => {
+            studentResidenceDataList = filteredRaw.map(item => {
                 const totalAtCoord = coordCounts[item.coordKey] || 1;
                 const currIdx = coordCurrentIndex[item.coordKey] || 0;
                 coordCurrentIndex[item.coordKey] = currIdx + 1;
@@ -1681,6 +1707,7 @@
 
                 return {
                     branchName: item.branchName,
+                    cleanBranch: item.cleanBranch,
                     address: item.address,
                     count: item.count,
                     rawLat: item.lat,
@@ -1689,8 +1716,11 @@
                 };
             });
 
-            console.log(`📍 Student Residence CSV data parsed: ${studentResidenceDataList.length} rows`);
-            renderStudentResidenceMarkers();
+            console.log(`📍 Operating branch student residences loaded: ${studentResidenceDataList.length} rows (Filtered out closed branches: ${rawStudentResidenceList.length - studentResidenceDataList.length})`);
+
+            if (activeBranchForStudentResidence) {
+                renderStudentResidenceMarkers();
+            }
         }
 
         // 6. 지점별 수강생 학교 분기별 데이터 파싱 및 4분기 추이 연산
@@ -2547,6 +2577,9 @@
             window.clearRadiusOverlay();
             closeDetailModal();
 
+            activeBranchForStudentResidence = b;
+            renderStudentResidenceMarkers();
+
             if (!yoyInfo) {
                 yoyInfo = getYoYInfo(b.name);
             }
@@ -2640,6 +2673,11 @@
                 }
             }
 
+            const targetCleanBranch = cleanBranchName(b.name);
+            const branchStudents = studentResidenceDataList.filter(sr => sr.cleanBranch === targetCleanBranch);
+            const totalBranchResStudents = branchStudents.reduce((acc, cur) => acc + cur.count, 0);
+            const totalBranchResLocs = branchStudents.length;
+
             const highSchoolTableHtml = renderSchoolTrendTable(b.name, 'high');
             const middleSchoolTableHtml = renderSchoolTrendTable(b.name, 'middle');
             const rankTitle = (isTop10 && yoyInfo) ? `(#${yoyInfo.rank} 성장지점)` : '';
@@ -2661,6 +2699,7 @@
                 <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${(b.studentCount || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
                 ${yoyBanner}
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${(potentialCustomers || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
+                <div class="rs-address" style="margin-top:4px;">📍 학생 소재지 (퇴원 포함): <b style="color:#f43f5e;">총 ${totalBranchResStudents.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(${totalBranchResLocs}곳 지도 표출)</span></div>
                 <div class="rs-grid" style="margin-top:8px;">
                     <!-- 1단계: 반경 3km 총 학교 수 / 총 학생수 (접고 펼치기) -->
                     <div class="rs-item rs-accordion-toggle open" id="rs-toggle-schools" title="클릭하여 고등학교/중학교 목록 접기/펼치기">
@@ -2994,24 +3033,18 @@
             popupOverlays.push(overlay);
         }
 
-        // 📍 학생 소재지(퇴원 포함) 마커 렌더링 (화면 뷰포트 영역 실시간 필터링 적용)
+        // 📍 학생 소재지(퇴원 포함) 마커 렌더링 (지점 클릭 시 해당 지점의 학생 소재지만 표출)
         function renderStudentResidenceMarkers() {
             studentResidenceOverlays.forEach(ol => ol.setMap(null));
             studentResidenceOverlays = [];
 
-            const isStudentResidenceChecked = document.getElementById('chk-student-residence')?.checked ?? false;
-            if (!isStudentResidenceChecked) return;
+            if (!activeBranchForStudentResidence) return;
 
-            const bounds = map.getBounds();
-            const zoomLevel = map.getLevel();
+            const targetCleanBranch = cleanBranchName(activeBranchForStudentResidence.name);
+            const branchStudents = studentResidenceDataList.filter(sr => sr.cleanBranch === targetCleanBranch);
 
-            studentResidenceDataList.forEach(item => {
+            branchStudents.forEach(item => {
                 if (!item || !item.pos) return;
-                // 화면 영역(bounds) 내에 있는 학생 소재지 마커만 렌더링하여 렉 없이 즉각 표출
-                if (bounds && !bounds.contain(item.pos)) return;
-
-                // 전국 원거리 줌아웃(Lv 9 이상) 시 렉 방지 및 지도 가독성을 위해 2명 이상만 표출 (줌인 시 전체 100% 표출)
-                if (zoomLevel >= 9 && item.count < 2) return;
 
                 const circleClass = getStudentResidenceCircleClass(item.count);
                 const circleSize = getStudentResidenceCircleSize(item.count);
@@ -3046,7 +3079,7 @@
                 overlay.setMap(map);
                 studentResidenceOverlays.push(overlay);
             });
-            console.log(`📍 Rendered ${studentResidenceOverlays.length} student residence markers in current map bounds.`);
+            console.log(`📍 Rendered ${studentResidenceOverlays.length} student residence markers for branch ${activeBranchForStudentResidence.name}.`);
         }
 
         // 📍 학생 소재지 색상 스케일 매핑 (5단계 로즈 핑크)
@@ -3069,12 +3102,13 @@
 
         // 📍 학생 소재지 클릭 전용 팝업
         function showStudentResidenceOverlayPopup(item) {
-            window.clearRadiusOverlay();
+            popupOverlays.forEach(ol => ol.setMap(null));
+            popupOverlays = [];
 
             // 소속 지점과의 직선거리 계산
-            const cleanTarget = item.branchName.replace(/지점/g, '').trim();
+            const cleanTarget = cleanBranchName(item.branchName);
             const foundBranch = branchDataList.find(b => {
-                const bClean = b.name.replace(/지점/g, '').trim();
+                const bClean = cleanBranchName(b.name);
                 return bClean === cleanTarget || bClean.includes(cleanTarget) || cleanTarget.includes(bClean);
             });
 
@@ -3094,7 +3128,8 @@
             closeBtn.innerHTML = '✕';
             closeBtn.onclick = (e) => {
                 if (e) { e.preventDefault(); e.stopPropagation(); }
-                window.clearRadiusOverlay();
+                popupOverlays.forEach(ol => ol.setMap(null));
+                popupOverlays = [];
             };
 
             const branchText = item.branchName.endsWith('지점') ? item.branchName : (item.branchName + '지점');
