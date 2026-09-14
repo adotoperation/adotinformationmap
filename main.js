@@ -718,7 +718,8 @@
                         const isTop10 = yoyInfo && yoyInfo.rank <= 10;
                         const icon = isTop10 ? `⭐ [Top10 #${yoyInfo.rank} 지점]` : `🎓 [에이닷지점]`;
                         const badge = (yoyInfo && typeof yoyInfo.inc === 'number') ? ` <span style="color:#f59e0b; font-weight:bold;">(+${yoyInfo.inc}명 / ${yoyInfo.rate}%↑)</span>` : '';
-                        html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">${icon} ${b.name} (학생수: ${b.studentCount}명${badge})</div>`;
+                        const shareBadge = b.shareRank ? ` <span style="color:#38bdf8; font-weight:600;">(점유율 #${b.shareRank}위)</span>` : '';
+                        html += `<div class="search-item" data-type="branch" data-name="${b.name}" data-lat="${b.pos.getLat()}" data-lng="${b.pos.getLng()}">${icon} ${b.name} (학생수: ${b.studentCount}명${badge}${shareBadge})</div>`;
                     });
                     matchingCandidates.slice(0, 6).forEach(c => {
                         html += `<div class="search-item" data-type="candidate" data-name="${c.name}" data-lat="${c.lat}" data-lng="${c.lng}">🎯 [${c.category}] ${c.name} (${c.desc.slice(0, 20)}...)</div>`;
@@ -1891,19 +1892,19 @@
             `;
         }
  
-        // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
-        function updateGlobalSummaryBar() {
+        // 📊 전 지점 반경 3km 학교 학생수 합산, 점유율 계산 및 전국 순위(내림차순) 산출
+        function computeBranchShareRanks() {
             const branchCount = branchDataList.length;
             const schoolKeys = Object.keys(schoolMap);
             
-            if (branchCount === 0 || schoolKeys.length === 0) return;
- 
-            const totalBranchStudents = branchDataList.reduce((sum, b) => sum + (b.studentCount || 0), 0);
-            
-            // 각 지점의 3km 반경 내 학교 학생수 합산의 총합 구하기 (Bounding Box 고속화)
-            let totalTargetSchoolStudents = 0;
+            if (branchCount === 0 || schoolKeys.length === 0) return false;
+
             branchDataList.forEach(b => {
-                if (!b || !b.pos) return;
+                if (!b || !b.pos) {
+                    b.schoolStudents3km = 0;
+                    b.shareRatio = 0;
+                    return;
+                }
                 let branch3kmStudents = 0;
                 const bLat = typeof b.pos.getLat === 'function' ? b.pos.getLat() : (b.pos.lat ?? b.pos.Ma ?? 0);
                 const bLng = typeof b.pos.getLng === 'function' ? b.pos.getLng() : (b.pos.lng ?? b.pos.La ?? 0);
@@ -1922,8 +1923,31 @@
                         }
                     }
                 });
-                totalTargetSchoolStudents += branch3kmStudents;
+                b.schoolStudents3km = branch3kmStudents;
+                const studentCount = b.studentCount || 0;
+                b.shareRatio = branch3kmStudents > 0 ? (studentCount / branch3kmStudents) * 100 : 0;
             });
+
+            // 점유율 내림차순 정렬하여 순위 부여
+            const sorted = [...branchDataList].sort((a, b) => (b.shareRatio || 0) - (a.shareRatio || 0));
+            sorted.forEach((b, index) => {
+                b.shareRank = index + 1;
+            });
+
+            console.log(`📊 전 지점 반경 3km 점유율 순위 산출 완료: 총 ${branchDataList.length}개 지점`);
+            return true;
+        }
+
+        // 전역 종합 지표 바 연산 및 갱신 함수 (지점별 3km 학생수 기반)
+        function updateGlobalSummaryBar() {
+            const hasComputed = computeBranchShareRanks();
+            if (!hasComputed) return;
+
+            // 지점 마커 라벨에 점유율 순위가 반영되도록 마커 재렌더링
+            renderBranchMarkers();
+
+            const totalBranchStudents = branchDataList.reduce((sum, b) => sum + (b.studentCount || 0), 0);
+            const totalTargetSchoolStudents = branchDataList.reduce((sum, b) => sum + (b.schoolStudents3km || 0), 0);
  
             // 점유율 계산 (실질 타겟 학생수 대비)
             let ratioText = "0.00%";
@@ -2176,6 +2200,7 @@
                 const yoyInfo = getYoYInfo(b.name);
                 const isTop10 = yoyInfo && yoyInfo.rank <= 10;
                 const studentNum = (b.studentCount || 0).toLocaleString();
+                const shareRankText = b.shareRank ? ` / 점유율 ${b.shareRank}위` : '';
 
                 const labelContent = document.createElement('div');
 
@@ -2185,7 +2210,7 @@
                     const rateSign = yoyInfo.rate >= 0 ? `+${yoyInfo.rate}%↑` : `${yoyInfo.rate}%↓`;
                     labelContent.innerHTML = `
                         <span>🔥 #${yoyInfo.rank} ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${studentNum}명 (${incSign}명 / ${rateSign})</span>
+                        <span style="font-size:11px; opacity:0.95; margin-left:4px; font-weight:700; background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:10px;">${studentNum}명 (${incSign}명 / ${rateSign}${shareRankText ? ` / <span style="color:#ffeaa7;">점유율 ${b.shareRank}위</span>` : ''})</span>
                     `;
                 } else if (yoyInfo) {
                     labelContent.className = 'branch-badge';
@@ -2194,13 +2219,14 @@
                     const rateColor = yoyInfo.inc >= 0 ? '#4ade80' : '#f87171';
                     labelContent.innerHTML = `
                         <span>🎓 ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.9; background:rgba(0,0,0,0.3); padding:1px 6px; border-radius:10px;">${studentNum}명 <span style="color:${rateColor}; font-weight:600;">(${incSign}명 / ${rateSign})</span></span>
+                        <span style="font-size:11px; opacity:0.9; background:rgba(0,0,0,0.3); padding:1px 6px; border-radius:10px;">${studentNum}명 <span style="font-weight:600;">(<span style="color:${rateColor};">${incSign}명 / ${rateSign}</span>${shareRankText ? ` / <span style="color:#ffd166;">점유율 ${b.shareRank}위</span>` : ''})</span></span>
                     `;
                 } else {
                     labelContent.className = 'branch-badge';
+                    const plainShareRank = b.shareRank ? ` <span style="color:#ffd166; font-weight:600;">(점유율 ${b.shareRank}위)</span>` : '';
                     labelContent.innerHTML = `
                         <span>🎓 ${b.name}</span>
-                        <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${studentNum}명</span>
+                        <span style="font-size:11px; opacity:0.85; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:10px;">${studentNum}명${plainShareRank}</span>
                     `;
                 }
 
@@ -2691,12 +2717,15 @@
                 ? '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.35)'
                 : '0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(121, 80, 242, 0.3)';
 
+            const shareRankTitle = b.shareRank ? ` [점유율 #${b.shareRank}위]` : '';
+            const shareRankSpan = b.shareRank ? ` / 순위: 전체 <b style="color:${isTop10 ? '#f59e0b' : '#a29bfe'};">${b.shareRank}위</b>` : '';
+
             panel.innerHTML = `
                 <div class="rs-header">
-                    <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${rankTitle} (반경 3km 분석)</span>
+                    <span class="rs-title" style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${isTop10 ? '🔥' : '🎓'} 에이닷 ${b.name} ${rankTitle}${shareRankTitle} (반경 3km 분석)</span>
                     <button class="rs-close-btn" id="branch-panel-close-btn" title="닫기">✕</button>
                 </div>
-                <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${(b.studentCount || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText} ※ 반경 3km 학생수 합계 대비 점유율)</span></div>
+                <div class="rs-address">📍 지점 학생수: <b style="color:${isTop10 ? '#f59e0b' : '#7950f2'};">${(b.studentCount || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(점유율: ${ratioText}${shareRankSpan} ※ 반경 3km 학생수 합계 대비)</span></div>
                 ${yoyBanner}
                 <div class="rs-address" style="margin-top:4px;">🎯 잠정 고객수: <b style="color:#ff6b81;">${(potentialCustomers || 0).toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(반경 3km 학생수 합계 대비 5% 학생수)</span></div>
                 <div class="rs-address" style="margin-top:4px;">📍 학생 소재지 (퇴원 포함): <b style="color:#f43f5e;">총 ${totalBranchResStudents.toLocaleString()}명</b> <span style="font-size:11px; font-weight:normal; color:#aaa; margin-left:4px;">(${totalBranchResLocs}곳 지도 표출)</span></div>
