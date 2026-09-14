@@ -37,21 +37,60 @@ html, body, #map {
 }
 
 /* 제목 박스 */
-#title-box h1 {
-    font-size: 19px;
-    font-weight: 800;
+#title-box {
+    padding: 13px 18px;
+}
+
+#title-box .brand-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
     margin: 0;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #ffffff 0%, #a5a5a5 100%);
+    line-height: 1.15;
+}
+
+#title-box .aim-logo {
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: 3.5px;
+    background: linear-gradient(135deg, #ffffff 15%, #c4b5fd 55%, #7950f2 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 14px rgba(121, 80, 242, 0.6));
+    display: inline-block;
 }
 
-#title-box p {
+#title-box .aim-full {
+    font-family: 'Outfit', sans-serif;
     font-size: 11px;
-    margin-top: 4px;
-    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.3px;
+}
+
+#title-box .brand-sub {
+    font-size: 12px;
+    margin-top: 6px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#title-box .sub-adot {
+    color: #fef08a;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: -0.2px;
+}
+
+#title-box .gold-text {
+    color: #ffff00;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    text-shadow: 0 0 10px rgba(255, 255, 0, 0.55), 0 0 22px rgba(245, 158, 11, 0.35);
 }
 
 /* 검색창 */
